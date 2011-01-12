@@ -1,4 +1,4 @@
-#include "CMGTools/ZmumuJetsTutorial/interface/JetCountingHistograms.h"
+#include "CMGTools/DiJetHighMass/interface/JetCountingHistograms.h"
 
 void cmg::JetCountingHistograms::defineHistograms(){
 
