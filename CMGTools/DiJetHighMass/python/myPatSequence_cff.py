@@ -25,8 +25,7 @@ def myPatSequence( process, runOnData=True  ):
                      doL1Cleaning = False,                 
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak7GenJets"),
-                     doJetID      = True,
-                     jetIdLabel   = "ak7"
+                     doJetID      = False
                      )
 
 
@@ -39,8 +38,7 @@ def myPatSequence( process, runOnData=True  ):
                      doL1Cleaning = False,                 
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak5GenJets"),
-                     doJetID      = True,
-                     jetIdLabel   = "ak5"
+                     doJetID      = False
                      )
 
 
@@ -53,7 +51,7 @@ def myPatSequence( process, runOnData=True  ):
                      doL1Cleaning = False,                 
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak7GenJets"),
-                     doJetID      = True
+                     doJetID      = False
                      )
 
 
@@ -68,7 +66,7 @@ def myPatSequence( process, runOnData=True  ):
                      doL1Cleaning = False,                 
                      doL1Counters = False,
                      genJetCollection=cms.InputTag("ak5GenJets"),
-                     doJetID      = True
+                     doJetID      = False
                      )
 
 
