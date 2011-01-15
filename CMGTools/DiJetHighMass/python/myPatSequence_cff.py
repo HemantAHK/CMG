@@ -6,65 +6,72 @@ from PhysicsTools.PatAlgos.tools.coreTools import *
 
 def myPatSequence( process, runOnData=True  ): 
 
+#    jetCorrString = cms.vstring(['L2Relative', 'L3Absolute', 'L2L3Residual'])
+    jetCorrString = cms.vstring(['L2Relative', 'L3Absolute'])
+
     if runOnData:
         switchOnTrigger( process )
         removeMCMatching(process, ['All'])
+        #jetCorrString = cms.vstring(['L2Relative', 'L3Absolute', 'L2L3Residual'])
         #RunOnData(process, ['All'])
-
+        
 
     addJetCollection(process,cms.InputTag('ak7CaloJets'),
-                 'AK7', 'Calo',
-                 doJTA        = True,
-                 doBTagging   = False,
-                 jetCorrLabel = ('AK7', 'Calo'),
-                 doType1MET   = True,
-                 doL1Cleaning = True,                 
-                 doL1Counters = False,
-                 genJetCollection=cms.InputTag("ak7GenJets"),
-                 doJetID      = True,
-                 jetIdLabel   = "ak7"
-                 )
+                     'AK7', 'Calo',
+                     doJTA        = True,
+                     doBTagging   = False,
+                     jetCorrLabel = ('AK7Calo', jetCorrString),
+                     doType1MET   = False,
+                     doL1Cleaning = False,                 
+                     doL1Counters = False,
+                     genJetCollection=cms.InputTag("ak7GenJets"),
+                     doJetID      = True,
+                     jetIdLabel   = "ak7"
+                     )
+
+
+    addJetCollection(process,cms.InputTag('ak5CaloJets'),
+                     'AK5', 'Calo',
+                     doJTA        = True,
+                     doBTagging   = False,
+                     jetCorrLabel = ('AK5Calo', jetCorrString),
+                     doType1MET   = False,
+                     doL1Cleaning = False,                 
+                     doL1Counters = False,
+                     genJetCollection=cms.InputTag("ak5GenJets"),
+                     doJetID      = True,
+                     jetIdLabel   = "ak5"
+                     )
 
 
     addJetCollection(process,cms.InputTag('ak7PFJets'),
-                  'AK7', 'PF',
-                  doJTA        = True,
-                  doBTagging   = False,
-                  jetCorrLabel = ('AK7', 'PF'),
-                  doType1MET   = True,
-                  doL1Cleaning = True,                 
-                  doL1Counters = False,
-                  genJetCollection=cms.InputTag("ak7GenJets"),
-                  doJetID      = True,
-                  jetIdLabel   = "ak7"
-                  )
-
-    addJetCollection(process,cms.InputTag('ak5CaloJets'),
-                 'AK5', 'Calo',
-                 doJTA        = True,
-                 doBTagging   = False,
-                 jetCorrLabel = ('AK5', 'Calo'),
-                 doType1MET   = True,
-                 doL1Cleaning = True,                 
-                 doL1Counters = False,
-                 genJetCollection=cms.InputTag("ak5GenJets"),
-                 doJetID      = True,
-                 jetIdLabel   = "ak5"
-                 )
+                     'AK7', 'PF',
+                     doJTA        = True,
+                     doBTagging   = True,
+                     jetCorrLabel = ('AK7PF', jetCorrString),
+                     doType1MET   = False,
+                     doL1Cleaning = False,                 
+                     doL1Counters = False,
+                     genJetCollection=cms.InputTag("ak7GenJets"),
+                     doJetID      = True
+                     )
 
 
+
+  
     addJetCollection(process,cms.InputTag('ak5PFJets'),
-                  'AK5', 'PF',
-                  doJTA        = True,
-                  doBTagging   = False,
-                  jetCorrLabel = ('AK5', 'PF'),
-                  doType1MET   = True,
-                  doL1Cleaning = True,                 
-                  doL1Counters = False,
-                  genJetCollection=cms.InputTag("ak5GenJets"),
-                  doJetID      = True,
-                  jetIdLabel   = "ak5"
-                  )
+                     'AK5', 'PF',
+                     doJTA        = True,
+                     doBTagging   = True,
+                     jetCorrLabel = ('AK5PF', jetCorrString),
+                     doType1MET   = False,
+                     doL1Cleaning = False,                 
+                     doL1Counters = False,
+                     genJetCollection=cms.InputTag("ak5GenJets"),
+                     doJetID      = True
+                     )
+
+
 
     process.selectedPatJetsAK7Calo.cut = "pt()>30"
     process.selectedPatJetsAK7PF.cut = "pt()>10"
