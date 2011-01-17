@@ -3,11 +3,20 @@ import FWCore.ParameterSet.Config as cms
 
 # changing process name, as PAT is already taken 
 processName = 'ANA'
-runOnData = True
+runOnData = False
 postfix="PFlow"
 ext = 'Data'
 
+import os
+path = os.getcwd()
+runAtFNAL = False
 
+if path.find('uscms') > -1:
+    runAtFNAL=True
+    print "Run at FNAL"
+else:
+    print "Run probably at CERN"
+    
 process.setName_(processName)
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10))
@@ -18,8 +27,12 @@ if (not runOnData):
 
 if runOnData:
     process.source.fileNames = cms.untracked.vstring('/store/cmst3/user/cbern/RA2SusyJetMET/Data/HotSkim/hotskim_pf.root')
+    if runAtFNAL:
+        process.source.fileNames = cms.untracked.vstring('file:/uscms/home/mgouzevi/work/TEST_SAMPLES/Data_skim.root')
 else:
     process.source.fileNames = cms.untracked.vstring('rfio:/castor/cern.ch/user/m/meschi/CMSSW_3_8_6_p2/Reco/Reco_RSGraviton_500_0.root')   
+    if runAtFNAL:
+        process.source.fileNames = cms.untracked.vstring('file:/uscms/home/mgouzevi/work/TEST_SAMPLES/Reco_RSGraviton_500_skim.root')
 
 
 
