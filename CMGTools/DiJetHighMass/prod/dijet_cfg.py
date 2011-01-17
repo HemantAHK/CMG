@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 
 # changing process name, as PAT is already taken 
 processName = 'ANA'
-runOnData = False
+runOnData = True
 postfix="PFlow"
 ext = 'Data'
 
