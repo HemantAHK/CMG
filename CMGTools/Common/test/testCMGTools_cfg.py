@@ -28,11 +28,9 @@ process.out.fileName = cms.untracked.string('testCMGTools.root')
 
 from CMGTools.Common.EventContent.particleFlow_cff import particleFlow as particleFlowEventContent  
 from CMGTools.Common.EventContent.particleFlow_cff import particleFlowBase as particleFlowEventContentBase  
-from CMGTools.Common.EventContent.traditional_cff import traditional as traditionalEventContent  
 process.out.outputCommands = cms.untracked.vstring( 'drop *')
 process.out.outputCommands.extend( particleFlowEventContent ) 
 process.out.outputCommands.extend( particleFlowEventContentBase )
-process.out.outputCommands.extend( traditionalEventContent ) 
 process.out.outputCommands.append( 'keep cmgBaseMETs_*_*_*' )
     
 
@@ -52,7 +50,6 @@ process.load('CMGTools.Common.jet_cff')
 process.load('CMGTools.Common.met_cff')
 process.load('CMGTools.Common.pfcands_cff')
 process.load('CMGTools.Common.w_cff')
-process.load('CMGTools.Common.vbf_cff')
 
 process.load('CMGTools.Common.cutsummary_cff')
 process.load('CMGTools.Common.Tools.indexSelector_cfi')
@@ -73,9 +70,8 @@ process.analysisSequence = cms.Sequence(
     process.diMuonSequence +
     process.jetSequence +
     process.metSequence +
-#    process.baseMETSelector +
+    process.baseMETSelector +
     process.pfcandsSequence +
-    process.vbfSequence + 
     process.wSequence +
     process.indexSelector +
     process.runInfoAccounting + 
