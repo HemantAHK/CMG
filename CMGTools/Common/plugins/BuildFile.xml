@@ -1,6 +1,0 @@
-<export></export>
-<library name="CMGToolsCommonPlugins" file="*.cc">
-  <use name="CMGTools/Common"/>
-  <use name="DQMServices/Core"/>
-  <flags   EDM_PLUGIN="1"/>
-</library>
