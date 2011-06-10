@@ -12,7 +12,5 @@ susyEventContent += RA2EventContent
 susyEventContent += razorEventContent
 susyEventContent += LPEventContent
 susyEventContent += ['keep *_TriggerResults_*_SUSY']
-susyEventContent += ['keep *_susyMuon_*_SUSY']
-susyEventContent += ['keep *_susyElectron_*_SUSY']
  
 # susyEventContent += 'keep *_cmgMHTPFJet30_*_*'

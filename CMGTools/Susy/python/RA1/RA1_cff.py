@@ -13,11 +13,33 @@ from CMGTools.Common.skims.cmgMuonSel_cfi import *
 from CMGTools.Common.skims.cmgPFJetSel_cfi import *
 from CMGTools.Common.skims.cmgBaseMETSel_cfi import *
 from CMGTools.Common.skims.leadingCMGPFJetSelector_cfi import leadingCMGPFJetSelector
-from CMGTools.Susy.commonLeptonSequence_cfi import *
 
 ######################################################################
 ## Cuts and selections and their sequences.
 ######################################################################
+
+RA1Electron = cmgElectronSel.clone(
+    cut = "(pt() > 10.) && (abs(eta()) < 2.5)", 
+    src = 'cmgElectronSel'
+    )
+
+RA1ElectronSequence = cms.Sequence(
+    RA1Electron
+    )
+
+##########
+
+RA1Muon = cmgMuonSel.clone(
+    cut = "(pt() > 10.) && (abs(eta()) < 2.5) && " \
+    "getSelection('cuts_isomuon') && getSelection('cuts_vbtfmuon')",
+    src = 'cmgMuonSel'
+    )
+
+RA1MuonSequence = cms.Sequence(
+    RA1Muon
+    )
+
+##########
 
 RA1Photon = cmgPhotonSel.clone()
 
@@ -126,12 +148,12 @@ RA1PFJetFailCount = cmgCandCount.clone(
     )
 
 RA1ElectronCount = cmgCandCount.clone(
-    src = "susyElectron",
+    src = "RA1Electron",
     minNumber = 1
     )
 
 RA1MuonCount = cmgCandCount.clone(
-    src = "susyMuon",
+    src = "RA1Muon",
     minNumber = 1
     )
 
@@ -196,6 +218,8 @@ RA1HistogramSequence = cms.Sequence(
 ######################################################################
 
 RA1ObjectSequence = cms.Sequence(
+    RA1ElectronSequence +
+    RA1MuonSequence +
 #    RA1PhotonSequence +
     RA1JetSequence +
     RA1HTSequence +
