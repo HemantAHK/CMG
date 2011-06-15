@@ -19,38 +19,37 @@ namespace cmg {
 
   class BaseJet : public PhysicsObjectWithPtr< pat::JetPtr > {
   public:
-
+    
     BaseJet(){}
     BaseJet(const value& m):
       PhysicsObjectWithPtr<value>::PhysicsObjectWithPtr(m),
-      btag_(UnSet(double)),
-      rawFactor_(1.)
-        {}
+      btag_(UnSet(double)), 
+      rawFactor_(1){}
 
     virtual ~BaseJet(){}
-
-    cmg::TriBool jetId() const{return jetId_;}
-
+    
+    cmg::TriBool jetId() const{ return jetId_; }
+    
     /// \return btag discriminator
-    Float_t btag() const{ return btag_; }
-
+    double btag() const{ return btag_; }
+    
     /// \return a correction factor that can be applied to the jet energy or pT to bring
     /// it back to the uncorrected value
-    Float_t rawFactor() const {return rawFactor_;}
+    double rawFactor() const {return rawFactor_;}
 
     friend class BaseJetFactory;
-
+    
   private:
-
-    /// Is the jet ID'ed?
+ 
+    /// is the jet ID'ed?
     cmg::TriBool jetId_;
 
-    /// b-Tagging discriminator.
-    Float_t btag_;
+    /// b tagging discriminator
+    double btag_;
 
-    /// Correction factor that can be applied to the jet energy or pT
-    /// to bring it back to the uncorrected value.
-    Float_t rawFactor_;
+    /// correction factor that can be applied to the jet energy or pT to bring
+    /// it back to the uncorrected value
+    float rawFactor_;
   };
 }
 
