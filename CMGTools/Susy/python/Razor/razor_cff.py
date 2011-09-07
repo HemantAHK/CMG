@@ -12,14 +12,10 @@ from CMGTools.Common.skims.cmgTriggerObjectSel_cfi import *
 #take the leading selected electrons + muons
 from CMGTools.Common.skims.leadingCMGMuonSelector_cfi import leadingCMGMuonSelector
 razorLeadingMuon = leadingCMGMuonSelector.clone(inputCollection = "susyMuon", index = cms.int32(1))
-# use an additional pt cut for electrons, but keep the common ID
-from CMGTools.Common.skims.cmgElectronSel_cfi import *
-razorElectron = cmgElectronSel.clone(src = "susyElectron", cut = 'pt() > 20')
 from CMGTools.Common.skims.leadingCMGElectronSelector_cfi import leadingCMGElectronSelector
-razorLeadingElectron = leadingCMGElectronSelector.clone(inputCollection = "razorElectron", index = cms.int32(1))
+razorLeadingElectron = leadingCMGElectronSelector.clone(inputCollection = "susyElectron", index = cms.int32(1))
 
 razorElectronSequence = cms.Sequence(
-    razorElectron*                                
     razorLeadingElectron
     )
 razorMuonSequence = cms.Sequence(
@@ -30,19 +26,16 @@ razorMuonSequence = cms.Sequence(
 from CMGTools.Common.skims.cmgPFJetSel_cfi import *
 razorPFJetSel = cmgPFJetSel.clone( src = 'cmgPFJetSel', cut = 'pt()>60 && abs(eta)<3.0' )
 razorPFJetSelID = cmgPFJetSel.clone( src = 'cmgPFJetSel', cut = '%s && getSelection("cuts_looseJetId")' % razorPFJetSel.cut.value() )
-# filter out B-tagged jets for latter use 
-razorPFBJetSel = cmgPFJetSel.clone( src = 'razorPFJetSel', cut = 'getSelection("cuts_btag_loose")' )
 
 #combine leading leptons with jets
 razorPFJetsWithLeadingLeptons = cmgCandMerge.clone(
     src = cms.VInputTag(
       cms.InputTag("razorLeadingElectron"),
       cms.InputTag("razorLeadingMuon"),
-      cms.InputTag("razorPFJetSel"),                    
+      cms.InputTag("razorPFJetSelID"),                    
     )
     )
 #skim on leading objects - i.e. at least one ID'd jet and a lepton, or two jets
-razorPFJetIDCount = cmgCandCount.clone( src = 'razorPFJetSelID', minNumber = 1 )
 razorLeadingObjectCount = cmgCandCount.clone( src = 'razorPFJetsWithLeadingLeptons', minNumber = 2 )
 
 #make the hemispheres
@@ -143,7 +136,6 @@ razorSelectedCount = cmgCandCount.clone( src = 'razorSelectedDiHemi', minNumber 
 razorJetSequence = cms.Sequence(
     razorPFJetSel+
     razorPFJetSelID+
-    razorPFBJetSel+
     razorPFJetsWithLeadingLeptons
 )
 
@@ -161,14 +153,16 @@ razorObjectSequence = cms.Sequence(
 
 from CMGTools.Susy.histograms.pfBJetHistograms_cff import pfJetHistograms
 #BJet histograms
-razorBJetHistograms = pfJetHistograms.clone(inputCollection = cms.InputTag("razorPFJetSel"))
+razorBJetHistogramsAll = pfJetHistograms.clone()
+razorBJetHistogramsSel = pfJetHistograms.clone(inputCollection = cms.InputTag("razorPFJetSel"))
 
 razorHistogrammingSequence  = cms.Sequence(
     #Razor histograms                                       
     razorDiHemiHistogramsHadBox+
     razorDiHemiHistogramsMuStarBox+
     #btag histograms
-    razorBJetHistograms
+    razorBJetHistogramsAll+
+    razorBJetHistogramsSel
 )
 
 razorSequence = cms.Sequence(
@@ -178,7 +172,6 @@ razorSequence = cms.Sequence(
 
 razorSkimSequence = cms.Sequence(
     razorObjectSequence + 
-    razorPFJetIDCount + 
     razorLeadingObjectCount+
     razorSelectedDiHemi*
     razorSelectedCount
