@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import copy, datetime, inspect, fnmatch, os, re, subprocess, sys, tempfile, time
 
 import castortools
@@ -59,7 +61,8 @@ class CheckDatasetExists(Task):
             raise Exception("Dataset '%s' not found by listSamples.py. Please check." % self.dataset)
         samples = [s for s in stdout.split('\n') if s]
         if not len(samples) == 1:
-            raise Exception("Dataset not unique according to listSamples.py. Samples found were '%s'" % samples)
+            if not self.dataset in samples:
+                raise Exception("Dataset not unique according to listSamples.py and no exact match found. Samples found were '%s'" % samples)
         if '//' in samples[0]:
             raise Exception("Too many slashes in sample name '%s'. Please check." % samples[0])
         return {'Dataset':samples[0]}
@@ -314,8 +317,8 @@ class FullCFG(Task):
         output = file(source,'w')
         output.write(config)
         output.write('\nprocess.load("%s")\n' % sourceFile)
-        output.write('process.maxEvents.input = cms.untracked.int32(-1)\n')
-        output.write('process.maxLuminosityBlocks.input = cms.untracked.int32(-1)\n')
+        output.write('if hasattr(process,"maxEvents"): process.maxEvents.input = cms.untracked.int32(-1)\n')
+        output.write('if hasattr(process,"maxLuminosityBlocks"): process.maxLuminosityBlocks.input = cms.untracked.int32(-1)\n')
         output.close()
 
         return {'FullCFG':source}
@@ -544,6 +547,8 @@ class CheckJobStatus(Task):
     """Check the job STDOUT"""    
     def __init__(self, dataset, user, options):
         Task.__init__(self,'CheckJobStatus', dataset, user, options)
+    def addOption(self, parser):
+        parser.add_option("--output_wildcard", dest="output_wildcard", help="The wildcard to use when testing the output of this production (defaults to same as -w)", default=None)           
     def run(self, input):
         
         job_status = input['MonitorJobs']['LSFJobStatus']
@@ -566,7 +571,12 @@ class CheckJobStatus(Task):
             else:
                 result[j] = status
 
-        mask = GenerateMask(input['RunCMSBatch']['SampleDataset'],self.options.batch_user,self.options)
+        #allows a different wildcard in the final check.
+        options = copy.deepcopy(self.options)
+        if self.options.output_wildcard is not None:
+            options.wildcard = self.options.output_wildcard
+
+        mask = GenerateMask(input['RunCMSBatch']['SampleDataset'],self.options.batch_user,options)
         report = mask.run({'CheckForMask':{'MaskPresent':False}})
         report['LSFJobStatusCheck'] = result
         return report
@@ -606,6 +616,20 @@ class CleanJobFiles(Task):
         removed = clean.run(actions)
         return {'Cleaned':removed,'Compressed':compressed}
     
+class WriteSavannah(Task):
+    """Call the writeSavannah.py script"""    
+
+    def __init__(self, dataset, user, options):
+        Task.__init__(self,'WriteSavannah', dataset, user, options)
+    def addOption(self, parser):
+        parser.add_option("-s", "--savuser",action = "store",dest="savuser",
+                          help="If Savannah user is different to current user, enter Savannah username here",
+                          default=os.getlogin())        
+    def run(self, input):
+        #ret = os.system('writeSavannah.py -u %s -s %s -T %s' % (self.user,self.options.savuser,self.dataset))
+        return {'SavannahWritten':False}
+
+    
 if __name__ == '__main__':
     
     dataset = None
@@ -613,6 +637,7 @@ if __name__ == '__main__':
     options = {}
     
     op = ParseOptions(dataset,user,options)
+    op.das.parser.add_option("--max_threads", dest="max_threads", default=None,help='The maximum number of threads to use')
     
     tasks = [CheckDatasetExists(dataset,user,options),
              FindOnCastor(dataset,user,options),
@@ -634,12 +659,28 @@ if __name__ == '__main__':
     #allow the tasks to add extra options
     for t in tasks:
         t.addOption(op.das.parser)
-    
+    #sigh! treat write savannah differently
+    sav = WriteSavannah(dataset,user,options)
+    sav.addOption(op.das.parser)
+    #get the options
     op.run({})
     
-    def log(output,s):
+    #these tasks are quick and are done in the main thread (fail early...)
+    simple_tasks = [CheckDatasetExists(dataset,user,options),FindOnCastor(dataset,user,options),sav]
+    for d in op.dataset:
+        for t in simple_tasks:
+            t.dataset = d
+            t.options = op.options
+            t.user = op.user
+            t.run({})
+    
+    def callback(result):
+        print 'Production thread done: ',str(result)
+    
+    def log(output,s, tostdout = True):
         """Brain-dead utility function"""
-        print s
+        if tostdout:
+            print s
         print >> output,s
     
     def work(dataset,op_parse,task_list):
@@ -655,22 +696,32 @@ if __name__ == '__main__':
             t.options = op_parse.options
             t.user = op_parse.user
             
-            log(output,'[%s] %s:' % (time.asctime(),t.getname()))
+            log(output,'%s: [%s] %s:' % (dataset,time.asctime(),t.getname()))
             if t.__doc__:
-                log(output,t.__doc__)
-            previous[t.getname()] = t.run(previous)
-            log(output,'\t%s' % previous[t.getname()])
+                log(output,'%s: %s' % (dataset,t.__doc__) )
+            try:
+                previous[t.getname()] = t.run(previous)
+                log(output,'%s: \t%s' % (dataset,previous[t.getname()]),tostdout=False)
+            except Exception, e:
+                log(output,'%s: [%s] %s FAILED:' % (dataset,time.asctime(),t.getname()))
+                log(output,"%s: Error was '%s'" % (dataset,str(e)))
+
+                #TODO: Perhaps some cleaning?
+                break
             
         output.close()
         
         return logfile
     
+    #submit the main work in a multi-threaded way
     import multiprocessing
-    jobs = {}
+    pool = multiprocessing.Pool(processes=op.options.max_threads)
+    print op.dataset
     for d in op.dataset:
-        p = multiprocessing.Process(target=work, args=(d,copy.deepcopy(op),copy.deepcopy(tasks)))
-        jobs[d] = p
-        p.start()
+        pool.apply_async(work, args=(d,copy.deepcopy(op),copy.deepcopy(tasks)),callback=callback)
+    pool.close()
+    pool.join()
+
  
         
     
