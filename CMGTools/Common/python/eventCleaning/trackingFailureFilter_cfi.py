@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 trackingFailureFilter = cms.EDFilter(
   "TrackingFailureFilter",
   # Steven was using AK5PFJets
-  JetSource = cms.InputTag('pfJetsAK5'),
+  JetSource = cms.InputTag('ak5PFJets'),
   TrackSource = cms.InputTag('generalTracks'),
   # Steven was using a collection of good vertices
   VertexSource = cms.InputTag('offlinePrimaryVertices'),
