@@ -259,8 +259,6 @@ void RecoilCorrectedMETProducer::produce(edm::Event & iEvent, const edm::EventSe
 int  RecoilCorrectedMETProducer::nJets( const JetCollectionType& jets, 
 					const RecBosonType& boson, float deltaR) {
   
-  //COLIN : check that I should really remove jets matched to both legs
-  // when working with Ws.
   if(verbose_) {
     std::cout<<"\tMatching jets to boson legs"<<std::endl;
   }
