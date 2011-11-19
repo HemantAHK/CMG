@@ -33,15 +33,13 @@ class DataMCPlot(object):
         self.histosDict[name] = tmp
         # tmp.AddEntry( self.legend, legendLine)
         
-    def _SortedHistograms(self, reverse=False):
+    def _SortedHistograms(self):
         '''Returns the histogram dictionary, sorted by increasing layer,
         excluding histograms which are not "on".
 
         This function is used in all the Draw functions.'''
         byLayer = sorted( self.histos, key=attrgetter('layer') )
         byLayerOn = [ hist for hist in byLayer if (hist.on is True) ]
-        if reverse:
-            byLayerOn.reverse()
         return byLayerOn
 
 
@@ -72,24 +70,19 @@ class DataMCPlot(object):
         gPad.Update()
 
 
-    def CreateLegend(self, ratio=False):
+    def CreateLegend(self):
         if self.legend is None:
             self.legend = TLegend( *self.legendBorders )
         else:
             self.legend.Clear()
-        for index, hist in enumerate(self._SortedHistograms(reverse=True)):
-            if index == 0 and ratio:
-                # the first histogram is used as denominator
-                # so does not appear in the plot, and should not be
-                # added in the legend
-                continue
+        for hist in self._SortedHistograms():
             hist.AddEntry( self.legend )
             
 
-    def DrawLegend(self, ratio=False):
+    def DrawLegend(self):
         '''Draw the legend.'''
         if self.legendOn:
-            self.CreateLegend(ratio)
+            self.CreateLegend()
             self.legend.Draw('same')
 
                 
@@ -113,10 +106,10 @@ class DataMCPlot(object):
             self.ratios.append( ratio )
             if same == '':
                 same = 'same'
-        self.DrawLegend( ratio=True )
+        self.DrawLegend()
         gPad.Update()
 
-    def DrawRatioStack(self,opt='', ymin=None, ymax=None):
+    def DrawRatioStack(self,opt=''):
         '''Draw ratios.
 
         The stack is considered as a single histogram.'''
@@ -129,7 +122,7 @@ class DataMCPlot(object):
             histForRatios.append( hist )
         self._BuildStack( histForRatios )
         self.stack.Divide( denom.obj )
-        self.stack.Draw(opt, ymin, ymax )
+        self.stack.Draw(opt)
         self.ratios = []
         for hist in self.nostack:
             print 'nostack ', hist
@@ -137,11 +130,11 @@ class DataMCPlot(object):
             ratio.obj.Divide( denom.obj )
             ratio.obj.Draw('same')
             self.ratios.append( ratio )
-        self.DrawLegend( ratio=True )
+        self.DrawLegend()
         self.DrawRatioLines(denom)
         gPad.Update()
                 
-    def DrawNormalizedRatioStack(self,opt='', ymin=None, ymax=None):
+    def DrawNormalizedRatioStack(self,opt=''):
         '''Draw ratios.
 
         The stack is considered as a single histogram.
@@ -160,7 +153,7 @@ class DataMCPlot(object):
         self.stack.Normalize()
         denom.Normalize()
         self.stack.Divide( denom.weighted )
-        self.stack.Draw(opt, ymin, ymax )
+        self.stack.Draw(opt)
         self.ratios = []
         for hist in self.nostack:
             print 'nostack ', hist
@@ -169,7 +162,7 @@ class DataMCPlot(object):
             ratio.obj.Divide( denom.weighted )
             ratio.obj.Draw('same')
             self.ratios.append( ratio )        
-        self.DrawLegend( ratio=True )
+        self.DrawLegend()
         self.DrawRatioLines(denom)
         gPad.Update()
 
@@ -228,11 +221,10 @@ class DataMCPlot(object):
                 self.stack.Add( hist )
             else:
                 self.nostack.append(hist)
-
-
+    
     def __str__(self):
         tmp =  'DataMCPlot: ' + self.name + '\n' 
-        for hist in self._SortedHistograms( reverse=True ):
+        for hist in self._SortedHistograms():
             tmp += '\t' + str(hist) + '\n'
         return tmp
 
