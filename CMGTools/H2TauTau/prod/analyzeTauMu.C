@@ -1,7 +1,7 @@
 {  
   TauMuAnalysis analysis("analysis");
-  analysis.setVerbosity(0);
-  //analysis.setTruncateEvents(10); 
+  analysis.setVerbosity(1);
+  analysis.setTruncateEvents(10); 
   analysis.makeAllHistos(1);
   analysis.setPrintFreq(1000);
   analysis.setInputTag("cmgTauMuSelClean");
@@ -14,10 +14,8 @@
 
   //TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbCat";
   //TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbCatRecoil";
-  //TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbCatSVFitRecoil";
-  
-  TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbMETSig";  
-  //TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbMETSigFix";//did not fix svfit mass
+  TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbCatSVFitRecoil";
+  //TString path="/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/prod/21fbMETSig";
 
   analysis.setOutputPath(path);
 
@@ -26,7 +24,7 @@
   /////////////////////////
   Sample WJetsToLNu("WJetsToLNu","/data/benitezj/RootFiles/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/cmgTauMu");
   WJetsToLNu.setDataType("MC");
-  WJetsToLNu.setRecoilCorr("../data/recoilfits/recoilfit_wjets_njet.root");
+  WJetsToLNu.setRecoilCorr("/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/data/recoilfits/recoilfit_wjets_njet.root");
   WJetsToLNu.setColor(kRed+2);
   WJetsToLNu.setLineColor(WJetsToLNu.getColor());
   WJetsToLNu.setPlotLabel("W");
@@ -54,7 +52,7 @@
   Sample ZToMuMu("ZToMuMu","/data/benitezj/RootFiles/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/cmgTauMu");
   ZToMuMu.setDataType("MC");
   ZToMuMu.setTruthEventType(3);
-  ZToMuMu.setRecoilCorr("../data/recoilfits/recoilfit_zmm42X_njet.root");
+  ZToMuMu.setRecoilCorr("/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/data/recoilfits/recoilfit_zmm42X_njet.root");
   ZToMuMu.setColor(kRed);//kRed+2);
   ZToMuMu.setLineColor(ZToMuMu.getColor());
   ZToMuMu.setPlotLabel("Z#rightarrow#mu^{+}#mu^{-}");
@@ -68,7 +66,7 @@
   Sample ZToTauTau("ZToTauTau","/data/benitezj/RootFiles/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/cmgTauMu");
   ZToTauTau.setDataType("MC");
   ZToTauTau.setTruthEventType(5);
-  ZToTauTau.setRecoilCorr("../data/recoilfits/recoilfit_zjets_ltau_njet.root");
+  ZToTauTau.setRecoilCorr("/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/data/recoilfits/recoilfit_zjets_ltau_njet.root");
   ZToTauTau.setColor(kOrange-4);
   ZToTauTau.setLineColor(ZToTauTau.getColor());
   ZToTauTau.setPlotLabel("Z#rightarrow#tau^{+}#tau^{-}");
@@ -82,7 +80,7 @@
   Sample ZToLJet("ZToLJet","/data/benitezj/RootFiles/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/cmgTauMu");
   ZToLJet.setDataType("MC");
   ZToLJet.setTruthEventType(6);
-  ZToLJet.setRecoilCorr("../data/recoilfits/recoilfit_wjets_njet.root");
+  ZToLJet.setRecoilCorr("/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/data/recoilfits/recoilfit_wjets_njet.root");
   ZToLJet.setColor(kRed+2);
   ZToLJet.setLineColor(ZToLJet.getColor());
   ZToLJet.setPlotLabel("Z(l+jet)");
@@ -122,20 +120,19 @@
   //   ZZ.setEffCorrFactor(MCEffCorrFactor);
   //   analysis.addSample(&ZZ);
   
-  Sample Higgs("Higgs","/data/benitezj/RootFiles/GluGluToHToTauTau_M-115_7TeV-powheg-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/TauMu");
-  Higgs.setDataType("MC");
-  Higgs.setRecoilCorr("../data/recoilfits/recoilfit_zjets_ltau_njet.root");
-  Higgs.setColor(0);
-  Higgs.setLineColor(1);
-  Higgs.setLineStyle(2);
-  Higgs.setPlotLabel("SM Higgs(115)");
-  Higgs.setLegendOption("L");
-  Higgs.setCrossection(18.12*0.0765);//not sure
-  Higgs.setSampleGenEvents(196002);
-  Higgs.addTrigPath("HLT_IsoMu12_v1");
-  Higgs.setEffCorrFactor(MCEffCorrFactor);
-  analysis.addSample(&Higgs);    
-
+//   Sample Higgs("Higgs","/data/benitezj/RootFiles/GluGluToHToTauTau_M-115_7TeV-powheg-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM/V2/PAT_CMG_V2_3_0/TauMu");
+//   Higgs.setDataType("MC");
+//   Higgs.setColor(0);
+//   Higgs.setLineColor(1);
+//   Higgs.setLineStyle(2);
+//   Higgs.setPlotLabel("5 x SM Higgs(115)");
+//   Higgs.setLegendOption("L");
+//   Higgs.setCrossection(18.12*0.0765);
+//   Higgs.setRecoilCorr("/afs/cern.ch/user/b/benitezj/scratch0/CMGTools/CMSSW_4_2_8/src/CMGTools/H2TauTau/data/recoilfits/recoilfit_zjets_ltau_njet.root");
+//   Higgs.setSampleGenEvents(196002);
+//   Higgs.addTrigPath("HLT_IsoMu12_v1");
+//   Higgs.setEffCorrFactor(MCEffCorrFactor*5);
+//   analysis.addSample(&Higgs);    
 
 //   Sample Higgs4("Higgs4","/data/benitezj/RootFiles/GluGluToHToTauTau_M-115_7TeV-powheg-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM/V2_/PAT_CMG_V2_4_0/TauMu");
 //   Higgs4.setDataType("MC");
@@ -322,7 +319,9 @@
   TauPlusXv6_SS.addTrigPaths(TauPlusXv6.getTrigPaths());
   analysis.addSample(&TauPlusXv6_SS);
 
+  ///////////initialize
+  if(!analysis.init()){cout<<" could not init"<<endl;return 0;}
+  
 
- 
 }
 
