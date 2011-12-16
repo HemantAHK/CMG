@@ -129,21 +129,20 @@ class BaseDataset(Task):
             return (data['data'],data)
 
         data = None
-        exists = False
-        
         if self.options.name is None:
             #guess the dataset name in DBS
-            tokens = [t for t in dataset.split(os.sep) if t]
-            if len(tokens) >= 3:
-                #DBS names always have three entries
-                ds = os.sep + os.sep.join(tokens[0:3])
-                if ds:
-                    exists, data = check(ds)
-                    self.options.name = ds
+            tokens = dataset.split(os.sep)
+            for i in reversed(xrange(len(tokens))):
+                ds = os.sep.join(tokens[1:i])
+                if not ds: continue
+                ds = '/%s' % ds
+                exists, data = check(ds)
+                self.options.name = ds
+                if exists: break
         else:
             exists, data = check(self.options.name)
             if not exists:
-                raise Exception("Specified dataset '%s' not found in Das. Please check." % self.options.name)
+                raise Exception("Dataset '%s' not found in Das. Please check." % self.options.name)
         
         if data is None:
             raise Exception("Dataset '%s' not found in Das. Please check." % self.dataset)
