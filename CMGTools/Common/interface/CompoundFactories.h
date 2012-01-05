@@ -2,7 +2,6 @@
 #define COMPOUNDFACTORIES_H_
 
 #include "CMGTools/Common/interface/DiObjectFactory.h"
-#include "CMGTools/Common/interface/DiObjectUpdateFactory.h"
 #include "AnalysisDataFormats/CMGTools/interface/CompoundTypes.h"
 
 namespace cmg{
@@ -27,9 +26,6 @@ namespace cmg{
   typedef DiObjectFactory< cmg::WTauNu::type1, cmg::WTauNu::type2 > WTauNuFactory;
     
   typedef DiObjectFactory< cmg::QuadMuon::type1, cmg::QuadMuon::type2 > QuadMuonFactory;
-
-  typedef DiObjectUpdateFactory< cmg::TauMu > TauMuUpdateFactory;
-  
     
 }
 

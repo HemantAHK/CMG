@@ -45,7 +45,6 @@ process.load("CMGTools.Common.muon_cff")
 process.load("CMGTools.Common.diMuon_cff")
 
 process.zmumusummary = process.cutSummaryMuon.clone(inputCollection = cms.InputTag("cmgDiMuon"))
-process.cmgDiMuon.cfg.metCollection = "cmgPFMET"
 
 process.analysisSequence = cms.Sequence(
     process.pfSimpleMetSequence + 
