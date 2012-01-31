@@ -5,13 +5,13 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 
-//COLIN: replacing by CMG::DiTau
+//COLIN1 : will need to read CMG::DiTaus instead.
 // #include "TauAnalysis/CandidateTools/interface/CompositePtrCandidateT1T2MEtProducer.h"
 // #include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEt.h"
 // #include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEtFwd.h"
 #include "AnalysisDataFormats/CMGTools/interface/CompoundTypes.h"
+//!COLIN1
 
-#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -65,7 +65,6 @@ MuTauStreamAnalyzer::MuTauStreamAnalyzer(const edm::ParameterSet & iConfig){
   verticesTag_       = iConfig.getParameter<edm::InputTag>("vertices");
   triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults"); 
   isMC_              = iConfig.getParameter<bool>("isMC");
-  genJetsTag_        = iConfig.getParameter<edm::InputTag>("genJets"); 
   deltaRLegJet_      = iConfig.getUntrackedParameter<double>("deltaRLegJet",0.3);
   minCorrPt_         = iConfig.getUntrackedParameter<double>("minCorrPt",10.);
   minJetID_          = iConfig.getUntrackedParameter<double>("minJetID",0.5);
@@ -79,63 +78,40 @@ void MuTauStreamAnalyzer::beginJob(){
 
   tRandom_ = new TRandom3();
  
-  //OK (for a good agreement on jet quantities, cut pt>30 && eta>-4.5)
   jetsBtagHE_  = new std::vector< double >();
   jetsBtagHP_  = new std::vector< double >();
 
-  //DIFF: Lorenzo's charged hadron fraction distribution seems skewed
-  // (less charged hadrons than we do - are they computed before JEC?)
   jetsChEfraction_  = new std::vector< float >();
-  //BAD: PRIO3 can be dropped
   jetsChNfraction_  = new std::vector< float >();
-  //BAD: PRIO2 we don't have that yet
   jetMoments_       = new std::vector< float >();
 
-  //OK
   gammadR_       = new std::vector< float >();
   gammadEta_     = new std::vector< float >();
   gammadPhi_     = new std::vector< float >();
   gammaPt_       = new std::vector< float >();
 
-  //BAD: PRIO1 : Jose needs to implement that
   tauXTriggers_= new std::vector< int >();
   triggerBits_ = new std::vector< int >();
 
-  //DIFF: Lorenzo has a bit more uncorrected jets at low pT, and at pT>30. 
-  // I think it's due to the lack of pile-up charged hadron subtraction.
   jetsP4_          = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //OK
   jetsIDP4_        = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //BAD: PRIO2 not yet filled
   jetsIDUpP4_      = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
   jetsIDDownP4_    = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
   jetsIDL1OffsetP4_= new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //BAD: PRIO3 -the JEC will be checked externally. the genjets are available though.
   genJetsIDP4_     = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
 
-  //OK
-  diTauVisP4_   = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >(); 
-  //BAD: PRIO3 we don't have collinear approx yet
+  diTauVisP4_   = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
   diTauCAP4_    = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
   diTauICAP4_   = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //DIFF** 
-  diTauSVfitP4_ = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >(); 
+  diTauSVfitP4_ = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
 
-  //OK
   diTauLegsP4_    = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //? some variables show up, others don't.
   genDiTauLegsP4_ = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //OK 0: raw MET; 1: recoil corrected
   METP4_          = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //OK
   genMETP4_       = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-  //OK
   genVP4_         = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
 
-  //OK (note: I have muons below 15 in my tree; for a good agreement, cut pt>15
   extraMuons_   = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
-
-  //BAD: PRIO3 - but we don't care. 
   pfMuons_      = new std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >();
 
   std::vector< float > Summer11Lumi ;
@@ -436,20 +412,13 @@ void MuTauStreamAnalyzer::beginJob(){
   tree_->Branch("extraMuons","std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >",&extraMuons_);
   tree_->Branch("pfMuons","std::vector< ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > >",&pfMuons_);
 
-  //OK
   tree_->Branch("sumEt",&sumEt_,"sumEt/F");
-  //N/A
   tree_->Branch("mTauTauMin",&mTauTauMin_,"mTauTauMin/F");
-  //DIFF (small difference due to recoil correction, I think)
   tree_->Branch("MtLeg1",&MtLeg1_,"MtLeg1/F");
-  //OK
   tree_->Branch("pZeta",&pZeta_,"pZeta/F");
-  //OK
   tree_->Branch("pZetaVis",&pZetaVis_,"pZetaVis/F");
-  //N/A we don't have that yet
   tree_->Branch("pZetaSig",&pZetaSig_,"pZetaSig/F");
 
-  //COLIN we don't care about v1 (2010 settings)
   tree_->Branch("chIsoLeg1v1",&chIsoLeg1v1_,"chIsoLeg1v1/F");
   tree_->Branch("nhIsoLeg1v1",&nhIsoLeg1v1_,"nhIsoLeg1v1/F");
   tree_->Branch("phIsoLeg1v1",&phIsoLeg1v1_,"phIsoLeg1v1/F");
@@ -459,121 +428,66 @@ void MuTauStreamAnalyzer::beginJob(){
   tree_->Branch("nhIsoPULeg1v1",&nhIsoPULeg1v1_,"nhIsoPULeg1v1/F");
   tree_->Branch("phIsoPULeg1v1",&phIsoPULeg1v1_,"phIsoPULeg1v1/F");
 
-  //OK
   tree_->Branch("chIsoLeg1v2",&chIsoLeg1v2_,"chIsoLeg1v2/F");
-  //OK
   tree_->Branch("nhIsoLeg1v2",&nhIsoLeg1v2_,"nhIsoLeg1v2/F");
-  //OK
   tree_->Branch("phIsoLeg1v2",&phIsoLeg1v2_,"phIsoLeg1v2/F");
-  //BAD, PRIO2
   tree_->Branch("elecIsoLeg1v2",&elecIsoLeg1v2_,"elecIsoLeg1v2/F");
-  //BAD, PRIO2
   tree_->Branch("muIsoLeg1v2",&muIsoLeg1v2_ ,"muIsoLeg1v2/F");
-  //DIFF, but I don't know what this is for.
   tree_->Branch("chIsoPULeg1v2",&chIsoPULeg1v2_,"chIsoPULeg1v2/F");
-  //OK
   tree_->Branch("nhIsoPULeg1v2",&nhIsoPULeg1v2_,"nhIsoPULeg1v2/F");
-  //OK
   tree_->Branch("phIsoPULeg1v2",&phIsoPULeg1v2_,"phIsoPULeg1v2/F");
 
-  //OK
   tree_->Branch("chIsoLeg2",&chIsoLeg2_,"chIsoLeg2/F");
-  //OK
   tree_->Branch("nhIsoLeg2",&nhIsoLeg2_,"nhIsoLeg2/F");
-  //OK
   tree_->Branch("phIsoLeg2",&phIsoLeg2_,"phIsoLeg2/F");
-  //OK
   tree_->Branch("dxy1",&dxy1_,"dxy1/F");
-  //DIFF, we have a more spiky plot than Lorenzo
   tree_->Branch("dxy2",&dxy2_,"dxy2/F");
-  //OK
   tree_->Branch("dz1",&dz1_,"dz1/F");
-  //OK
   tree_->Branch("dz2",&dz2_,"dz2/F");
 
-  //OK
   tree_->Branch("run",&run_,"run/l");
-  //OK
   tree_->Branch("event",&event_,"event/l");
-  //OK
   tree_->Branch("lumi",&lumi_,"lumi/l");
-  //DIFF??
   tree_->Branch("numPV",&numPV_,"numPV/F");
-  //DIFF : I guess I have a looser selection upstream
   tree_->Branch("numOfDiTaus",&numOfDiTaus_,"numOfDiTaus/I");
-  //OK (once isolation is applied)
   tree_->Branch("numOfLooseIsoDiTaus",&numOfLooseIsoDiTaus_,"numOfLooseIsoDiTaus/I");
-  //OK
   tree_->Branch("decayMode",&decayMode_,"decayMode/I");
-  //OK
   tree_->Branch("tightestHPSWP",&tightestHPSWP_,"tightestHPSWP/I");
-  //OK
   tree_->Branch("tightestHPSDBWP",&tightestHPSDBWP_,"tightestHPSDBWP/I");
-  //OK
   tree_->Branch("visibleTauMass",&visibleTauMass_,"visibleTauMass/F");
 
-  //BAD: PRIO2 I don't have that 
   tree_->Branch("leadPFChargedHadrTrackPt",&leadPFChargedHadrTrackPt_,"leadPFChargedHadrTrackPt/F");
-  //BAD: PRIO2 I don't have that
   tree_->Branch("leadPFChargedHadrTrackP", &leadPFChargedHadrTrackP_,"leadPFChargedHadrTrackP/F");
-  //OK 
   tree_->Branch("leadPFChargedHadrPt",&leadPFChargedHadrPt_,"leadPFChargedHadrPt/F");
-  //OK 
   tree_->Branch("leadPFChargedHadrP", &leadPFChargedHadrP_,"leadPFChargedHadrP/F");
-  //OK 
   tree_->Branch("leadPFChargedHadrMva",&leadPFChargedHadrMva_,"leadPFChargedHadrMva/F");
-  //OK 
   tree_->Branch("leadPFChargedHadrHcalEnergy",&leadPFChargedHadrHcalEnergy_,"leadPFChargedHadrHcalEnergy/F");
-  //OK 
   tree_->Branch("leadPFChargedHadrEcalEnergy",&leadPFChargedHadrEcalEnergy_,"leadPFChargedHadrEcalEnergy/F");
-
-  //BAD: PRIO2 
   tree_->Branch("leadPFCandMva",&leadPFCandMva_,"leadPFCandMva/F");
-  //BAD: PRIO2 
   tree_->Branch("leadPFCandHcalEnergy",&leadPFCandHcalEnergy_,"leadPFCandHcalEnergy/F");
-  //BAD: PRIO2 
   tree_->Branch("leadPFCandEcalEnergy",&leadPFCandEcalEnergy_,"leadPFCandEcalEnergy/F");
-  //OK
   tree_->Branch("leadPFCandPt",&leadPFCandPt_,"leadPFCandPt/F");
-  //OK
   tree_->Branch("leadPFCandP",&leadPFCandP_,"leadPFCandP/F");
-  //BAD: PRIO2 
   tree_->Branch("emFraction",&emFraction_,"emFraction/F");
-  //BAD: PRIO2 
   tree_->Branch("hasGsf",&hasGsf_,"hasGsf/F");
-  //DIFF (small differences... Lorenzo has a charge selection maybe?)
   tree_->Branch("signalPFChargedHadrCands",&signalPFChargedHadrCands_,"signalPFChargedHadrCands/I");
-  //OK
   tree_->Branch("signalPFGammaCands",&signalPFGammaCands_,"signalPFGammaCands/I");
 
 
-  //OK
   tree_->Branch("isTauLegMatched",&isTauLegMatched_,"isTauLegMatched/I");
-  //OK
   tree_->Branch("isMuLegMatched",&isMuLegMatched_,"isMuLegMatched/I");
-  //OK
   tree_->Branch("muFlag",&muFlag_,"muFlag/I");
-  //BAD: PRIO2 
   tree_->Branch("hasKft",&hasKft_,"hasKft/I");
 
-  //OK
   tree_->Branch("diTauCharge",&diTauCharge_,"diTauCharge/F");
-  //DIFF (I guess due to charged hadron pile-up subtraction)
   tree_->Branch("rhoFastJet",&rhoFastJet_,"rhoFastJet/F");
-  //BAD we don't have that - PRIO2
   tree_->Branch("rhoNeutralFastJet",&rhoNeutralFastJet_,"rhoNeutralFastJet/F");
-  //COLIN what is this? Forget about it
   tree_->Branch("mcPUweight",&mcPUweight_,"mcPUweight/F");
-  //OK
   tree_->Branch("nPUVertices",&nPUVertices_,"nPUVertices/I");
-  //Not in Lorenzo's tree
   tree_->Branch("nPUVerticesM1",&nPUVerticesM1_,"nPUVerticesM1/I");
-  //Not in Lorenzo's tree
   tree_->Branch("nPUVerticesP1",&nPUVerticesP1_,"nPUVerticesP1/I");
-  
-  //OK
+
   tree_->Branch("embeddingWeight",&embeddingWeight_,"embeddingWeight/F");
-  //does not work in mine, and not in Lorenzo's tree. 
   tree_->Branch("nPUtruth",  &nPUtruth_,  "nPUtruth/I");
 
 
@@ -630,17 +544,10 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   //   typedef pat::Tau               Tau;
   //   typedef PATMuTauPairCollection DiTauCollection;
   //   typedef PATMuTauPair           DiTau;
-  //   typedef pat::Muon Muon; 
   //if running on CMG objects:
   typedef cmg::TauMu DiTau;
   typedef std::vector<cmg::TauMu> DiTauCollection;
   typedef cmg::Tau Tau;
-  typedef cmg::Muon Muon;
-  typedef std::vector<cmg::Muon> MuonCollection;  
-  typedef cmg::BaseMET MET;
-  typedef std::vector<cmg::BaseMET> METCollection;
-  typedef cmg::GenJet GenJet;
-  typedef std::vector< GenJet > GenJetCollection;
 
   edm::Handle<DiTauCollection> diTauHandle;
   iEvent.getByLabel(diTauTag_,diTauHandle);
@@ -649,6 +556,8 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   //       << "No diTau label available \n";
   const DiTauCollection* diTaus = diTauHandle.product();
   
+  //COLINB1
+
   edm::Handle<JetCollection> jetsHandle;
   iEvent.getByLabel(jetsTag_,jetsHandle);
   //   if( !jetsHandle.isValid() )  
@@ -666,18 +575,12 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     newJets = newJetsHandle.product();
   }
 
-  //COLIN: we don't keep the PFCandidate collection in the CMG-tuple
-  //used only in the rejection of low mass drell-yan events.
-  //I guess that's not necessary at this stage, but could easily be done 
-  //by accessing cmg::DiElectrons and cmg::DiMuons.
-  //note : there is a pt cut pt>5 in our PF2PAT sequence, but it could 
-  //probably be relaxed.
-//   edm::Handle<reco::PFCandidateCollection> pfHandle;
-//   iEvent.getByLabel("particleFlow",pfHandle);
-//   if( !pfHandle.isValid() )  
-//     edm::LogError("DataNotAvailable")
-//       << "No pf particles label available \n";
-//   const reco::PFCandidateCollection* pfCandidates = pfHandle.product();
+  edm::Handle<reco::PFCandidateCollection> pfHandle;
+  iEvent.getByLabel("particleFlow",pfHandle);
+  if( !pfHandle.isValid() )  
+    edm::LogError("DataNotAvailable")
+      << "No pf particles label available \n";
+  const reco::PFCandidateCollection* pfCandidates = pfHandle.product();
 
   edm::Handle<reco::VertexCollection> pvHandle;
   iEvent.getByLabel( verticesTag_ ,pvHandle);
@@ -705,67 +608,44 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 
   numPV_ = vertexes->size();
 
-  edm::Handle<METCollection> metHandle;
+  edm::Handle<pat::METCollection> metHandle;
   iEvent.getByLabel( metTag_, metHandle);
   if( !metHandle.isValid() )  
     edm::LogError("DataNotAvailable")
       << "No MET label available \n";
-  const METCollection* met = metHandle.product();
+  const pat::METCollection* met = metHandle.product();
 
-  edm::Handle<METCollection> rawMetHandle;
+  edm::Handle<pat::METCollection> rawMetHandle;
   iEvent.getByLabel( rawMetTag_, rawMetHandle);
   if( !rawMetHandle.isValid() )  
     edm::LogError("DataNotAvailable")
       << "No raw MET label available \n";
-  const METCollection* rawMet = rawMetHandle.product();
+  const pat::METCollection* rawMet = rawMetHandle.product();
 
-  //JOSETD : read our trigger branch
-//   edm::Handle<pat::TriggerEvent> triggerHandle;
-//   iEvent.getByLabel(triggerResultsTag_, triggerHandle);
-//   if( !triggerHandle.isValid() )  
-//     edm::LogError("DataNotAvailable")
-//       << "No Trigger label available \n";
-//   const pat::TriggerEvent* trigger = triggerHandle.product();
+  edm::Handle<pat::TriggerEvent> triggerHandle;
+  iEvent.getByLabel(triggerResultsTag_, triggerHandle);
+  if( !triggerHandle.isValid() )  
+    edm::LogError("DataNotAvailable")
+      << "No Trigger label available \n";
+  const pat::TriggerEvent* trigger = triggerHandle.product();
 
-  //JOSETD : read our trigger object branch
-//   edm::Handle<pat::TriggerObjectStandAloneCollection > triggerObjsHandle;
-//   iEvent.getByLabel(edm::InputTag("patTrigger"),triggerObjsHandle);
-//   if( !triggerObjsHandle.isValid() )  
-//     edm::LogError("DataNotAvailable")
-//       << "No Trigger Objects label available \n";
-//   const pat::TriggerObjectStandAloneCollection* triggerObjs = triggerObjsHandle.product();
+  edm::Handle<pat::TriggerObjectStandAloneCollection > triggerObjsHandle;
+  iEvent.getByLabel(edm::InputTag("patTrigger"),triggerObjsHandle);
+  if( !triggerObjsHandle.isValid() )  
+    edm::LogError("DataNotAvailable")
+      << "No Trigger Objects label available \n";
+  const pat::TriggerObjectStandAloneCollection* triggerObjs = triggerObjsHandle.product();
 
 
   genDecay_ = -99;
   edm::Handle<reco::GenParticleCollection> genHandle;
   const reco::GenParticleCollection* genParticles = 0;
-  const reco::GenParticleCollection* genParticlesStatus3 = 0;
-  const reco::GenParticleCollection* genLeptonsStatus1 = 0;
-  const GenJetCollection* genJets = 0;
-
   if(isMC_){
-    
-    edm::Handle<GenJetCollection> genJetsHandle;
-    iEvent.getByLabel( genJetsTag_, genJetsHandle);
-    genJets = genJetsHandle.product();    
-
-    //COLIN read genParticles of status 3 from CMG-tuple
-    edm::Handle<reco::GenParticleCollection> genStatus3Handle;
-    iEvent.getByLabel(edm::InputTag("genParticlesStatus3"), genStatus3Handle);
-    genParticlesStatus3 = genStatus3Handle.product();
-    
-    //COLIN read genLeptons of status 1 from CMG-tuple
-    edm::Handle<reco::GenParticleCollection> genLeptonsStatus1Handle;
-    iEvent.getByLabel(edm::InputTag("genLeptonsStatus1"), genLeptonsStatus1Handle);
-    genLeptonsStatus1 = genLeptonsStatus1Handle.product();
-    
-    // COLIN: the following can be done on status 3 particles, which are available.
-//     iEvent.getByLabel(edm::InputTag("genParticles"),genHandle);
-//     if( !genHandle.isValid() )  
-//       edm::LogError("DataNotAvailable")
-// 	<< "No gen particles label available \n";
-//     genParticles = genHandle.product();
-    genParticles = genParticlesStatus3;
+    iEvent.getByLabel(edm::InputTag("genParticles"),genHandle);
+    if( !genHandle.isValid() )  
+      edm::LogError("DataNotAvailable")
+	<< "No gen particles label available \n";
+    genParticles = genHandle.product();
     for(unsigned int k = 0; k < genParticles->size(); k ++){
       if( !( (*genParticles)[k].pdgId() == 23 || abs((*genParticles)[k].pdgId()) == 24 || (*genParticles)[k].pdgId() == 25) || (*genParticles)[k].status()!=3)
 	continue;
@@ -794,33 +674,28 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     }
   }
 
+  edm::Handle<reco::GenJetCollection> tauGenJetsHandle;
+  edm::Handle<std::vector<PileupSummaryInfo> > puInfoH;
   nPUVertices_       = -99;
   nPUVerticesP1_     = -99;
   nPUVerticesM1_     = -99;
 
   nPUtruth_          = -99;
 
-//   const reco::GenJetCollection* tauGenJets = 0;
+  const reco::GenJetCollection* tauGenJets = 0;
   if(isMC_){
-    //COLIN: tauGenJets not necessary anymore.
-    //can be added to CMG-tuple if needed. 
-//     // tag gen jets
-//     edm::Handle<reco::GenJetCollection> tauGenJetsHandle;
-//     iEvent.getByLabel(edm::InputTag("tauGenJetsSelectorAllHadrons"),tauGenJetsHandle);
-//     if( !tauGenJetsHandle.isValid() )  
-//       edm::LogError("DataNotAvailable")
-// 	<< "No gen jet label available \n";
-//     tauGenJets = tauGenJetsHandle.product();
-    
+    // tag gen jets
+    iEvent.getByLabel(edm::InputTag("tauGenJetsSelectorAllHadrons"),tauGenJetsHandle);
+    if( !tauGenJetsHandle.isValid() )  
+      edm::LogError("DataNotAvailable")
+	<< "No gen jet label available \n";
+    tauGenJets = tauGenJetsHandle.product();
+
     // PU infos
-    //COLIN: note: the CMG-tuple already contains the weights for all 
-    //data-taking periods. would be better to transfer these weights to the 
-    //output tree, to make synchronization easier in the future. 
-    edm::Handle<std::vector<PileupSummaryInfo> > puInfoH;
     iEvent.getByType(puInfoH);
     if(puInfoH.isValid()){
       for(std::vector<PileupSummaryInfo>::const_iterator it = puInfoH->begin(); it != puInfoH->end(); it++){
-	
+
 	//cout << "Bunc crossing " << it->getBunchCrossing() << endl;
 	if(it->getBunchCrossing() == 0 ) 
 	  nPUVertices_  = it->getPU_NumInteractions();
@@ -828,7 +703,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 	  nPUVerticesM1_= it->getPU_NumInteractions();
 	else if(it->getBunchCrossing() == +1)  
 	  nPUVerticesP1_= it->getPU_NumInteractions();
-	
+
 	nPUtruth_ = it->getTrueNumInteractions();	
       }
     }
@@ -843,7 +718,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   mcPUweight_ = LumiWeights_.weight( nPUVertices_ );
 
   edm::Handle<double> rhoFastJetHandle;
-  iEvent.getByLabel(edm::InputTag("kt6PFJetsAK5","rho", ""), rhoFastJetHandle);
+  iEvent.getByLabel(edm::InputTag("kt6PFJetsCentral","rho", ""), rhoFastJetHandle);
   if( !rhoFastJetHandle.isValid() )  
     edm::LogError("DataNotAvailable")
       << "No rho label available \n";
@@ -853,32 +728,31 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   iEvent.getByLabel(edm::InputTag("generator","weight",""), embeddingWeightHandle);
   embeddingWeight_ = embeddingWeightHandle.isValid() ? (*embeddingWeightHandle) : 1.0;
 
-  //COLINTD: Lorenzo : necessary? - PRIO3 
-//   edm::Handle<double> rhoNeutralFastJetHandle;
-//   iEvent.getByLabel(edm::InputTag("kt6PFJetsNeutral","rho", ""), rhoNeutralFastJetHandle);
-//   if( !rhoNeutralFastJetHandle.isValid() )  
-//     edm::LogError("DataNotAvailable")
-//       << "No rho neutral label available \n";
-//   rhoNeutralFastJet_ = (*rhoNeutralFastJetHandle);
+  edm::Handle<double> rhoNeutralFastJetHandle;
+  iEvent.getByLabel(edm::InputTag("kt6PFJetsNeutral","rho", ""), rhoNeutralFastJetHandle);
+  if( !rhoNeutralFastJetHandle.isValid() )  
+    edm::LogError("DataNotAvailable")
+      << "No rho neutral label available \n";
+  rhoNeutralFastJet_ = (*rhoNeutralFastJetHandle);
   
-  edm::Handle<MuonCollection> muonsHandle;
+  edm::Handle<pat::MuonCollection> muonsHandle;
   iEvent.getByLabel( muonsTag_ ,muonsHandle);
   if( !muonsHandle.isValid() )  
     edm::LogError("DataNotAvailable")
       << "No muons label available \n";
-  const MuonCollection* muons = muonsHandle.product();
+  const pat::MuonCollection* muons = muonsHandle.product();
   if(muons->size()<1){
     cout << " No muons !!! " << endl;
     return;
   } else if(muons->size()>1 && verbose_){
     cout << "WARNING: "<< muons->size() << "  muons found in the event !!! We will select only one" << endl;
   }
-  edm::Handle<MuonCollection> muonsRelHandle;
+  edm::Handle<pat::MuonCollection> muonsRelHandle;
   iEvent.getByLabel(muonsRelTag_, muonsRelHandle);
   if( !muonsRelHandle.isValid() )  
     edm::LogError("DataNotAvailable")
       << "No muonsRel label available \n";
-  const MuonCollection* muonsRel = muonsRelHandle.product();
+  const pat::MuonCollection* muonsRel = muonsRelHandle.product();
   if(muonsRel->size()<1){
     cout << " No muonsRel !!! " << endl;
     return;
@@ -886,6 +760,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     cout << "WARNING: "<< muonsRel->size() << "  muonsRel found in the event !!! We will select only one" << endl;
   }
   
+  //COLIN1
   const DiTau *theDiTau = 0;
   if(diTaus->size()<1){
     cout << " No diTau !!! " << endl;
@@ -899,58 +774,21 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   muFlag_ = 0;
 
   bool found = false;
-  //COLIN muonsRel is relaxed for the lepton veto (already applied in preselection)
-  // muons is the baseline tight muon selection.
-  //Lorenzo: which ptCut? now using 15
-  double ptCut = 15;
   for(unsigned int i=0; i<muonsRel->size(); i++){
-
-    const Muon& muonRel = (*muonsRel)[i];
-    if(!  ( muonRel.pt()>ptCut &&
-	    abs( muonRel.eta() ) < 2.5 &&
-	    muonRel.isGlobal() &&
-	    abs(muonRel.dxy()) < 0.045 &&
-	    abs(muonRel.dz()) < 0.2 && 
-	    muonRel.relIso(0.5)<0.3 ) ) {
-      //COLIN: not a loose muon
-      continue;
-    }
-
-    double isorel = muonRel.relIso( 0.5 );
-
     for(unsigned int j=0; j<muons->size(); j++){
+      
       if(found) continue;
-      const Muon& muon = (*muons)[j];
       
-      if(!  ( muon.pt()>ptCut &&
-	      abs( muon.eta() ) < 2.1 &&
-	      muon.isGlobal() &&
-	      muon.isTracker() &&
-	      muon.numberOfValidTrackerHits() > 10 &&
-	      muon.numberOfValidPixelHits() > 0 &&
-	      muon.numberOfValidMuonHits() > 0 &&
-	      muon.numberOfMatches() > 1 &&
-	      muon.normalizedChi2() < 10 &&
-	      abs(muon.dxy()) < 0.045 &&
-	      abs(muon.dz()) < 0.2 &&
-	      muon.relIso(0.5)<0.1 ) ) {
-	//COLIN: not a tight muon
-	continue;
-      }
-      
-      double iso = muon.relIso( 0.5 );
       if( Geom::deltaR( (*muonsRel)[i].p4(),(*muons)[j].p4())>0.3
 	  && (*muonsRel)[i].charge()*(*muons)[j].charge()<0
-	  && iso<0.3
-	  && isorel<0.3 ) {
+	  && (*muons)[j].userFloat("PFRelIsoDB04v2")<0.3 && (*muonsRel)[i].userFloat("PFRelIsoDB04v2")<0.3 ){
 	muFlag_ = 1;
 	if(verbose_) cout<< "Two muons failing diMu veto: flag= " << muFlag_ << endl;
 	found=true;
       }
       else if( Geom::deltaR( (*muonsRel)[i].p4(),(*muons)[j].p4())>0.3
 	       && (*muonsRel)[i].charge()*(*muons)[j].charge()>0
-	       && iso<0.3 
-	       && isorel<0.3 ){
+	       && (*muons)[j].userFloat("PFRelIsoDB04v2")<0.3 && (*muonsRel)[i].userFloat("PFRelIsoDB04v2")<0.3 ){
 	muFlag_ = 2;
 	if(verbose_) cout<< "Two muons with SS: flag= " << muFlag_ << endl;
 	found=true;
@@ -992,7 +830,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   // COLIN: one could avoid this second loop.
   std::vector<unsigned int> selectedDiTausFromMu;
   for(unsigned int i=0; i< diTaus->size(); i++){
-    //     if( Geom::deltaR(((*diTaus)[i].leg1())->p4(),((*muons)[muIndex]).p4())<0.01 ) 
+//     if( Geom::deltaR(((*diTaus)[i].leg1())->p4(),((*muons)[muIndex]).p4())<0.01 ) 
     //See COLIN1A
     if( Geom::deltaR(((*diTaus)[i].leg2()).p4(),((*muons)[muIndex]).p4())<0.01 ) 
       selectedDiTausFromMu.push_back(i);
@@ -1008,9 +846,9 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   std::vector<unsigned int> looseIsoTaus;
 
   for(unsigned int i=0; i<selectedDiTausFromMu.size(); i++){
-    //COLIN1B getting the tau from the di-tau
+    //COLIN1B: getting the tau from the di-tau
     // the Tau type changes, and one should remember that for the cmg::DiTau, the tau is 
-    // on the first leg, see COLIN1A
+    // on the first leg.
     //     const Tau*  tau_i = dynamic_cast<const Tau*>(  ((*diTaus)[selectedDiTausFromMu[i]].leg2()).get() );
     const Tau* tau_i = &((*diTaus)[selectedDiTausFromMu[i]].leg1());
     if(tau_i->tauID("decayModeFinding")<0.5) continue;
@@ -1022,31 +860,25 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 
   numOfLooseIsoDiTaus_ = looseIsoTaus.size();
   if(looseIsoTaus.size()>0 ){
-    //COLINTD: couldn't test this code yet!!! 
-    // need more events, or to access the pat::Tau somewhere else - PRIO1
     identifiedTaus.swap(looseIsoTaus);
     if(verbose_) cout << identifiedTaus.size() << "  isolated taus found..." << endl;
     for(unsigned int i=0; i<identifiedTaus.size(); i++){
       if(verbose_) cout << "Testing isolation of " << i << "th tau" << endl;
-      //COLIN same as COLIN1B
+      //COLIN: same as COLIN1B
       //       const Tau*  tau_i = dynamic_cast<const Tau*>(  ((*diTaus)[ identifiedTaus[i] ].leg2()).get() );
       const Tau* tau_i = &((*diTaus)[ identifiedTaus[i] ].leg1());
       double sumIsoTau_i = 0.;
      
-      //COLIN: I don't know what to do with the isolation...
-      // with this solution I keep the pat::Tau and 
-      // access the pat::Tau through the cmg::Tau
+      //COLIN1: I don't know what to do with the isolation...
+      // with this solution I must keep the pat::Tau
       //       const pat::TauPtr* patTauPtr = tau_i->sourcePtr();
-      //       const pat::Tau* tau = patTauPtr->get();
-      //COLINTD talk to Jose - OK, all of that is in the cmg::Tau
-      //       const pat::Tau* tau = tau_i->sourcePtr()->get();
-      const Tau& tau = *tau_i;
-      sumIsoTau_i += tau.isolationPFChargedHadrCandsPtSum();
-      //sumIsoTau_i += tau.isolationPFGammaCandsEtSum();
-      //COLINTD : is the code below really correct? Don't we want dbeta correction?
-      sumIsoTau_i += std::max( (tau.isolationPFGammaCandsEtSum() -
+      //       const pat::Tau* patTau = patTauPtr->get();
+      const pat::Tau* patTau = tau_i->sourcePtr()->get();
+      sumIsoTau_i += patTau->isolationPFChargedHadrCandsPtSum();
+      //sumIsoTau_i += patTau->isolationPFGammaCandsEtSum();
+      sumIsoTau_i += std::max( (patTau->isolationPFGammaCandsEtSum() -
 				rhoFastJet_*TMath::Pi()*0.5*0.5), 0.0);
-      //sumIsoTau_i += tau.isolationPFNeutrHadrCandsEtSum();
+      //sumIsoTau_i += patTau->isolationPFNeutrHadrCandsEtSum();
       if(sumIsoTau_i<sumIsoTau){
 	index = identifiedTaus[i];
 	sumIsoTau = sumIsoTau_i;
@@ -1067,29 +899,31 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   
   diTauCharge_ = theDiTau->charge();
   METP4_->push_back((*rawMet)[0].p4()); // raw met
-  //COLINTD PRIO1 : read recoil corrected MET (from diTau?)
-  METP4_->push_back( theDiTau->met().p4());    // possibly rescaled met
-  if(isMC_) 
-    genMETP4_->push_back( (*rawMet)[0].genMET() );
+  METP4_->push_back((*met)[0].p4());    // possibly rescaled met
+  if(isMC_) genMETP4_->push_back( (*rawMet)[0].genMET()->p4() );
   sumEt_  = (*met)[0].sumEt();
   //   MtLeg1_ =  theDiTau->mt1MET();
-  MtLeg1_ =  theDiTau->mTLeg2();
   //   pZeta_     =  theDiTau->pZeta();
-  pZeta_     =  theDiTau->pZeta();
   //   pZetaVis_  =  theDiTau->pZetaVis();
-  pZetaVis_  =  theDiTau->pZetaVis();
   //   pZetaSig_  =  theDiTau->pZetaSig();
-  //COLINTD: what is pZetaSig? - to be implemented in di-object PRIO2
+  //   mTauTauMin_=  theDiTau->mTauTauMin();
+  MtLeg1_ =  theDiTau->mTLeg2();
+  //COLIN1: is that really pZetaMET? 
+  pZeta_     =  theDiTau->pZetaMET();
+  pZetaVis_  =  theDiTau->pZetaVis();
+  //COLIN1: what is pZetaSig? 
   pZetaSig_  =  0.;
-  //   mTauTauMin_=  theDiTau->mTauTauMin(); - to be implemented in di-object
-  //COLINTD: what is mTauTauMin? PRIO2
+  //COLIN1: what is mTauTauMin? 
   mTauTauMin_=  0.;
 
   isMuLegMatched_  = 0;
   isTauLegMatched_ = 0;
 
+  //COLIN2 Muons 
+  //   typedef pat::Muon Muon; 
+  typedef cmg::Muon Muon;
   
-  //COLIN accessing (and exchanging) the legs of the ditau
+  //COLIN2 accessing (and exchanging) the legs of the ditau
   //   const Muon* leg1 = dynamic_cast<const Muon*>( (theDiTau->leg2()).get() );
   const Muon* leg1 = &( theDiTau->leg2() );
   //   const Tau*  leg2 = dynamic_cast<const Tau*>(  (theDiTau->leg1()).get() );
@@ -1100,8 +934,6 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   vector<string> HLTfiltersMu;
   vector<string> HLTfiltersTau;
 
-  //COLIN: looks like the vectors below could be filled once and for all,
-  // and not at every event. 
   if(isMC_){
 
     // X-triggers 
@@ -1170,81 +1002,81 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     HLTfiltersTau.push_back("hltOverlapFilterIsoMu15IsoPFTau20");
   }
 
-  //COLINTD : need Jose's help here. - PRIO1
-//   for(unsigned int i=0;i<triggerPaths.size();i++){
-//     if(!trigger){
-//       //COLIN this could be checked out of the for loop.
-//       continue;
-//       cout << "Invalid triggerEvent !" << endl;
-//     }
-//     const pat::TriggerPath *triggerPath =  trigger->path(triggerPaths[i]);
+  for(unsigned int i=0;i<triggerPaths.size();i++){
+    if(!trigger){
+      continue;
+      cout << "Invalid triggerEvent !" << endl;
+    }
+    const pat::TriggerPath *triggerPath =  trigger->path(triggerPaths[i]);
 
-//     if(verbose_){
-//       cout<<  "Testing " << triggerPaths[i] << endl;
-//       if(triggerPath) cout << "Is there..." << endl;
-//       if(triggerPath && triggerPath->wasRun()) cout << "Was run..." << endl;
-//       if(triggerPath && triggerPath->wasRun() && triggerPath->wasAccept()) cout << "Was accepted..." << endl;
-//     }
+    if(verbose_){
+      cout<<  "Testing " << triggerPaths[i] << endl;
+      if(triggerPath) cout << "Is there..." << endl;
+      if(triggerPath && triggerPath->wasRun()) cout << "Was run..." << endl;
+      if(triggerPath && triggerPath->wasRun() && triggerPath->wasAccept()) cout << "Was accepted..." << endl;
+    }
 
-//     if(triggerPath && triggerPath->wasRun() && 
-//        triggerPath->wasAccept() && 
-//        triggerPath->prescale()==1) triggerBits_->push_back(1);
-//     else if (triggerPath && triggerPath->wasRun() && 
-// 	     triggerPath->wasAccept() && 
-// 	     triggerPath->prescale()!=1) triggerBits_->push_back(2);
-//     else triggerBits_->push_back(0);
-//   }
+    if(triggerPath && triggerPath->wasRun() && 
+       triggerPath->wasAccept() && 
+       triggerPath->prescale()==1) triggerBits_->push_back(1);
+    else if (triggerPath && triggerPath->wasRun() && 
+	     triggerPath->wasAccept() && 
+	     triggerPath->prescale()!=1) triggerBits_->push_back(2);
+    else triggerBits_->push_back(0);
+  }
 
  
-//   for(unsigned int i=0 ; i< HLTfiltersMu.size() ; i++){
-//     bool matched = false;
-//     for(pat::TriggerObjectStandAloneCollection::const_iterator it = triggerObjs->begin() ; it !=triggerObjs->end() ; it++){
-//       pat::TriggerObjectStandAlone *aObj = const_cast<pat::TriggerObjectStandAlone*>(&(*it));
-//       if(verbose_) {
-// 	if( Geom::deltaR( aObj->triggerObject().p4(), leg1->p4() )<0.3 ){
-// 	  for(unsigned int k =0; k < (aObj->filterLabels()).size() ; k++){
-// 	    cout << "Object passing " << (aObj->filterLabels())[k] << " within 0.3 of muon" << endl;
-// 	  }
-// 	}
-//       }
-//       if( Geom::deltaR( aObj->triggerObject().p4(), leg1->p4() )<0.3  && aObj->hasFilterLabel(HLTfiltersMu[i]) ){
-// 	matched = true;
-//       }
-//     }
-//     if(matched) 
-//       tauXTriggers_->push_back(1);
-//     else 
-//       tauXTriggers_->push_back(0);
-//     if(verbose_){
-//       if(matched) cout << "Muon matched within dR=0.3 with trigger object passing filter " << HLTfiltersMu[i] << endl;
-//       else cout << "!!! Muon is not trigger matched within dR=0.3 !!!" << endl;
-//     }
-//   }
-//   for(unsigned int i=0 ; i< HLTfiltersTau.size() ; i++){
-//     bool matched = false;
-//     for(pat::TriggerObjectStandAloneCollection::const_iterator it = triggerObjs->begin() ; it !=triggerObjs->end() ; it++){
-//       pat::TriggerObjectStandAlone *aObj = const_cast<pat::TriggerObjectStandAlone*>(&(*it));
-//       if(verbose_) {
-//         if( Geom::deltaR( aObj->triggerObject().p4(), leg2->p4() )<0.3 ){
-//           for(unsigned int k =0; k < (aObj->filterLabels()).size() ; k++){
-//             cout << "Object passing " << (aObj->filterLabels())[k] << " within 0.3 of tau" << endl;
-//           }
-//         }
-//       }
-//       if( Geom::deltaR( aObj->triggerObject().p4(), leg2->p4() )<0.3  && aObj->hasFilterLabel(HLTfiltersTau[i]) ){
-// 	matched = true;
-//       }
-//     }
-//     if(matched) 
-//       tauXTriggers_->push_back(1);
-//     else 
-//       tauXTriggers_->push_back(0);
-//     if(verbose_){
-//       if(matched) cout << "Tau matched within dR=0.3 with trigger object passing filter " << HLTfiltersTau[i] << endl;
-//       else cout << "!!! Tau is not trigger matched within dR=0.3 !!!" << endl;
-//     }
-//   }
+  for(unsigned int i=0 ; i< HLTfiltersMu.size() ; i++){
+    bool matched = false;
+    for(pat::TriggerObjectStandAloneCollection::const_iterator it = triggerObjs->begin() ; it !=triggerObjs->end() ; it++){
+      pat::TriggerObjectStandAlone *aObj = const_cast<pat::TriggerObjectStandAlone*>(&(*it));
+      if(verbose_) {
+	if( Geom::deltaR( aObj->triggerObject().p4(), leg1->p4() )<0.3 ){
+	  for(unsigned int k =0; k < (aObj->filterLabels()).size() ; k++){
+	    cout << "Object passing " << (aObj->filterLabels())[k] << " within 0.3 of muon" << endl;
+	  }
+	}
+      }
+      if( Geom::deltaR( aObj->triggerObject().p4(), leg1->p4() )<0.3  && aObj->hasFilterLabel(HLTfiltersMu[i]) ){
+	matched = true;
+      }
+    }
+    if(matched) 
+      tauXTriggers_->push_back(1);
+    else 
+      tauXTriggers_->push_back(0);
+    if(verbose_){
+      if(matched) cout << "Muon matched within dR=0.3 with trigger object passing filter " << HLTfiltersMu[i] << endl;
+      else cout << "!!! Muon is not trigger matched within dR=0.3 !!!" << endl;
+    }
+  }
+  for(unsigned int i=0 ; i< HLTfiltersTau.size() ; i++){
+    bool matched = false;
+    for(pat::TriggerObjectStandAloneCollection::const_iterator it = triggerObjs->begin() ; it !=triggerObjs->end() ; it++){
+      pat::TriggerObjectStandAlone *aObj = const_cast<pat::TriggerObjectStandAlone*>(&(*it));
+      if(verbose_) {
+        if( Geom::deltaR( aObj->triggerObject().p4(), leg2->p4() )<0.3 ){
+          for(unsigned int k =0; k < (aObj->filterLabels()).size() ; k++){
+            cout << "Object passing " << (aObj->filterLabels())[k] << " within 0.3 of tau" << endl;
+          }
+        }
+      }
+      if( Geom::deltaR( aObj->triggerObject().p4(), leg2->p4() )<0.3  && aObj->hasFilterLabel(HLTfiltersTau[i]) ){
+	matched = true;
+      }
+    }
+    if(matched) 
+      tauXTriggers_->push_back(1);
+    else 
+      tauXTriggers_->push_back(0);
+    if(verbose_){
+      if(matched) cout << "Tau matched within dR=0.3 with trigger object passing filter " << HLTfiltersTau[i] << endl;
+      else cout << "!!! Tau is not trigger matched within dR=0.3 !!!" << endl;
+    }
+  }
 
+
+  //COLIN3: I don't know how to access trigger matching information.
 //   // triggers Mu
 //   if(verbose_){
 //     const pat::TriggerObjectStandAloneCollection trColl = leg1->triggerObjectMatchesByType(trigger::TriggerMuon);
@@ -1271,37 +1103,18 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //       }
 //     }
 //   }
-  //!COLINTD
 
   diTauLegsP4_->push_back(leg1->p4());
   diTauLegsP4_->push_back(leg2->p4());
   
-  //COLIN:
-  // in the following, according to the PAT documentation, 
-  // the muon is matched to a gen muon with the same charge, status is not checked.
-  // will now check only status 1 gen leptons from the corresponding CMG-tuple collection 
-  if(isMC_){
-    const reco::GenParticleCollection& leptons = *genLeptonsStatus1;
-    double dR2Min = 9999999;
-    int index = -1;
-    for(unsigned i=0; i<leptons.size(); ++i){
-      if(abs(leptons[i].pdgId()) != 13) continue;
-      if(leptons[i].charge() != leg1->charge()) continue;
-      double dR2 = reco::deltaR2( *leg1, leptons[i] );
-      if(dR2<dR2Min) {
-	dR2Min = dR2; 
-	index = static_cast<int>(i);
-      }
-    }
-    if( dR2Min<0.01 ) {
-      //    if( (leg1->genParticleById(13,0,true)).isNonnull() ){
-      genDiTauLegsP4_->push_back( leptons[index].p4() );
-      isMuLegMatched_ = 1;
-    }
-    else{
-      // the muon is not matched to a gen muon, filling p4 = 0
-      genDiTauLegsP4_->push_back( math::XYZTLorentzVectorD(0,0,0,0) );
-      //COLIN should the verbose block below really be here? - PRIO2
+  //COLIN4: I don't know how to deal with generator matching 
+//   if(isMC_){
+//     if( (leg1->genParticleById(13,0,true)).isNonnull() ){
+//       genDiTauLegsP4_->push_back( leg1->genParticleById(13,0,true)->p4() );
+//       isMuLegMatched_ = 1;
+//     }
+//     else{
+//       genDiTauLegsP4_->push_back( math::XYZTLorentzVectorD(0,0,0,0) );
 //       if(verbose_){
 // 	for(unsigned int l = 0; l < leg1->genParticlesSize() ; l++){
 // 	  if((leg1->genParticleRefs())[l]->pt() < 0.5 ) continue;
@@ -1309,51 +1122,34 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 // 	       << " with pt " << (leg1->genParticleRefs())[l]->pt()
 // 	       << endl;
 // 	}
-//   }
-    }
-    
-    //COLIN: access gen leptons from the CMGTuple collection of leptons with status1.
-    bool leg2IsFromMu = false;
-    math::XYZTLorentzVectorD genMuP4(0,0,0,0);
-    for(unsigned int k = 0; k < genLeptonsStatus1->size(); k ++){
-      if( abs((*genLeptonsStatus1)[k].pdgId()) != 13  || (*genLeptonsStatus1)[k].status()!=3 )
-	continue;
-      if(Geom::deltaR( (*genLeptonsStatus1)[k].p4(),leg2->p4())<0.15){
-	leg2IsFromMu = true;
-	genMuP4 = (*genLeptonsStatus1)[k].p4();
-      }
-    }
-    
-    //COLIN : access the genjet information from the cmg::Tau
-    std::string genDecMode = leg2->genJetDecayMode();
-    if( ! genDecMode.empty() )
-      genDiTauLegsP4_->push_back(leg2->genJetp4());
-    else if(leg2IsFromMu)
-      genDiTauLegsP4_->push_back( genMuP4 );
-    else{
-      genDiTauLegsP4_->push_back( math::XYZTLorentzVectorD(0,0,0,0) );
-      if(verbose_) cout << "WARNING: no genJet matched to the leg2 with eta,phi " << leg2->eta() << ", " << leg2->phi() << endl;
-    }
+//       }
+//     }
 
-  // to make the difference between DY fake and DY. 
-  //COLIN: done because tauGenJets are made only from hadronic tau decay products
-  // in Lorenzo's configuration. 
-  //COLIN: tauHadMatched can be obtained looking at the genJet in the cmg::Tau
-  // -> tauGenJets not necessary anymore, at least for now.
+//     bool leg2IsFromMu = false;
+//     math::XYZTLorentzVectorD genMuP4(0,0,0,0);
+//     for(unsigned int k = 0; k < genParticles->size(); k ++){
+//       if( abs((*genParticles)[k].pdgId()) != 13  || (*genParticles)[k].status()!=3 )
+//         continue;
+//       if(Geom::deltaR( (*genParticles)[k].p4(),leg2->p4())<0.15){
+//         leg2IsFromMu = true;
+//         genMuP4 = (*genParticles)[k].p4();
+//       }
+//     }
+
+//     if( leg2->genJet() !=0 )
+//       genDiTauLegsP4_->push_back(leg2->genJet()->p4());
+//     else if(leg2IsFromMu)
+//       genDiTauLegsP4_->push_back( genMuP4 );
+//     else{
+//       genDiTauLegsP4_->push_back( math::XYZTLorentzVectorD(0,0,0,0) );
+//       if(verbose_) cout << "WARNING: no genJet matched to the leg2 with eta,phi " << leg2->eta() << ", " << leg2->phi() << endl;
+//     }
+
 //     bool tauHadMatched = false;
 //     for(unsigned int k = 0; k < tauGenJets->size(); k++){
 //       if( Geom::deltaR( (*tauGenJets)[k].p4(),leg2->p4() ) < 0.15 ) tauHadMatched = true;
 //     }
-  bool tauHadMatched = false;
-  // cout<<"genDecMode = "<<genDecMode<<endl;
-  if(! genDecMode.empty() ) {
-    tauHadMatched = true;
-    isTauLegMatched_ = 1;
-  }
-  //COLIN: I think there is no need to also try to match to the true tau, 
-  //but it could easily be done, just use genParticlesStatus3 from CMG-tuple
-  //Or maybe Lorenzo wants to match to the true tau and then matching to the tau gen jet is not 
-  //needed? 
+
 //     if( ( (leg2->genParticleById(15,0,true)).isNonnull() || (leg2->genParticleById(-15,0,true)).isNonnull() ) && tauHadMatched ) isTauLegMatched_ = 1;
 //     else if(verbose_){
 //       for(unsigned int l = 0; l < leg2->genParticlesSize() ; l++){
@@ -1363,38 +1159,16 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 // 	     << endl;
 //       }
 //     }
-  }
+//   }
 
-  //COLIN: here, only computing the decay mode, can access it directly.
+  //COLIN5 we would need to keep the pat::Tau with PFCandidate embedding 
+ 
 //   if((leg2->signalPFChargedHadrCands()).size()==1 && (leg2->signalPFGammaCands()).size()==0) decayMode_ = 0; 
 //   else if((leg2->signalPFChargedHadrCands()).size()==1 && (leg2->signalPFGammaCands()).size()>0)  decayMode_ = 1; 
 //   else if((leg2->signalPFChargedHadrCands()).size()==3) decayMode_ = 2; 
 //   else  decayMode_ = -99;
-  // cout<<"decay mode"<<leg2->decayMode()<<endl;
-  switch( leg2->decayMode() ) {
-  case 0: 
-    decayMode_ = 0;
-    break;
-  case 1: 
-  case 2: 
-  case 3: 
-  case 4: 
-    decayMode_ = 1;
-    break;
-  case 10: 
-  case 11: 
-  case 12: 
-  case 13: 
-  case 14:
-    decayMode_ = 2;
-    break;
-  default:
-    decayMode_ = -99;
-  }
 
-  //COLIN needed for control. ok added the signal cands to the cmg::Tau in a light format.
-  // btw I don't like the if... is there any way to know with respect to what 
-  // the deltas have been computed, from the output tree? 
+  
 //   for(unsigned int k = 0 ; k < (leg2->signalPFGammaCands()).size() ; k++){
 //     reco::PFCandidateRef gamma = (leg2->signalPFGammaCands()).at(k);
 //     if( (leg2->leadPFChargedHadrCand()).isNonnull() ){
@@ -1409,28 +1183,10 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //     }
 //     gammaPt_->push_back(  gamma->pt() );
 //   }
-  const cmg::SimpleParticle& leadCharged = leg2->leadPFChargedHadrCand();
-  for(unsigned int k = 0 ; k < leg2->signalPFCands().size() ; k++){
-    const cmg::SimpleParticle& gamma = leg2->signalPFCands()[k];
-    if( gamma.type() != 22) continue;    
-    if( leadCharged.type() != 0 ){
-      gammadR_->push_back(   Geom::deltaR( gamma, leadCharged ) );
-      gammadPhi_->push_back( Geom::deltaPhi( gamma, leadCharged ) );
-      gammadEta_->push_back( gamma.eta() - leadCharged.eta() ) ;
-    }
-    else{
-      gammadR_->push_back(   Geom::deltaR( gamma, leg2->p4() ) );
-      gammadPhi_->push_back( Geom::deltaPhi( gamma, leg2->p4() ) );
-      gammadEta_->push_back(  gamma.eta() - leg2->eta() ) ;
-    }
-    gammaPt_->push_back(  gamma.pt() );
-  }
-
+  
   visibleTauMass_ = leg2->mass();
 
-  //COLIN: we don't keep the tracks in the CMG tuple. 
-  //Lorenzo: are these variables really necessary?
-  //these are control variables, we could add them to our pat::Tau - PRIO2
+  //COLIN5 
 //   if((leg2->leadPFChargedHadrCand()->trackRef()).isNonnull()){
 //     leadPFChargedHadrTrackPt_ = leg2->leadPFChargedHadrCand()->trackRef()->pt();
 //     leadPFChargedHadrTrackP_  = leg2->leadPFChargedHadrCand()->trackRef()->p();
@@ -1441,62 +1197,25 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //     leadPFChargedHadrTrackPt_ = -99;
 //     leadPFChargedHadrTrackP_  = -99;
 //   }
-  leadPFChargedHadrTrackPt_ = -99;
-  leadPFChargedHadrTrackP_  = -99;
-  leadPFChargedHadrPt_  = leadCharged.pt();
-  //   leadPFChargedHadrP_  = leg2->leadPFChargedHadrCand()->p();  
-  leadPFChargedHadrP_ = leadCharged.energy();
+//   leadPFChargedHadrPt_  = leg2->leadPFChargedHadrCand()->pt();
+//   leadPFChargedHadrP_  = leg2->leadPFChargedHadrCand()->p();  
 
-  //COLIN: electronPreIDOutput is mva_e_pi. 
-  //   leadPFChargedHadrMva_        =   leg2->electronPreIDOutput() ;	
-  leadPFChargedHadrMva_        =   leg2->leadChargedHadrMvaEPi() ;	
-  //   leadPFChargedHadrHcalEnergy_ =  (leg2->leadPFChargedHadrCand()).isNonnull() ? (leg2->leadPFChargedHadrCand())->hcalEnergy() : -99 ;
-  leadPFChargedHadrHcalEnergy_ =  leg2->leadChargedHadrHcalEnergy();
-  //   leadPFChargedHadrEcalEnergy_ =  (leg2->leadPFChargedHadrCand()).isNonnull() ? (leg2->leadPFChargedHadrCand())->ecalEnergy() : -99;
-  leadPFChargedHadrEcalEnergy_ =  leg2->leadChargedHadrEcalEnergy();
+//   leadPFChargedHadrMva_        =   leg2->electronPreIDOutput() ;	
+//   leadPFChargedHadrHcalEnergy_ =  (leg2->leadPFChargedHadrCand()).isNonnull() ? (leg2->leadPFChargedHadrCand())->hcalEnergy() : -99 ;
+//   leadPFChargedHadrEcalEnergy_ =  (leg2->leadPFChargedHadrCand()).isNonnull() ? (leg2->leadPFChargedHadrCand())->ecalEnergy() : -99;
  
-  //COLIN this is the leading PFCandidate in the tau, of any type, e.g. e-, photon, ...
-  //   if( (leg2->leadPFCand()).isNonnull() ){
-  //
-  //     leadPFCandMva_               =  (leg2->leadPFCand())->mva_e_pi() ;	
-  //     leadPFCandHcalEnergy_        =  (leg2->leadPFCand())->hcalEnergy() ;
-  //     leadPFCandEcalEnergy_        =  (leg2->leadPFCand())->ecalEnergy() ;
-  //     leadPFCandPt_                =  (leg2->leadPFCand())->pt();
-  //     leadPFCandP_                 =  (leg2->leadPFCand())->p();
-  //   }
-  // look for lead PF cand:
+//   if( (leg2->leadPFCand()).isNonnull() ){
+//     leadPFCandMva_               =  (leg2->leadPFCand())->mva_e_pi() ;	
+//     leadPFCandHcalEnergy_        =  (leg2->leadPFCand())->hcalEnergy() ;
+//     leadPFCandEcalEnergy_        =  (leg2->leadPFCand())->ecalEnergy() ;
+//     leadPFCandPt_                =  (leg2->leadPFCand())->pt();
+//     leadPFCandP_                 =  (leg2->leadPFCand())->p();
+//   }
   
-  const Tau::Constituents& signalCands = leg2->signalPFCands();
-  unsigned leadIndex = 0;
-  double ptMax = -1;
-  unsigned nChargedHadr = 0;
-  unsigned nGamma = 0;
-  for(unsigned i=0; i<signalCands.size(); ++i) {
-    const Tau::Constituent& cand = signalCands[i];
-    if(cand.pt() > ptMax ) {
-      ptMax = cand.pt();
-      leadIndex = i; 
-    }
-    if(cand.type() == 22) nGamma++;
-    if( abs(cand.type()) == 211 ) nChargedHadr++;    
-  }
-
-  //COLINTD: we don't have the following yet 
-  leadPFCandMva_               =  0;
-  leadPFCandHcalEnergy_        =  0;
-  leadPFCandEcalEnergy_        =  0;
-
-  leadPFCandPt_                =  signalCands[leadIndex].pt();
-  leadPFCandP_                 =  signalCands[leadIndex].energy();
- 
-  //   signalPFChargedHadrCands_ = (leg2->signalPFChargedHadrCands()).size();
-  //   signalPFGammaCands_       = (leg2->signalPFGammaCands()).size();
-  signalPFChargedHadrCands_ = nChargedHadr; 
-  signalPFGammaCands_ = nGamma;
-  
-  //COLINTD: we don't have the following numbers: 
-  //   emFraction_ = leg2->emFraction();
-  //   hasGsf_     = ((leg2->leadPFChargedHadrCand())->gsfTrackRef()).isNonnull() ? 1. : 0.;
+//   signalPFChargedHadrCands_ = (leg2->signalPFChargedHadrCands()).size();
+//   signalPFGammaCands_       = (leg2->signalPFGammaCands()).size();
+//   emFraction_ = leg2->emFraction();
+//   hasGsf_     = ((leg2->leadPFChargedHadrCand())->gsfTrackRef()).isNonnull() ? 1. : 0.;
   
 
   tightestHPSWP_ = -1;
@@ -1511,7 +1230,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   if(leg2->tauID("byTightCombinedIsolationDeltaBetaCorr")>0.5)  tightestHPSDBWP_++;
 
 
-  //COLIN : reading dxy and dz from CMG leptons
+  //COLIN 6 : would be more comfortable with pat::Muon and pat::Tau, but can recompute
 //   dxy1_ = vertexes->size()!=0 ? leg1->globalTrack()->dxy( (*vertexes)[0].position() ) : -99;
 //   dz1_ = vertexes->size()!=0 ? leg1->globalTrack()->dz( (*vertexes)[0].position() ) : -99;
 //   dxy2_ = -99;
@@ -1528,70 +1247,50 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //       dz2_ = leg2->leadPFChargedHadrCand()->gsfTrackRef()->dz( (*vertexes)[0].position() );
 //     }
 //   }
-  dxy1_ = leg1->dxy();
-  dz1_ = leg1->dz();
-  dxy2_ = leg2->dxy();
-  dz2_ = leg2->dz();
-  
 
-  //COLIN isolation is now precomputed
-//   // isoDeposit definition: 2010
-//   isodeposit::AbsVetos vetos2010ChargedLeg1; 
-//   isodeposit::AbsVetos vetos2010NeutralLeg1; 
-//   isodeposit::AbsVetos vetos2010PhotonLeg1;
-//   // isoDeposit definition: 2011
-//   isodeposit::AbsVetos vetos2011ChargedLeg1; 
-//   isodeposit::AbsVetos vetos2011NeutralLeg1; 
-//   isodeposit::AbsVetos vetos2011PhotonLeg1;
+
+
+  // isoDeposit definition: 2010
+  isodeposit::AbsVetos vetos2010ChargedLeg1; 
+  isodeposit::AbsVetos vetos2010NeutralLeg1; 
+  isodeposit::AbsVetos vetos2010PhotonLeg1;
+  // isoDeposit definition: 2011
+  isodeposit::AbsVetos vetos2011ChargedLeg1; 
+  isodeposit::AbsVetos vetos2011NeutralLeg1; 
+  isodeposit::AbsVetos vetos2011PhotonLeg1;
  
-//   vetos2010ChargedLeg1.push_back(new isodeposit::ConeVeto(reco::isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
-//   vetos2010ChargedLeg1.push_back(new isodeposit::ThresholdVeto(0.5));
-//   vetos2010NeutralLeg1.push_back(new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.08));
-//   vetos2010NeutralLeg1.push_back(new isodeposit::ThresholdVeto(1.0));
-//   vetos2010PhotonLeg1.push_back( new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.05));
-//   vetos2010PhotonLeg1.push_back( new isodeposit::ThresholdVeto(1.0));
+  vetos2010ChargedLeg1.push_back(new isodeposit::ConeVeto(reco::isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
+  vetos2010ChargedLeg1.push_back(new isodeposit::ThresholdVeto(0.5));
+  vetos2010NeutralLeg1.push_back(new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.08));
+  vetos2010NeutralLeg1.push_back(new isodeposit::ThresholdVeto(1.0));
+  vetos2010PhotonLeg1.push_back( new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.05));
+  vetos2010PhotonLeg1.push_back( new isodeposit::ThresholdVeto(1.0));
 
-//   vetos2011ChargedLeg1.push_back(new isodeposit::ConeVeto(reco::isodeposit::Direction(leg1->eta(),leg1->phi()),0.0001));
-//   vetos2011ChargedLeg1.push_back(new isodeposit::ThresholdVeto(0.0));
-//   vetos2011NeutralLeg1.push_back(new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
-//   vetos2011NeutralLeg1.push_back(new isodeposit::ThresholdVeto(0.5));
-//   vetos2011PhotonLeg1.push_back( new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
-//   vetos2011PhotonLeg1.push_back( new isodeposit::ThresholdVeto(0.5));
+  vetos2011ChargedLeg1.push_back(new isodeposit::ConeVeto(reco::isodeposit::Direction(leg1->eta(),leg1->phi()),0.0001));
+  vetos2011ChargedLeg1.push_back(new isodeposit::ThresholdVeto(0.0));
+  vetos2011NeutralLeg1.push_back(new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
+  vetos2011NeutralLeg1.push_back(new isodeposit::ThresholdVeto(0.5));
+  vetos2011PhotonLeg1.push_back( new isodeposit::ConeVeto(isodeposit::Direction(leg1->eta(),leg1->phi()),0.01));
+  vetos2011PhotonLeg1.push_back( new isodeposit::ThresholdVeto(0.5));
   
-  //COLIN replace by our isolation
-  //from which particles is the charged hadron iso done? 
-  // should use chargedParticleIso (save it also in cmg::Lepton)... 
-  // ... but that's not what Lorenzo is using ???
+  //COLIN7 replace by our isolation
 //   chIsoLeg1v1_   = 
 //     leg1->isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4,vetos2010ChargedLeg1).first;
-  chIsoLeg1v2_   = leg1->chargedAllIso();
 //   nhIsoLeg1v1_ = 
 //     leg1->isoDeposit(pat::PfNeutralHadronIso)->depositAndCountWithin(0.4,vetos2010NeutralLeg1).first;
-  nhIsoLeg1v2_   = leg1->neutralHadronIso();
 //   phIsoLeg1v1_ = 
 //     leg1->isoDeposit(pat::PfGammaIso)->depositAndCountWithin(0.4,vetos2010PhotonLeg1).first;
-  phIsoLeg1v2_   = leg1->photonIso();
 //   elecIsoLeg1v1_ = 
 //     leg1->isoDeposit(pat::User3Iso)->depositAndCountWithin(0.4,vetos2010ChargedLeg1).first;
-  elecIsoLeg1v2_ = 0; //COLINTD - PRIO2
 //   muIsoLeg1v1_   = 
 //     leg1->isoDeposit(pat::User2Iso)->depositAndCountWithin(0.4,vetos2010ChargedLeg1).first;
-  muIsoLeg1v2_ = 0; //COLINTD - PRIO2
 //   chIsoPULeg1v1_ = 
 //     leg1->isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4,vetos2010ChargedLeg1).first;
-  chIsoPULeg1v2_ = leg1->puChargedHadronIso(); //COLIN: not used for dbeta corrections
 //   nhIsoPULeg1v1_ = 
 //     leg1->isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4,vetos2010NeutralLeg1).first;
-  nhIsoPULeg1v2_ = chIsoPULeg1v2_; //COLINTD - beware vetoes!!! PRIO1
 //   phIsoPULeg1v1_ = 
 //     leg1->isoDeposit(pat::PfAllParticleIso)->depositAndCountWithin(0.4,vetos2010PhotonLeg1).first;
-  phIsoPULeg1v2_ = chIsoPULeg1v2_; //COLINTD - beware vetoes!!! PRIO1
-  
-  //COLINTD: check isolation definition of muons
-  //COLINTD: implement Daniele's settings in PF2PAT
-  //COLINTD: after momentum rescaling of physics objects, need to recompute the MET (provide module)
 
-  //COLIN: dumping V2.
 //   chIsoLeg1v2_   = 
 //     leg1->isoDeposit(pat::PfChargedHadronIso)->depositAndCountWithin(0.4,vetos2011ChargedLeg1).first;
 //   nhIsoLeg1v2_ = 
@@ -1611,7 +1310,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 
   //COLIN8: oops, cannot do that... but I think it is not very important. 
   //One could think of keeping all muons and all electrons as cmg::Leptons. Is that what we do
-  //already? Lorenzo 
+  //already? 
   // loop over pfMuon to make sure we don't have low-mass DY events
 //   for(unsigned int i = 0 ; i < pfCandidates->size() ; i++){
 //     const reco::PFCandidate cand = (*pfCandidates)[i];
@@ -1621,48 +1320,45 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //     pfMuons_->push_back(cand.p4());
 //   }
 
-  //Check the link between iso in cmg::Lepton and iso in cmg::Tau 
+  //COLIN9: don't know what to do with tau isolation
   //assume pat::Tau is kept. 
-  chIsoLeg2_ = leg2->isolationPFChargedHadrCandsPtSum();
-  //   //
-  //   if(verbose_){
-  //     cout << "Tau z position " << (leg2->vertex()).z() << endl;
-  //     for(unsigned int i = 0; i < (leg2->isolationPFChargedHadrCands()).size(); i++){
-  //       if( (((leg2->isolationPFChargedHadrCands()).at(i))->trackRef()).isNonnull() )
-  // 	cout << "Ch # " << i << " has z position " << (((leg2->isolationPFChargedHadrCands()).at(i))->trackRef()->referencePoint()).z() << " and pt " << ((leg2->isolationPFChargedHadrCands()).at(i))->pt() << endl;
-  //     }
-  //   }
-  //   //
-  nhIsoLeg2_ = 0.;
-  // COLIN: recomputed in the TauFactory. Why don't we put that in the reco::Tau or pat::Tau 
-  // it it's needed? 
-  //   for(unsigned int i = 0; i < (leg2->isolationPFNeutrHadrCands()).size(); i++){
-  //     nhIsoLeg2_ += (leg2->isolationPFNeutrHadrCands()).at(i)->pt();
-  //   }
-  nhIsoLeg2_ = leg2->isolationPFNeutralHadrCandsPtSum();
-  //   phIsoLeg2_ = leg2->isolationPFGammaCandsEtSum();
-  phIsoLeg2_ = leg2->isolationPFGammaCandsEtSum();
+//   chIsoLeg2_ = leg2->isolationPFChargedHadrCandsPtSum();
+//   //
+//   if(verbose_){
+//     cout << "Tau z position " << (leg2->vertex()).z() << endl;
+//     for(unsigned int i = 0; i < (leg2->isolationPFChargedHadrCands()).size(); i++){
+//       if( (((leg2->isolationPFChargedHadrCands()).at(i))->trackRef()).isNonnull() )
+// 	cout << "Ch # " << i << " has z position " << (((leg2->isolationPFChargedHadrCands()).at(i))->trackRef()->referencePoint()).z() << " and pt " << ((leg2->isolationPFChargedHadrCands()).at(i))->pt() << endl;
+//     }
+//   }
+//   //
+//   nhIsoLeg2_ = 0.;
+//   for(unsigned int i = 0; i < (leg2->isolationPFNeutrHadrCands()).size(); i++){
+//     nhIsoLeg2_ += (leg2->isolationPFNeutrHadrCands()).at(i)->pt();
+//   }
+//   phIsoLeg2_ = leg2->isolationPFGammaCandsEtSum();
+   
 
   // cleaning
-//   for(unsigned int i = 0; i <vetos2010ChargedLeg1.size(); i++){
-//     delete vetos2010ChargedLeg1[i];
-//   }
-//   for(unsigned int i = 0; i <vetos2010NeutralLeg1.size(); i++){
-//     delete vetos2010NeutralLeg1[i];
-//     delete vetos2010PhotonLeg1[i];
-//   }
-//   for(unsigned int i = 0; i <vetos2011ChargedLeg1.size(); i++){
-//     delete vetos2011ChargedLeg1[i];
-//   }
-//   for(unsigned int i = 0; i <vetos2011NeutralLeg1.size(); i++){
-//     delete vetos2011NeutralLeg1[i];
-//     delete vetos2011PhotonLeg1[i];
-//   }
+  for(unsigned int i = 0; i <vetos2010ChargedLeg1.size(); i++){
+    delete vetos2010ChargedLeg1[i];
+  }
+  for(unsigned int i = 0; i <vetos2010NeutralLeg1.size(); i++){
+    delete vetos2010NeutralLeg1[i];
+    delete vetos2010PhotonLeg1[i];
+  }
+  for(unsigned int i = 0; i <vetos2011ChargedLeg1.size(); i++){
+    delete vetos2011ChargedLeg1[i];
+  }
+  for(unsigned int i = 0; i <vetos2011NeutralLeg1.size(); i++){
+    delete vetos2011NeutralLeg1[i];
+    delete vetos2011PhotonLeg1[i];
+  }
 
   //   diTauVisP4_->push_back( theDiTau->p4Vis() );
   diTauVisP4_->push_back( theDiTau->p4() );
 
-  //COLIN: we don't have collinear approximation. - PRIO2
+  //COLIN10: we don't have collinear approximation. Can we drop it? 
 //   diTauCAP4_->push_back(  theDiTau->p4CollinearApprox() );
 //   diTauICAP4_->push_back( theDiTau->p4ImprovedCollinearApprox() );
 //   if(verbose_){
@@ -1675,9 +1371,8 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //     if((theDiTau->p4CollinearApprox()).M()>0 && (theDiTau->p4ImprovedCollinearApprox()).M()<=0)
 //       cout << "Watch out! ICA gave mass=0 and CA mass !=0 ..." << endl;
 //   }
-  
-  //COLINTD why the if? I think we always have a solution. Lorenzo?
-  //Lorenzo why don't we store the mass as a double? the other components seem useless!
+
+  //COLIN11: I don't know what is done with SVFit 
 //   math::XYZTLorentzVectorD nSVfitFitP4(0,0,0,(theDiTau->p4Vis()).M() );
 //   if( theDiTau->hasNSVFitSolutions() && theDiTau->nSVfitSolution("psKine_MEt_logM_fit",0)!=0 /*&& theDiTau->nSVfitSolution("psKine_MEt_logM_fit",0)->isValidSolution()*/ ){
 //     if(verbose_) cout << "Visible mass ==> " << nSVfitFitP4.E() << endl;
@@ -1686,15 +1381,6 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //   }
 //   diTauSVfitP4_->push_back( nSVfitFitP4  );
 
-  math::XYZTLorentzVectorD nSVfitFitP4(0,0,0,theDiTau->mass() );
-  //   if( theDiTau->hasNSVFitSolutions() && theDiTau->nSVfitSolution("psKine_MEt_logM_fit",0)!=0 /*&& theDiTau->nSVfitSolution("psKine_MEt_logM_fit",0)->isValidSolution()*/ ){
-  if(verbose_) cout << "Visible mass ==> " << nSVfitFitP4.mass() << endl;
-  nSVfitFitP4.SetPxPyPzE( 0,0,0, theDiTau->massSVFit() ) ;
-  if(verbose_) cout << "SVFit fit solution ==> " << nSVfitFitP4.mass() << endl;
-  // }
-  diTauSVfitP4_->push_back( nSVfitFitP4  );
-
-  //COLIN: the following is not necessary 
 //   int errFlag = 0;
 //   diTauNSVfitMass_        = (theDiTau->hasNSVFitSolutions() && theDiTau->nSVfitSolution("psKine_MEt_logM_int",&errFlag)!=0 && theDiTau->nSVfitSolution("psKine_MEt_logM_int",0)->isValidSolution() ) ? theDiTau->nSVfitSolution("psKine_MEt_logM_int",0)->mass()        : -99; 
 //   diTauNSVfitMassErrUp_   = (theDiTau->hasNSVFitSolutions() && theDiTau->nSVfitSolution("psKine_MEt_logM_int",&errFlag)!=0 && theDiTau->nSVfitSolution("psKine_MEt_logM_int",0)->isValidSolution() ) ? theDiTau->nSVfitSolution("psKine_MEt_logM_int",0)->massErrUp()   : -99; 
@@ -1711,8 +1397,10 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
   std::map<double, math::XYZTLorentzVectorD ,MuTauStreamAnalyzer::more> sortedJetsIDDown;
   std::map<double, math::XYZTLorentzVectorD ,MuTauStreamAnalyzer::more> sortedGenJetsID;
   std::map<double, std::pair<float,float> ,  MuTauStreamAnalyzer::more> bTaggers;
-  std::map<double, std::pair<float,float> ,  MuTauStreamAnalyzer::more> sortedJetsIDFracs;
+  std::map<double, std::pair<float,float> ,  MuTauStreamAnalyzer::more> jetPVassociation;
   std::map<double, std::pair<float,float> ,  MuTauStreamAnalyzer::more> jetMoments;
+  
+
 
   for(unsigned int it = 0; it < jets->size() ; it++){
 
@@ -1728,7 +1416,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
       newJet = jet;
     }
     
-    //COLIN: if there is a matching between the tau and the jet, use the jet p4.
+    //COLIN13: if there is a matching between the tau and the jet, use the jet p4.
     // otherwise, use the tau p4. for now, use the tau p4, as we don't have the jet->tau matching. 
     //     math::XYZTLorentzVectorD leg2p4 = ( (leg2->pfJetRef()).isNonnull() ) ? leg2->pfJetRef()->p4() : leg2->p4();
     math::XYZTLorentzVectorD leg2p4 = leg2->p4();
@@ -1741,7 +1429,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 
     /////////////////////////////////////////////////////////////////////////
     //// use JES uncertainties
-    //COLIN: using uncertainty from the cmg::Jet itself.
+    //COLIN14: using uncertainty from the cmg::Jet itself.
 //     edm::ESHandle<JetCorrectorParametersCollection> jetCorrParameters;
 //     // get the jet corrector parameters collection from the global tag
 //     iSetup.get<JetCorrectionsRecord>().get("AK5PF", jetCorrParameters);
@@ -1758,8 +1446,7 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
       cout << "Analyzing jet with pt " << (newJet->p4()).Pt() 
 	   << "and eta " << (newJet->p4()).Eta() << endl;
       cout << " ==> JEC uncertainty is " << shift*100 << " %" << endl;
-      //COLINTD: we don't have the following information, but probably not needed.
-      //talk to Lorenzo
+      //COLINB2: we don't have the following information, but probably not needed.
 //       for(unsigned int i = 0; i < (newJet->availableJECSets()).size() ; i++ ){
 // 	std::cout << (newJet->availableJECSets())[i] << std::endl;
 //       }
@@ -1778,10 +1465,9 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
 //       std::cout << "L3Absolute"   << newJet->jecFactor("L3Absolute","none", "patJetCorrFactorsL1Offset")*newJet->pt() << std::endl;  
     }
 
-//     std::map<string,float> aMap;
+    std::map<string,float> aMap;
 
-    //COLIN : doing JetID using the cmg::PFJet "components", as the PFCandidate consistituents 
-    // are not available anymore
+    //COLINB3 : do JetID using the cmg::PFJet components
     //     if( jetID( jet , &((*vertexes)[0]), vtxZ, aMap ) < minJetID_ ){
     if( jetID( *jet ) < minJetID_ ){
       if(verbose_){
@@ -1790,30 +1476,23 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
       continue;
     }
 
-    //COLIN storing raw jets
-    reco::Candidate::LorentzVector p4uncorrected =   newJet->rawFactor() * newJet->p4();
-    sortedJets.insert( make_pair( p4uncorrected.pt() ,
-				  p4uncorrected ) );
+    //COLINB4 : what is this? 
+    //     sortedJets.insert( make_pair( newJet->correctedJet("Uncorrected").p4().Pt() ,newJet->correctedJet("Uncorrected").p4() ) );
 
     if(newJet->p4().Pt() < minCorrPt_) continue;
 
     // add b-tag info
     bTaggers.insert(         make_pair( newJet->p4().Pt(), make_pair( jet->bDiscriminator("trackCountingHighEffBJetTags"),
 								      jet->bDiscriminator("trackCountingHighPurBJetTags")  ) ) );
-
-    //COLIN: pile-up charged hadrons have been removed -> meaningless to do that. 
-    // all use of PV association commented. 
     // add pu information
-    //     jetPVassociation.insert( make_pair( newJet->p4().Pt(), make_pair(aMap["chFracRawJetE"],
-    // 								     aMap["chFracAllChargE"]) ) );
-
-    // add jet moments. Not used at the moment. Used to parametrize the fake rate as a function of these 
-    //COLIN: need to store these guys in the cmg::Jet - PRIO2
+    jetPVassociation.insert( make_pair( newJet->p4().Pt(), make_pair(aMap["chFracRawJetE"],
+								     aMap["chFracAllChargE"]) ) );
+    // add jet moments
+    //COLINB5: need to store these guys in the cmg::Jet. Ask Kostas? 
     //     jetMoments.insert(       make_pair( newJet->p4().Pt(), make_pair( jet->etaetaMoment(),
     // 								      jet->phiphiMoment()) ) );
    
-    //COLIN: no access to all levels of correction. 
-    // Is it necessary? if yes could re-correct on the fly. - PRIO3
+    //COLINB6: no access to all levels of correction. Is it necessary? if yes could re-correct on the fly.
     //     if(isMC_) 
     //       sortedJetsIDL1Offset.insert( make_pair( newJet->jecFactor("L3Absolute","none", "patJetCorrFactorsL1Offset")*newJet->pt() , 
     // 					      newJet->jecFactor("L3Absolute","none", "patJetCorrFactorsL1Offset")*newJet->p4()) );   
@@ -1821,31 +1500,26 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     //       sortedJetsIDL1Offset.insert( make_pair( newJet->jecFactor("L2L3Residual","none", "patJetCorrFactorsL1Offset")*newJet->pt() , 
     // 					      newJet->jecFactor("L2L3Residual","none", "patJetCorrFactorsL1Offset")*newJet->p4()) ); 
     
-    if(verbose_) 
-      cout << "Components: "
-	   << "px=" << (newJet->p4()).Px() << " (" << newJet->px() << "), "
-	   << "py=" << (newJet->p4()).Py() << " (" << newJet->py() << "), "
-	   << "pz=" << (newJet->p4()).Pz() << " (" << newJet->pz() << "), "
-	   << "E="  << (newJet->p4()).E()  << " (" << newJet->energy()  << ")"
-	   << endl;
-    
+    if(verbose_) cout << "Components: "
+		      << "px=" << (newJet->p4()).Px() << " (" << newJet->px() << "), "
+		      << "py=" << (newJet->p4()).Py() << " (" << newJet->py() << "), "
+		      << "pz=" << (newJet->p4()).Pz() << " (" << newJet->pz() << "), "
+		      << "E="  << (newJet->p4()).E()  << " (" << newJet->energy()  << ")"
+		      << endl;
+
     sortedJetsID.insert(     make_pair( newJet->p4().Pt() ,  newJet->p4() ) );
-    sortedJetsIDFracs.insert(     make_pair( newJet->p4().Pt() ,  
-					     make_pair( newJet->component(PFCandidate::h).fraction(), 
-							newJet->component(PFCandidate::h0).fraction() ) ) );
     sortedJetsIDUp.insert(   make_pair( newJet->p4().Pt() ,  newJet->p4()*(1+shift) ) );
     sortedJetsIDDown.insert( make_pair( newJet->p4().Pt() ,  newJet->p4()*(1-shift) ) );
 
-    //COLIN we don't have the matched GenJet
-    //just to check JEC - can be removed 
-    //     if(isMC_){
-    //       if(jet->genJet() != 0) sortedGenJetsID.insert( make_pair( newJet->p4().Pt() ,jet->genJet()->p4() ) );
-    //       else sortedGenJetsID.insert( make_pair( newJet->p4().Pt() , math::XYZTLorentzVectorD(0,0,0,0) ) );
-    //     }
-    
+    //COLINB7 we don't have the matched GenJet
+//     if(isMC_){
+//       if(jet->genJet() != 0) sortedGenJetsID.insert( make_pair( newJet->p4().Pt() ,jet->genJet()->p4() ) );
+//       else sortedGenJetsID.insert( make_pair( newJet->p4().Pt() , math::XYZTLorentzVectorD(0,0,0,0) ) );
+//     }
+     
   }
   
-  //COLIN: below, feeding jet p4. 
+  //COLIN: below, feeling jet p4. 
   //contains jet p4 for all jets passing jetID
   
   //uncorrected jets, sorting by uncorrected pt.
@@ -1883,10 +1557,9 @@ void MuTauStreamAnalyzer::analyze(const edm::Event & iEvent, const edm::EventSet
     jetsBtagHE_->push_back( (it->second).first  );
     jetsBtagHP_->push_back( (it->second).second );
   }
-  for(std::map<double, std::pair<float,float> >::iterator it = sortedJetsIDFracs.begin(); 
-      it != sortedJetsIDFracs.end() ; it++){
+  for(std::map<double, std::pair<float,float> >::iterator it = jetPVassociation.begin(); it != jetPVassociation.end() ; it++){
     jetsChEfraction_->push_back( (it->second).first  );
-    jetsChNfraction_->push_back( 0 );
+    jetsChNfraction_->push_back( (it->second).second );
   }
   for(std::map<double, std::pair<float,float> >::iterator it = jetMoments.begin(); it != jetMoments.end() ; it++){
     jetMoments_->push_back( (it->second).first  );
@@ -2183,6 +1856,7 @@ MuTauStreamAnalyzer::Jet* MuTauStreamAnalyzer::newJetMatched( const Jet* oldJet 
   }
 
   return matchedJet;
+
 }
 
 
