@@ -92,10 +92,10 @@ bool BaseAnalysis::fillVariables(const fwlite::Event * event){
   edm::Handle< std::vector<cmg::TriggerObject> > trig;
   event->getByLabel(edm::InputTag("cmgTriggerObjectSel","","PAT"),trig);
   if(sample_->getTrigPaths()->size()==0)trigpass_=1;//no trigger requirement
-  for(std::vector<std::string>::const_iterator path=sample_->getTrigPaths()->begin(); path!=sample_->getTrigPaths()->end(); path++){
+  for(std::vector<std::vector<std::string> >::const_iterator path=sample_->getTrigPaths()->begin(); path!=sample_->getTrigPaths()->end(); path++){
     //trig->begin()->printSelections(cout);
-    if(trig->begin()->hasSelection(path->c_str()))
-      if(trig->begin()->getSelection(path->c_str())){
+    if(trig->begin()->hasSelection((*path)[0].c_str()))
+      if(trig->begin()->getSelection((*path)[0].c_str())){
 	trigpass_=1;
       }
   }
@@ -103,7 +103,6 @@ bool BaseAnalysis::fillVariables(const fwlite::Event * event){
   //get trigger object list for later
   event->getByLabel(edm::InputTag("cmgTriggerObjectListSel","","PAT"),trigObjs_);
 
- 
   ///Event weight definition starts here:
   pupWeight_=1.;//do not comment out needs to be used.
 
@@ -190,11 +189,12 @@ bool BaseAnalysis::fillPUPWeightHisto(){
   return 1;
 }
 
-bool BaseAnalysis::trigObjMatch(float eta, float phi, std::string filter){
+bool BaseAnalysis::trigObjMatch(float eta, float phi, std::string path, std::string filter){
   for(std::vector<cmg::TriggerObject>::const_iterator obj=trigObjs_->begin(); obj!=trigObjs_->end(); obj++)
-    if(obj->hasSelection(filter.c_str())
-       && reco::deltaR(eta,phi,obj->eta(),obj->phi())<0.3)
-      return 1;
+    if(obj->hasSelection(path.c_str())
+       &&obj->hasSelection(filter.c_str())
+       &&reco::deltaR(eta,phi,obj->eta(),obj->phi())<0.3)
+       return 1;
   return 0;
 }
 
@@ -205,7 +205,6 @@ void BaseAnalysis::printMCGen(edm::Handle< std::vector<reco::GenParticle> > & ge
     cout<<"pdgID = "<<g->pdgId()<<" , pt = "<<g->p4().pt()<<" motherRef="<<g->mother()<<endl;
   }
 }
-
 
 
 void BaseAnalysis::createMCPileUP(){
@@ -385,5 +384,3 @@ void BaseAnalysis::createMCPileUP(){
   return;
 }
 
-
- 

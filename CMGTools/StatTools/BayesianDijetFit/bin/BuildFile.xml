@@ -1,5 +1,0 @@
-<use   name="Analysis/Statistics"/>
-<environment>
-  <bin   file="dijetStats.cc"></bin>
-  <bin   file="dijetStatsNewBackground.cc"></bin>
-</environment>
