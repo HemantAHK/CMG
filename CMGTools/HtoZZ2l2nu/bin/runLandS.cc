@@ -101,8 +101,7 @@ void printHelp()
   printf("--m       --> higgs mass to be considered\n");
   printf("--syst    --> use this flag if you want to run systematics, default is no systematics\n");
   printf("--shape   --> use this flag if you want to run shapeBased analysis, default is cut&count\n");
-  printf("--subNRB  --> use this flag if you want to subtract non-resonant-backgounds similarly to what was done in 2011 (will also remove H->WW)\n");
-  printf("--subNRB12--> use this flag if you want to subtract non-resonant-backgounds using a new technique that keep H->WW\n");
+  printf("--subNRB  --> use this flag if you want to subtract non-resonant-backgounds\n");
   printf("--closure --> use this flag if you want to perform a MC closure test (use only MC simulation)\n");
 }
 
@@ -127,17 +126,17 @@ int main(int argc, char* argv[])
   int mass=-1; int index = -1; bool runSystematics = false; bool shape = false;
   for(int i=1;i<argc;i++){
     string arg(argv[i]);
-    if(arg.find("--help")         !=string::npos) { printHelp(); return -1;} 
-    else if(arg.find("--syst")    !=string::npos) { runSystematics=true; printf("syst = True\n");}
-    else if(arg.find("--shape")   !=string::npos) { shape=true; printf("shapeBased = True\n");}
+    if(arg.find("--help")  !=string::npos) { printHelp(); return -1;} 
+    else if(arg.find("--syst")  !=string::npos) { runSystematics=true; printf("syst = True\n");}
+    else if(arg.find("--shape") !=string::npos) { shape=true; printf("shapeBased = True\n");}
+    else if(arg.find("--subNRB")!=string::npos) { subNRB2011=true; skipWW=true; printf("subNRB2011 = True\n");}
     else if(arg.find("--subNRB12")!=string::npos) { subNRB2012=true; skipWW=false; printf("subNRB2012 = True\n");}
-    else if(arg.find("--subNRB")  !=string::npos) { subNRB2011=true; skipWW=true; printf("subNRB2011 = True\n");}
-    else if(arg.find("--closure") !=string::npos) { MCclosureTest=true; printf("MCclosureTest = True\n");}
-    else if(arg.find("--index")   !=string::npos && i+1<argc)  { sscanf(argv[i+1],"%i",&index); i++; printf("index = %i\n", index);}
-    else if(arg.find("--in")      !=string::npos && i+1<argc)  { inFileUrl = argv[i+1];  i++;  printf("in = %s\n", inFileUrl.Data()); }
-    else if(arg.find("--json")    !=string::npos && i+1<argc)  { jsonFile  = argv[i+1];  i++;  printf("json = %s\n", jsonFile.Data()); }
-    else if(arg.find("--histo")   !=string::npos && i+1<argc)  { histo     = argv[i+1];  i++;  printf("histo = %s\n", histo.Data()); }
-    else if(arg.find("--m")       !=string::npos && i+1<argc)  { sscanf(argv[i+1],"%i",&mass ); i++; printf("mass = %i\n", mass);}
+    else if(arg.find("--closure")!=string::npos) { MCclosureTest=true; printf("MCclosureTest = True\n");}
+    else if(arg.find("--index") !=string::npos && i+1<argc)  { sscanf(argv[i+1],"%i",&index); i++; printf("index = %i\n", index);}
+    else if(arg.find("--in")    !=string::npos && i+1<argc)  { inFileUrl = argv[i+1];  i++;  printf("in = %s\n", inFileUrl.Data()); }
+    else if(arg.find("--json")  !=string::npos && i+1<argc)  { jsonFile  = argv[i+1];  i++;  printf("json = %s\n", jsonFile.Data()); }
+    else if(arg.find("--histo") !=string::npos && i+1<argc)  { histo     = argv[i+1];  i++;  printf("histo = %s\n", histo.Data()); }
+    else if(arg.find("--m")     !=string::npos && i+1<argc)  { sscanf(argv[i+1],"%i",&mass ); i++; printf("mass = %i\n", mass);}
   }
   if(jsonFile.IsNull() || inFileUrl.IsNull() || histo.IsNull() || index == -1 || mass==-1) { printHelp(); return -1; }
 
@@ -662,7 +661,9 @@ std::vector<TString>  buildDataCard(Int_t mass, TString histo, TString url, TStr
 	  dcF << dci.rates[RateKey_t(dci.procs[j-1],dci.ch[i-1])] << " ";
 	}
       dcF << endl;
+
 if(runSystematics){
+      
       //systematics
       dcF << "-------------------------------" << endl;
       dcF << "Lumi\t lnN\t ";
@@ -688,14 +689,11 @@ if(runSystematics){
 	  dcF << 1.03 << "  ";
 	}
       dcF << endl;
-}
       
       //systematics with shape description
       for(std::map<TString, std::map<RateKey_t,Double_t> >::iterator it=dci.systs.begin(); it!=dci.systs.end(); it++)
 	{
-          if(!runSystematics && string(it->first.Data())!="stat" )continue;
-
-          dcF << it->first << "\t shapeN2\t";
+	  dcF << it->first << "\t shapeN2\t";
 	  for(size_t j=1; j<=dci.procs.size(); j++)
 	    {
 	      if(dci.rates.find(RateKey_t(dci.procs[j-1],dci.ch[i-1]))==dci.rates.end()) continue;
@@ -707,6 +705,7 @@ if(runSystematics){
 	    }
 	  dcF << endl;
 	}
+}
   
       dcF.close();
       cout << "Data card for " << dci.shapesFile << " and " << dci.ch[i-1] << " channel @ " << dcName << endl;
@@ -745,14 +744,14 @@ DataCardInputs convertHistosForLimits(Int_t mass,TString histo,TString url,TStri
   //define vector for search
   std::vector<TString> selCh; selCh.push_back("ee"); selCh.push_back("mumu");
 
+  //print event yields from the mt shapes
+  //getCutFlowFromShape(selCh,allShapes,histo);
+
   //non-resonant background estimation
   //estimateNonResonantBackground(selCh,"emu",allShapes,"nonresbckg_ctrl");
 
   //remove the non-resonant background from data
   if(subNRB2011 || subNRB2012)doBackgroundSubtraction(selCh,"emu",allShapes,histo,"nonresbckg_ctrl");
-
-  //print event yields from the mt shapes
-  //getCutFlowFromShape(selCh,allShapes,histo);
 
   //prepare the output
   dci.shapesFile="Shapes_"+massStr+".root";
@@ -894,8 +893,7 @@ void convertHistosForLimits_core(DataCardInputs& dci, TString& proc, TString& ch
 
        //If cut&count keep only 1 bin in the histo
        if(!shape){
-//          hshape = hshape->Rebin(hshape->GetXaxis()->GetNbins(), TString(hshape->GetName())+"_Rebin"); 
-          hshape = hshape->Rebin(hshape->GetXaxis()->GetNbins()); 
+          hshape = hshape->Rebin(hshape->GetXaxis()->GetNbins(), TString(hshape->GetName())+"_Rebin"); 
           //make sure to also count the underflow and overflow
           double bin  = hshape->GetBinContent(0) + hshape->GetBinContent(1) + hshape->GetBinContent(2);
           double bine = sqrt(hshape->GetBinError(0)*hshape->GetBinError(0) + hshape->GetBinError(1)*hshape->GetBinError(1) + hshape->GetBinError(2)*hshape->GetBinError(2));
@@ -909,21 +907,6 @@ void convertHistosForLimits_core(DataCardInputs& dci, TString& proc, TString& ch
          hshape->SetName(proc); 
          if(proc=="data")  hshape->SetName("data_obs");
          hshape->Write();
-
-
-         if(hshape->Integral()>0){
-            hshape->SetName(proc+syst);
-            TH1* statup=(TH1 *)hshape->Clone(proc+"_stat"+"Up");
-            TH1* statdown=(TH1 *)hshape->Clone(proc+"_stat"+"Down");
-            for(int ibin=1; ibin<=statup->GetXaxis()->GetNbins(); ibin++){
-               statup  ->SetBinContent(ibin,statup  ->GetBinContent(ibin) + 3*statup  ->GetBinError(ibin));
-               statdown->SetBinContent(ibin,statdown->GetBinContent(ibin) - 3*statdown->GetBinError(ibin));
-            }
-            statup  ->Write(proc+"_stat"+"Up");
-            statdown->Write(proc+"_stat"+"Down");
-            dci.systs["stat"][RateKey_t(proc,ch)]=0.333;
-         }
-
        }else if(runSystematics && proc!="data" && (syst.Contains("Up") || syst.Contains("Down"))){
          //write variation to file
          hshape->SetName(proc+syst);
@@ -967,7 +950,7 @@ void doBackgroundSubtraction(std::vector<TString>& selCh,TString ctrlCh,map<TStr
         Shape_t& shapeChan_SB = allShapes.find(selCh[i]+sideBandHisto)->second;
         TH1* hChan_SB=shapeChan_SB.data;
         Shape_t& shapeChan_SI = allShapes.find(selCh[i]+mainHisto)->second;
-//        TH1* hChan_SI=shapeChan_SI.data;
+        TH1* hChan_SI=shapeChan_SI.data;
 
 	printf("Channel = %s\n", selCh[i].Data());
         printf("Bin %f %f %f %f %f %f\n", hCtrl_SB->GetBinContent(1), hCtrl_SB->GetBinContent(2), hCtrl_SB->GetBinContent(3), hCtrl_SB->GetBinContent(4), hCtrl_SB->GetBinContent(5), hCtrl_SB->GetBinContent(6) );
@@ -976,38 +959,46 @@ void doBackgroundSubtraction(std::vector<TString>& selCh,TString ctrlCh,map<TStr
         double alpha_err = ( fabs( hChan_SB->GetBinContent(5) * hCtrl_SB->GetBinError(5) ) + fabs(hChan_SB->GetBinError(5) * hCtrl_SB->GetBinContent(5) )  ) / pow(hCtrl_SB->GetBinContent(5), 2);        
         printf("alpha %s=%f+-%f\n", selCh[i].Data(),alpha, alpha_err);
 
-
-	printf("force alpha to the computed value in lowest bin\n");
-	if(string(selCh[i].Data())=="ee"  ){alpha = 0.339286; alpha_err=0.043549;}
-        if(string(selCh[i].Data())=="mumu"){alpha = 0.529018; alpha_err=0.059357;}
-        printf("alpha %s=%f+-%f\n", selCh[i].Data(),alpha, alpha_err);
-
         //add 100% syst uncertainty on alpha
         alpha_err = sqrt(1+alpha_err*alpha_err);
 
-        TH1* NonResonant = NULL;
-        if(subNRB2011){         NonResonant = (TH1*)hCtrl_SI->Clone("NonResonant");
-        }else if(subNRB2012){   NonResonant = (TH1*)hCtrl_SB->Clone("NonResonant");
-        }else{                  return;
+        printf("Integral = %f --> ", hChan_SI->Integral());
+        if(subNRB2011){
+           for(int b=0;b<=hCtrl_SI->GetXaxis()->GetNbins()+1;b++){
+  	      double val = hCtrl_SI->GetBinContent(b);
+              double err = hCtrl_SI->GetBinError(b);
+              val = val*alpha;
+              err = err*alpha + val*alpha_err;
+              hCtrl_SI->SetBinContent(b, val );
+              hCtrl_SI->SetBinError  (b, err );
+           }
+           hChan_SI->Add(hCtrl_SI,-1);
+           for(int b=0;b<=hChan_SI->GetXaxis()->GetNbins()+1;b++){
+              if(hChan_SI->GetBinContent(b)<0)hChan_SI->SetBinContent(b,0.0);
+           }
+        }else if(subNRB2012){
+           for(int b=0;b<=hCtrl_SB->GetXaxis()->GetNbins()+1;b++){
+              double val = hCtrl_SB->GetBinContent(b);
+              double err = hCtrl_SB->GetBinError(b);
+              val = val*alpha;
+              err = err*alpha + val*alpha_err;
+              hCtrl_SB->SetBinContent(b, val );
+              hCtrl_SB->SetBinError  (b, err );
+           }
+           hChan_SI->Add(hCtrl_SB,-1);
+           for(int b=0;b<=hChan_SI->GetXaxis()->GetNbins()+1;b++){
+              if(hChan_SI->GetBinContent(b)<0)hChan_SI->SetBinContent(b,0.0);
+           }
         }
+        printf("%f\n", hChan_SI->Integral());
 
-        NonResonant->SetTitle("NonResonant");
-        for(int b=0;b<=NonResonant->GetXaxis()->GetNbins()+1;b++){
-           double val = NonResonant->GetBinContent(b);
-           double err = NonResonant->GetBinError(b);
-           val = val*alpha;
-           err = err*alpha + val*alpha_err;
-           NonResonant->SetBinContent(b, val );
-            NonResonant->SetBinError  (b, err );
-        }
-        shapeChan_SI.bckg.push_back(NonResonant);           
 
         //Clean background collection
         size_t nbckg=shapeChan_SI.bckg.size();
-        for(size_t ibckg=0; ibckg<nbckg; ibckg++){           
+        for(size_t ibckg=0; ibckg<nbckg; ibckg++){
            TString proc(shapeChan_SI.bckg[ibckg]->GetTitle());
-	   if(( subNRB2011 && (proc.Contains("t#bar{t}") || proc.Contains("Single top") || proc.Contains("WW") || proc.Contains("Z#rightarrow #tau#tau")) ) ||
-              ( subNRB2012 && (proc.Contains("t#bar{t}") || proc.Contains("Single top") ) ) ){
+	   if((subNRB2011 && (proc.Contains("t#bar{t}") || proc.Contains("Single top") || proc.Contains("WW") || proc.Contains("Z#rightarrow #tau#tau")) ) ||
+              (subNRB2012 && (proc.Contains("t#bar{t}") || proc.Contains("Single top") ) ) ){
               shapeChan_SI.totalBckg->Add(shapeChan_SI.bckg[ibckg], -1);
 	      shapeChan_SI.bckg.erase(shapeChan_SI.bckg.begin()+ibckg);  ibckg--;
            }
@@ -1015,8 +1006,6 @@ void doBackgroundSubtraction(std::vector<TString>& selCh,TString ctrlCh,map<TStr
      }
 
 }
-
-
 
 
 
