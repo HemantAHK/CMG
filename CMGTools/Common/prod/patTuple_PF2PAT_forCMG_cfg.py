@@ -62,7 +62,6 @@ process.source = datasetToSource(
     # to test Data:
     'cmgtools_group',
     #'/DoubleMu/Run2011A-05Aug2011-v1/AOD/V3',
-    #'/DoubleElectron/Run2011B-16Jan2012-v1/AOD/V4',
     '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
     #'/GluGluToHToZZTo4L_M-120_7TeV-powheg-pythia6/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
     # '.*root'
@@ -98,9 +97,8 @@ from PhysicsTools.PatAlgos.tools.pfTools import *
 # ---------------- rho calculation for JEC ----------------------
 
 from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
-
 process.kt6PFJets = kt4PFJets.clone(
-    rParam = cms.double(0.6),
+    rParams = cms.double(0.6),
     doAreaFastjet = cms.bool(True),
     doRhoFastjet = cms.bool(True),
 )
@@ -201,11 +199,6 @@ process.stdElectronSeq = cms.Sequence(
     process.makePatElectrons +
     process.selectedPatElectrons
     )
-if not runOnMC:
-    process.stdMuonSeq.remove( process.muonMatch )
-    process.stdElectronSeq.remove( process.electronMatch )
-    process.patMuons.embedGenMatch = False
-    process.patElectrons.embedGenMatch = False
 
 # adding vbtf and cic electron IDs to both electron collections
 from CMGTools.Common.PAT.addPATElectronID_cff import addPATElectronID
