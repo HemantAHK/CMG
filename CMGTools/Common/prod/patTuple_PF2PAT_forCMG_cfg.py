@@ -13,7 +13,7 @@ runCMG = True
 
 # AK5 sequence with pileup substraction is the default
 # the other sequences can be turned off with the following flags.
-runAK5NoPUSub = True
+runAK5NoPUSub = False
 
 hpsTaus = True
 doEmbedPFCandidatesInTaus = True
@@ -53,12 +53,16 @@ print sep_line
 # print 'generate source'
 
 from CMGTools.Production.datasetToSource import *
-process.source = datasetToSource(
-    # 'cmgtools',
-    # '/DoubleElectron/Run2011A-16Jan2012-v1/AOD/V4',
-    'cmgtools_group',
-    '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
-    )
+process.source.fileNames = ['/store/relval/CMSSW_5_2_0/RelValProdTTbar/AODSIM/START52_V4A-v1/0250/68FCD498-F969-E111-9366-002618943949.root']
+
+## process.source = datasetToSource(
+##     # 'cmgtools',
+##     # '/DoubleElectron/Run2011A-16Jan2012-v1/AOD/V4',
+##     # 'cmgtools_group',
+##     # '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
+##     'CMS',
+##     '/RelValTTbar/CMSSW_5_2_3-START52_V5-v1/GEN-SIM-RECO'
+##     )
 
 ## for testing in 5X
 ## process.source.fileNames = cms.untracked.vstring(
@@ -215,10 +219,12 @@ addMITElectronID( process, 'selectedPatElectrons', 'stdElectronSeq', '')
 from RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi import *
 from CMGTools.Common.PAT.addLeptCustomIsoDeposit_cff import addMuonCustomIsoDeposit
 from CMGTools.Common.PAT.addLeptCustomIsoDeposit_cff import addElectronCustomIsoDeposit
-addMuonCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
-addMuonCustomIsoDeposit( process, 'stdMuonSeq', '')
-addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
-addElectronCustomIsoDeposit( process, 'stdElectronSeq', '')
+
+# COLIN REMOVED CANNOT RUN
+# addMuonCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+# addMuonCustomIsoDeposit( process, 'stdMuonSeq', '')
+# addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+# addElectronCustomIsoDeposit( process, 'stdElectronSeq', '')
 
 
 # ---------------- Sequence AK5NoPUSub, pfNoPileUp switched off ---------------
@@ -268,7 +274,8 @@ process.stdLeptonSequence = cms.Sequence(
     process.stdMuonSeq +
     process.stdElectronSeq 
     )
-process.p += process.stdLeptonSequence
+#COLIN REMOVED CANNOT RUN
+# process.p += process.stdLeptonSequence
 
 
 if runAK5NoPUSub:
@@ -309,7 +316,8 @@ if runCMG:
         addCmgMuons( process, 'StdLep', 'selectedPatMuons'  ) +
         addCmgElectrons( process, 'StdLep', 'selectedPatElectrons'  ) 
         )
-    process.cmgObjectSequence += process.cmgStdLeptonSequence
+    #COLIN REMOVED CANNOT RUN
+    # process.cmgObjectSequence += process.cmgStdLeptonSequence
 
     if runAK5NoPUSub:
         cloneProcessingSnippet(process, getattr(process, 'analysisSequence'), 'AK5NoPUSubCMG')
