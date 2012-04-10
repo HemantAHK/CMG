@@ -32,8 +32,7 @@ public:
 	~PileupJetIdAlgo(); 
 	
 	PileupJetIdentifier computeIdVariables(const reco::Jet * jet, 
-					       float jec, const reco::Vertex *, const reco::VertexCollection &,
-					       bool calculateMva=false);
+					       float jec, const reco::Vertex *, bool calculateMva=false);
 	std::string dumpVariables() const;
 
 	typedef std::map<std::string,std::pair<float *,float> > variables_list_t;
@@ -54,7 +53,6 @@ protected:
 	TMVA::Reader * reader_;
 	std::string    tmvaWeights_, tmvaMethod_; 
 	std::vector<std::string>  tmvaVariables_;
-	std::vector<std::string>  tmvaSpectators_;
 	std::map<std::string,std::string>  tmvaNames_;
 	
 	Int_t version_;

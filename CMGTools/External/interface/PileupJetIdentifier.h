@@ -68,7 +68,6 @@ public:
 
 	DECLARE_VARIABLE(dRLeadCent ,float);  
 	DECLARE_VARIABLE(dRLead2nd  ,float);  
-	DECLARE_VARIABLE(dR2Mean    ,float);  
 	DECLARE_VARIABLE(dRMean     ,float);  
 	DECLARE_VARIABLE(dRMeanNeut ,float);  
 	DECLARE_VARIABLE(dRMeanEm   ,float);  
@@ -126,11 +125,6 @@ public:
 	DECLARE_VARIABLE(emFrac03    ,float);  
 	DECLARE_VARIABLE(emFrac04    ,float);  
 	DECLARE_VARIABLE(emFrac05   ,float);  
-
-	DECLARE_VARIABLE(beta       ,float);  
-	DECLARE_VARIABLE(betaStar   ,float);  
-
-	DECLARE_VARIABLE(nvtx   ,float);  
 	
 	//// std::string dumpVariables() const;
 	//// 
