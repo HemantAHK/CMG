@@ -319,8 +319,7 @@ if runCMG:
     from CMGTools.Common.PAT.addStdLeptons import addCmgMuons, addCmgElectrons
     process.cmgStdLeptonSequence = cms.Sequence(
         addCmgMuons( process, 'StdLep', 'selectedPatMuons'  )
-        # +
-        # addCmgElectrons( process, 'StdLep', 'selectedPatElectrons'  ) 
+        + addCmgElectrons( process, 'StdLep', 'selectedPatElectrons'  ) 
         )
     #COLIN REMOVED CANNOT RUN
     process.cmgObjectSequence += process.cmgStdLeptonSequence
