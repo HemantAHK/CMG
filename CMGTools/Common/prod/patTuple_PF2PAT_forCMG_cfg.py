@@ -7,7 +7,7 @@ from PhysicsTools.PatAlgos.patTemplate_cfg import *
 ## pickRelVal = False
 
 # turn on when running on MC
-runOnMC = True
+runOnMC = False
 
 runCMG = True
 
@@ -53,16 +53,16 @@ print sep_line
 # print 'generate source'
 
 from CMGTools.Production.datasetToSource import *
-process.source.fileNames = ['/store/relval/CMSSW_5_2_0/RelValProdTTbar/AODSIM/START52_V4A-v1/0250/68FCD498-F969-E111-9366-002618943949.root']
+# process.source.fileNames = ['/store/relval/CMSSW_5_2_0/RelValProdTTbar/AODSIM/START52_V4A-v1/0250/68FCD498-F969-E111-9366-002618943949.root']
 
-## process.source = datasetToSource(
+process.source = datasetToSource(
 ##     # 'cmgtools',
 ##     # '/DoubleElectron/Run2011A-16Jan2012-v1/AOD/V4',
 ##     # 'cmgtools_group',
 ##     # '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
-##     'CMS',
-##     '/RelValTTbar/CMSSW_5_2_3-START52_V5-v1/GEN-SIM-RECO'
-##     )
+    'CMS',
+    '/DoubleMu/Run2012A-PromptReco-v1/AOD'
+    )
 
 ## for testing in 5X
 ## process.source.fileNames = cms.untracked.vstring(
