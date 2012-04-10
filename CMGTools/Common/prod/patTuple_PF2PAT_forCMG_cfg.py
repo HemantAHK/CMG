@@ -221,9 +221,14 @@ from CMGTools.Common.PAT.addLeptCustomIsoDeposit_cff import addMuonCustomIsoDepo
 from CMGTools.Common.PAT.addLeptCustomIsoDeposit_cff import addElectronCustomIsoDeposit
 
 # COLIN REMOVED CANNOT RUN
+# uncomment -> segv 
 # addMuonCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+# uncomment -> segv
+# track deposit alone -> segv
+# ecal and hcal deposits alone -> segv
 # addMuonCustomIsoDeposit( process, 'stdMuonSeq', '')
-addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+# addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+# did not try to uncomment the following, as std electrons can't be made (bad refcore problem)
 # addElectronCustomIsoDeposit( process, 'stdElectronSeq', '')
 
 
@@ -272,8 +277,7 @@ process.p += getattr(process,"patPF2PATSequence"+postfixAK5)
 
 process.stdLeptonSequence = cms.Sequence(
     process.stdMuonSeq
-    # +
-    # process.stdElectronSeq 
+    + process.stdElectronSeq 
     )
 #COLIN REMOVED CANNOT RUN
 process.p += process.stdLeptonSequence
@@ -373,52 +377,53 @@ process.patElectronsAK5.embedTrack = True
 process.patElectrons.embedTrack = True
 
 
+# COLIN : commenting the calibration out (leads to a value map crash in patElectrons )
 
-#electron energy-scale corrections (from Claude C., Paramatti & al.)
-print sep_line
-print "Replacing gsfElectrons with calibratedGsfElectrons..."
-for modulename in process.p.moduleNames():
-    module = getattr(process, modulename)
-    ml = dir(module)
-    for attr in ml:
-        v = getattr(module,attr)
-        if (isinstance(v, cms.InputTag) and v == cms.InputTag("gsfElectrons")):
-            setattr(module,attr,"calibratedGsfElectrons")
-            #print "Setting ",
-            #print module,
-            #print ".", 
-            #print attr,
-            #print " = ", 
-            #print getattr(module,attr)
-process.load("EgammaCalibratedGsfElectrons.CalibratedElectronProducers.calibratedGsfElectrons_cfi")
-process.calibratedGsfElectrons.isMC = cms.bool(runOnMC)
-process.calibratedGsfElectrons.updateEnergyError = cms.bool(True)
+## #electron energy-scale corrections (from Claude C., Paramatti & al.)
+## print sep_line
+## print "Replacing gsfElectrons with calibratedGsfElectrons..."
+## for modulename in process.p.moduleNames():
+##     module = getattr(process, modulename)
+##     ml = dir(module)
+##     for attr in ml:
+##         v = getattr(module,attr)
+##         if (isinstance(v, cms.InputTag) and v == cms.InputTag("gsfElectrons")):
+##             setattr(module,attr,"calibratedGsfElectrons")
+##             #print "Setting ",
+##             #print module,
+##             #print ".", 
+##             #print attr,
+##             #print " = ", 
+##             #print getattr(module,attr)
+## process.load("EgammaCalibratedGsfElectrons.CalibratedElectronProducers.calibratedGsfElectrons_cfi")
+## process.calibratedGsfElectrons.isMC = cms.bool(runOnMC)
+## process.calibratedGsfElectrons.updateEnergyError = cms.bool(True)
 
-process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
+## process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
 
-    # Include a PSet for each module label that needs a
-    # random engine.  The name is the module label.
-    # You must supply a seed or seeds.
-    # Optionally an engine type can be specified
-    #t1 = cms.PSet(
-    #    initialSeed = cms.untracked.uint32(81)
-    #),
-    calibratedGsfElectrons = cms.PSet(
-        initialSeed = cms.untracked.uint32(1),
-        engineName = cms.untracked.string('TRandom3')
-    ),
-)
+##     # Include a PSet for each module label that needs a
+##     # random engine.  The name is the module label.
+##     # You must supply a seed or seeds.
+##     # Optionally an engine type can be specified
+##     #t1 = cms.PSet(
+##     #    initialSeed = cms.untracked.uint32(81)
+##     #),
+##     calibratedGsfElectrons = cms.PSet(
+##         initialSeed = cms.untracked.uint32(1),
+##         engineName = cms.untracked.string('TRandom3')
+##     ),
+## )
 
-from CMGTools.Common.Tools.setupEleEnergyCorrections import setupEleEnergyCorrections
-setupEleEnergyCorrections(process)
+## from CMGTools.Common.Tools.setupEleEnergyCorrections import setupEleEnergyCorrections
+## setupEleEnergyCorrections(process)
 
-print "Setting process.calibratedGsfElectrons.inputDataset=",
-print process.calibratedGsfElectrons.inputDataset
+## print "Setting process.calibratedGsfElectrons.inputDataset=",
+## print process.calibratedGsfElectrons.inputDataset
 
-process.PFBRECOAK5.replace(process.goodOfflinePrimaryVertices,
-                           process.goodOfflinePrimaryVertices+
-                           process.calibratedGsfElectrons
-                           )
+## process.PFBRECOAK5.replace(process.goodOfflinePrimaryVertices,
+##                            process.goodOfflinePrimaryVertices+
+##                            process.calibratedGsfElectrons
+##                            )
 
 process.selectedPatMuonsAK5.cut = 'pt()>3'
 process.preselectedPatElectronsAK5.cut = 'pt()>5'
