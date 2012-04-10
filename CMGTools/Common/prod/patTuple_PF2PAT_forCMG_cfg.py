@@ -223,7 +223,7 @@ from CMGTools.Common.PAT.addLeptCustomIsoDeposit_cff import addElectronCustomIso
 # COLIN REMOVED CANNOT RUN
 # addMuonCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
 # addMuonCustomIsoDeposit( process, 'stdMuonSeq', '')
-# addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
+addElectronCustomIsoDeposit( process, 'patDefaultSequence', postfixAK5)
 # addElectronCustomIsoDeposit( process, 'stdElectronSeq', '')
 
 
@@ -271,11 +271,12 @@ process.p += process.kt6PFJetsForIso
 process.p += getattr(process,"patPF2PATSequence"+postfixAK5)
 
 process.stdLeptonSequence = cms.Sequence(
-    process.stdMuonSeq +
-    process.stdElectronSeq 
+    process.stdMuonSeq
+    # +
+    # process.stdElectronSeq 
     )
 #COLIN REMOVED CANNOT RUN
-# process.p += process.stdLeptonSequence
+process.p += process.stdLeptonSequence
 
 
 if runAK5NoPUSub:
@@ -313,11 +314,12 @@ if runCMG:
 
     from CMGTools.Common.PAT.addStdLeptons import addCmgMuons, addCmgElectrons
     process.cmgStdLeptonSequence = cms.Sequence(
-        addCmgMuons( process, 'StdLep', 'selectedPatMuons'  ) +
-        addCmgElectrons( process, 'StdLep', 'selectedPatElectrons'  ) 
+        addCmgMuons( process, 'StdLep', 'selectedPatMuons'  )
+        # +
+        # addCmgElectrons( process, 'StdLep', 'selectedPatElectrons'  ) 
         )
     #COLIN REMOVED CANNOT RUN
-    # process.cmgObjectSequence += process.cmgStdLeptonSequence
+    process.cmgObjectSequence += process.cmgStdLeptonSequence
 
     if runAK5NoPUSub:
         cloneProcessingSnippet(process, getattr(process, 'analysisSequence'), 'AK5NoPUSubCMG')
