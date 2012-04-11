@@ -7,7 +7,7 @@ from PhysicsTools.PatAlgos.patTemplate_cfg import *
 ## pickRelVal = False
 
 # turn on when running on MC
-runOnMC = True
+runOnMC = False
 
 runCMG = True
 
@@ -60,10 +60,10 @@ process.source = datasetToSource(
 ##     # '/DoubleElectron/Run2011A-16Jan2012-v1/AOD/V4',
 ##     # 'cmgtools_group',
 ##     # '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V4'
-    'cmgtools_group',
-    '/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/Summer12-PU_S7_START52_V5-v2/AODSIM/V4'
-    # 'CMS',
+    # 'cmgtools_group',
     # '/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/Summer12-PU_S7_START52_V5-v2/AODSIM/V4'
+    'CMS',
+    '/DoubleElectron/Run2012A-PromptReco-v1/AOD'
     )
 
 
