@@ -72,7 +72,6 @@ protected:
   int   tauisodisc_;
   int   tauisodiscmva_;
   float tauiso_;
-  float tauisomva_;
   float taujetpt_;
   float taujeteta_;
 

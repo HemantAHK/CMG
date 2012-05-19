@@ -1,7 +1,4 @@
 #include "CMGTools/H2TauTau/plugins/TauMuFlatNtp.h"
-#include "AnalysisDataFormats/CMGTools/interface/BaseMET.h"
-#include "AnalysisDataFormats/CMGTools/interface/METSignificance.h"
-#include "TauAnalysis/CandidateTools/interface/NSVfitStandaloneAlgorithm.h"
 
 
 TauMuFlatNtp::TauMuFlatNtp(const edm::ParameterSet & iConfig):
@@ -58,7 +55,6 @@ void TauMuFlatNtp::beginJob(){
   tree_->Branch("tauisodisc",&tauisodisc_,"tauisodisc/I");
   tree_->Branch("tauisodiscmva",&tauisodiscmva_,"tauisodiscmva/I");
   tree_->Branch("tauiso",&tauiso_,"tauiso/F");
-  tree_->Branch("tauisomva",&tauisomva_,"tauisomva/F");
   tree_->Branch("taux",&taux_,"taux/F");
   tree_->Branch("tauy",&tauy_,"tauy/F");
   tree_->Branch("tauz",&tauz_,"tauz/F");
@@ -107,7 +103,6 @@ void TauMuFlatNtp::beginJob(){
   countergen_=0;
   counterveto_=0;
   countertaueop_=0;
-  countertauvtx_=0;
   countertaumuveto_=0;
   countertaueveto_=0;
   countertauiso_=0;
@@ -190,48 +185,50 @@ bool TauMuFlatNtp::fillVariables(const edm::Event & iEvent, const edm::EventSetu
 bool TauMuFlatNtp::applySelections(){
   counterall_++;
 
-  //if none are selected returns 0
-  diTauSel_=NULL;
-
   if(!BaseFlatNtp::applySelections()) return 0;
   counterev_++;
 
+  //if none are selected returns 0
+  diTauSel_=NULL;
+  
   //apply gen level separation here
-  if( sampleGenEventType_!=0 && sampleGenEventType_!=genEventType_) return 0;
+  if( sampleGenEventType_!=0
+      && sampleGenEventType_!=genEventType_) return 0;
   countergen_++;
 
   ////other 
   if(vetoDiLepton()) return 0;
   counterveto_++;
 
-  std::vector<cmg::TauMu> tmpditaulist=*diTauList_;
+
   diTauSelList_.clear();
   
   //Tau E/P cut
+  std::vector<cmg::TauMu> tmpditaulist=*diTauList_;
   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
     if(cand->leg1().decayMode()==0&&cand->leg1().p()>0.)
-      if(cand->leg1().eOverP()<0.2)
-	continue;
-    
+      if(cand->leg1().eOverP()<0.2) continue;
     diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countertaueop_++;
 
-  //tau vtx
-  tmpditaulist=diTauSelList_;
-  diTauSelList_.clear();
-  for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
-    if(fabs(cand->leg1().dxy())<0.045 && fabs(cand->leg1().dz())<0.2 )     
-      diTauSelList_.push_back(*cand);
-  }
-  if(diTauSelList_.size()>0)countertauvtx_++;
+//   //tau vtx //vtx info not filled properly in V5_1_0
+//   tmpditaulist=diTauSelList_;
+//   diTauSelList_.clear();
+//   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
+//     if(!(fabs(cand->leg1().dxy())<0.045)
+//        || !(fabs(cand->leg1().dz())<0.2)
+//        ) continue;    
+//     diTauSelList_.push_back(*cand);
+//   }
+//   if(diTauSelList_.size()>0)countertauvtx_++;
 
   //Tau anti-mu cut
   tmpditaulist=diTauSelList_;
   diTauSelList_.clear();
   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
-    if(cand->leg1().tauID("againstMuonTight")>0.5)
-      diTauSelList_.push_back(*cand);
+    if(cand->leg1().tauID("againstMuonTight")<0.5) continue;
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countertaumuveto_++;
 
@@ -239,8 +236,8 @@ bool TauMuFlatNtp::applySelections(){
   tmpditaulist=diTauSelList_;
   diTauSelList_.clear();
   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
-    if(cand->leg1().tauID("againstElectronLoose")>0.5)
-      diTauSelList_.push_back(*cand);
+    if(cand->leg1().tauID("againstElectronLoose")<0.5) continue;
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countertaueveto_++;
 
@@ -267,9 +264,8 @@ bool TauMuFlatNtp::applySelections(){
       if(trigObjMatch(cand->leg1().eta(),cand->leg1().phi(),(*path)->label(),(*path)->instance()))
 	  matchtau=1;
     }
-    
-    if(matchtau)
-      diTauSelList_.push_back(*cand);
+    if(!matchtau)continue;
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countertaumatch_++;
   
@@ -277,8 +273,10 @@ bool TauMuFlatNtp::applySelections(){
   tmpditaulist=diTauSelList_;
   diTauSelList_.clear();
   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
-    if( fabs(cand->leg2().dxy())<0.045 && fabs(cand->leg2().dz())<0.2 )
-      diTauSelList_.push_back(*cand);
+    if(!(fabs(cand->leg2().dxy())<0.045)
+       || !(fabs(cand->leg2().dz())<0.2)
+       ) continue;    
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countermuvtx_++;
 
@@ -287,35 +285,20 @@ bool TauMuFlatNtp::applySelections(){
   tmpditaulist=diTauSelList_;
   diTauSelList_.clear();
   for(std::vector<cmg::TauMu>::const_iterator cand=tmpditaulist.begin(); cand!=tmpditaulist.end(); ++cand){    
+    //VBTF cuts
+    if(!(cand->leg2().isGlobal())
+       || !(cand->leg2().isTracker())
+       || !(cand->leg2().numberOfValidTrackerHits() > 10)
+       || !(cand->leg2().numberOfValidPixelHits() > 0)
+       || !(cand->leg2().numberOfValidMuonHits() > 0)
+       || !(cand->leg2().numberOfMatches() > 1)
+       || !(cand->leg2().normalizedChi2() < 10)
+       ) continue;    
 
-    //     //old VBTF cuts
-    //     if(cand->leg2().isGlobal()
-    //        &&cand->leg2().isTracker()
-    //        &&cand->leg2().numberOfValidTrackerHits() > 10
-    //        &&cand->leg2().numberOfValidPixelHits() > 0
-    //        &&cand->leg2().numberOfValidMuonHits() > 0
-    //        &&cand->leg2().numberOfMatches() > 1
-    //        &&cand->leg2().normalizedChi2() < 10
-    //        ){
-      
-    //     //"Loose Muon" 
-    //     if((*(cand->leg2().sourcePtr()))->userFloat("isPFMuon")>0.5
-    //        && (cand->leg2().isGlobal() || cand->leg2().isTracker())
-    //        ){      
-      
-    //"Tight Muon" 
-    if(cand->leg2().isGlobal()
-       && (*(cand->leg2().sourcePtr()))->userFloat("isPFMuon")>0.5
-       && cand->leg2().normalizedChi2() < 10
-       && cand->leg2().numberOfValidMuonHits() > 0
-       && cand->leg2().numberOfMatches() > 1
-       && cand->leg2().numberOfValidPixelHits() > 0
-       && cand->leg2().trackerLayersWithMeasurement() > 5
-       ){      
-            
-      diTauSelList_.push_back(*cand);
-    }
-      
+    //PFMuon
+    //if(!(cand->leg2().sourcePtr()->userFloat("isPFMuon")))continue;
+
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countermuid_++;
 
@@ -339,9 +322,8 @@ bool TauMuFlatNtp::applySelections(){
       if(trigObjMatch(cand->leg2().eta(),cand->leg2().phi(),(*path)->label(),(*path)->process()))
 	  matchmu=1;
     }
-    
-    if(matchmu) 
-      diTauSelList_.push_back(*cand);
+    if(!matchmu) continue;
+    diTauSelList_.push_back(*cand);
   }
   if(diTauSelList_.size()>0)countermumatch_++;
 
@@ -458,7 +440,7 @@ bool TauMuFlatNtp::fill(){
   mueta_=diTauSel_->leg2().eta();
   muphi_=diTauSel_->leg2().phi();
   muiso_=diTauSel_->leg2().relIso(0.5);
-  muisomva_=(*(diTauSel_->leg2().sourcePtr()))->userFloat("mvaIsoRings");
+  //muisomva_=(*(diTauSel_->leg2().sourcePtr()))->userFloat("mvaIsoRings");
   mudz_=diTauSel_->leg2().dz();
   mudxy_=diTauSel_->leg2().dxy();
   mux_=diTauSel_->leg2().vertex().x();
@@ -478,7 +460,6 @@ bool TauMuFlatNtp::fill(){
   tauy_=diTauSel_->leg1().leadChargedHadrVertex().y();
   tauz_=diTauSel_->leg1().leadChargedHadrVertex().z();
   tauiso_=diTauSel_->leg1().relIso();
-  tauisomva_=diTauSel_->leg1().tauID("byRawIsoMVA");
 
   tauantie_=0;
   if(diTauSel_->leg1().tauID("againstElectronLoose")>0.5)tauantie_=1;
@@ -493,28 +474,14 @@ bool TauMuFlatNtp::fill(){
   if(diTauSel_->leg1().tauID("byLooseCombinedIsolationDeltaBetaCorr")>0.5)tauisodisc_=2;
   if(diTauSel_->leg1().tauID("byMediumCombinedIsolationDeltaBetaCorr")>0.5)tauisodisc_=3;
   if(diTauSel_->leg1().tauID("byTightCombinedIsolationDeltaBetaCorr")>0.5)tauisodisc_=4;
-  tauisodiscmva_=0;
-  if(diTauSel_->leg1().tauID("byLooseIsoMVA")>0.5)tauisodiscmva_=1;
-  if(diTauSel_->leg1().tauID("byMediumIsoMVA")>0.5)tauisodiscmva_=2;
-  if(diTauSel_->leg1().tauID("byTightIsoMVA")>0.5)tauisodiscmva_=3;
+  tauisodiscmva_=diTauSel_->leg1().tauID("byRawIsoMVA");
 
   
   ditaumass_=diTauSel_->mass();
   ditaucharge_=diTauSel_->charge();
   ditaueta_=diTauSel_->eta();
   ditaupt_=diTauSel_->pt();
-  //svfitmass_=diTauSel_->massSVFit();
-
-  //new svfit
-  edm::Handle< cmg::METSignificance > metsig;
-  iEvent_->getByLabel(edm::InputTag("pfMetSignificance"),metsig); 
-  std::vector<NSVfitStandalone::MeasuredTauLepton> measuredTauLeptons;
-  measuredTauLeptons.push_back(NSVfitStandalone::MeasuredTauLepton(NSVfitStandalone::kLepDecay, diTauSel_->leg2().p4()));
-  measuredTauLeptons.push_back(NSVfitStandalone::MeasuredTauLepton(NSVfitStandalone::kHadDecay, diTauSel_->leg1().p4()));
-  NSVfitStandaloneAlgorithm algo(measuredTauLeptons, diTauSel_->met().p4().Vect(), *(metsig->significance()), 0);
-  algo.addLogM(false);
-  algo.integrate();
-  svfitmass_ = algo.getMass();
+  svfitmass_=diTauSel_->massSVFit();
 
 
   ///get the jets //need the jets here because of randomization of mT
@@ -721,12 +688,9 @@ bool TauMuFlatNtp::vetoDiLepton(){
     if(m->pt()<=15.0)continue;
     if(fabs(m->eta())>=2.5)continue;
     if(m->relIso(0.5)>=0.3)continue;    
-    if(!(m->isGlobal()||m->isTracker()))continue; 
-    if((*(m->sourcePtr()))->userFloat("isPFMuon")<0.5) continue;
+    if(m->isGlobal()<0.5)continue; 
     if(fabs(m->dxy())>=0.045)continue; 
     if(fabs(m->dz())>=0.2)continue; 
-
-
     nmuons++;
   }
   

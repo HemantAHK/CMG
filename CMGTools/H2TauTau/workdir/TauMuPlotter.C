@@ -472,8 +472,8 @@ TH1F* TauMuPlotter::getZToTauTau(){
 }
 
 TH1F* TauMuPlotter::getZToTauTauSS(){  
-  TH1F*h=getSampleSS("ZToTauTau");
-  //TH1F*h=getTotalEmbeddedSS();  
+  //TH1F*h=getSampleSS("ZToTauTau");
+  TH1F*h=getTotalEmbeddedSS();  
   return h;
 }
 
@@ -848,10 +848,10 @@ bool TauMuPlotter::plotInc(TString variable, Int_t Isocat, Int_t MTcat, Int_t SM
 
    
   
-  TH1F*hQCD = getQCDInc(); //0;
-//   if(SMcat_==-1 || SMcat_==0 || Isocat_!=1) hQCD=getQCDInc();
-//   else if(SMcat_==1 || SMcat_==2) hQCD=getQCDIsoSM();
-//   else hQCD=0;
+  TH1F*hQCD=0;
+  if(SMcat_==-1 || SMcat_==0 || Isocat_!=1) hQCD=getQCDInc();
+  else if(SMcat_==1 || SMcat_==2) hQCD=getQCDIsoSM();
+  else hQCD=0;
   if(hQCD){
     hQCD->SetLineWidth(1);
     hQCD->SetLineColor(QCDColor_);
@@ -884,11 +884,11 @@ bool TauMuPlotter::plotInc(TString variable, Int_t Isocat, Int_t MTcat, Int_t SM
   TH1F*hEWK=(TH1F*)hWJetsToLNu->Clone("hElectroWeak");
   delete hWJetsToLNu;
 
-//   //combine Di-Bosons
-//   TH1F*hVV=getDiBoson();
-//   if(!hVV)return 0;
-//   hEWK->Add(hVV);
-//   delete hVV;
+  //combine Di-Bosons
+  TH1F*hVV=getDiBoson();
+  if(!hVV)return 0;
+  hEWK->Add(hVV);
+  delete hVV;
 
   //combine ZLJet
   //TH1F*hZToLJet=getSample("ZToLJet");
@@ -2689,8 +2689,6 @@ void TauMuPlotter::fixFileTag(TString * filetag){
     if(TString((*filetag)[l])=="<") filetag->Replace(l,1,"L");
     if(TString((*filetag)[l])==">") filetag->Replace(l,1,"M");
     if(TString((*filetag)[l])=="&") filetag->Replace(l,1,"A");
-    if(TString((*filetag)[l])=="+") filetag->Replace(l,1,"P");
-    if(TString((*filetag)[l])=="-") filetag->Replace(l,1,"N");
   }
 
 }

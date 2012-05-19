@@ -2,7 +2,7 @@ from CMGTools.Common.generator.metRecoilCorrection.recoilCorrectedMET_cfi import
 
 #TODO remove code duplication
 
-def setupRecoilCorrection( process, runOnMC ):
+def setupRecoilCorrection( process ):
 
     print 'setting up recoil corrections:'
 
@@ -55,8 +55,7 @@ def setupRecoilCorrection( process, runOnMC ):
             process.recoilCorMETMuEle.leptonLeg = 2
     else:
         print '\tDISABLED'
-        if runOnMC:
-            process.metRecoilCorrectionInputSequence.remove( process.genWorZ ) 
+        process.metRecoilCorInputSequence.remove( process.genWorZ ) 
         if hasattr( process, 'recoilCorMETTauMu'):
             process.recoilCorMETTauMu.enable = False            
         if hasattr( process, 'recoilCorMETTauEle'):

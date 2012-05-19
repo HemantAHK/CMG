@@ -47,10 +47,10 @@ class H2TauTauDataMC( AnalysisDataMC ):
 
         self.groupDataComponents( self.dataComponents, groupDataName)
         
-        if embed: 
-            self.setupEmbedding( self.dataComponents, embed )
-        else:
-            self.removeEmbeddedSamples()
+##         if embed: 
+##             self.setupEmbedding( self.dataComponents, embed )
+##         else:
+##             self.removeEmbeddedSamples()
 
     def _BuildHistogram(self, tree, comp, compName, varName, cut, layer ):
         '''Build one histogram, for a given component'''
@@ -72,11 +72,11 @@ class H2TauTauDataMC( AnalysisDataMC ):
         for layer, (compName, comp) in enumerate( self.selComps.iteritems() ) : 
             fileName = '/'.join([ directory,
                                   compName,
-                                  'H2TauTauTreeProducerTauMu',
-                                  'H2TauTauTreeProducerTauMu_tree.root'])
+                                  'H2TauTauTreeProducer',
+                                  'H2TauTauTreeProducer_tree.root'])
             file = TFile(fileName)
             self.keeper.append( file )
-            tree = file.Get('H2TauTauTreeProducerTauMu')
+            tree = file.Get('H2TauTauTreeProducer')
             
             if compName == 'DYJets':
                 self._BuildHistogram(tree, comp, compName, self.varName,
@@ -93,48 +93,48 @@ class H2TauTauDataMC( AnalysisDataMC ):
         self._ApplyPrefs()
         
 
-    def removeEmbeddedSamples(self):
-        for compname in self.selComps:
-            if compname.startswith('embed_'):
-                hist = self.Hist(compname)
-                hist.stack = False
-                hist.on = False
+##     def removeEmbeddedSamples(self):
+##         for compname in self.selComps:
+##             if compname.startswith('embed_'):
+##                 hist = self.Hist(compname)
+##                 hist.stack = False
+##                 hist.on = False
                 
 
-    def setupEmbedding(self, dataComponents, doEmbedding ):
+##     def setupEmbedding(self, dataComponents, doEmbedding ):
 
-        name = 'DYJets'
-        dyHist = self.Hist(name)
-        dyYield = dyHist.Yield()
+##         name = 'DYJets'
+##         dyHist = self.Hist(name)
+##         dyYield = dyHist.Yield()
 
-        newName = 'DYJets (emb)'
+##         newName = 'DYJets (emb)'
         
-        # get the embedded samples corresponding to the data components
-        # merge them into a single embedded component
-        embed = None
-        for dataName in dataComponents:
-            if dataName.find('data_')==-1:
-                raise ValueError('the directory names for the data components should start by data...')
-            embedHistName = dataName.replace('data_', 'embed_')
-            embedHist = self.Hist( embedHistName )
-            embedHist.stack = False
-            embedHist.on = False
-            if doEmbedding:
-                if embed is None:
-                    embed = copy.deepcopy( embedHist )
-                    self.AddHistogram(newName, embed.weighted, 3.5)
-                    self.Hist(newName).stack = True
-                    continue
-                self.Hist(newName).Add(embedHist)
+##         # get the embedded samples corresponding to the data components
+##         # merge them into a single embedded component
+##         embed = None
+##         for dataName in dataComponents:
+##             if dataName.find('data_')==-1:
+##                 raise ValueError('the directory names for the data components should start by data...')
+##             embedHistName = dataName.replace('data_', 'embed_')
+##             embedHist = self.Hist( embedHistName )
+##             embedHist.stack = False
+##             embedHist.on = False
+##             if doEmbedding:
+##                 if embed is None:
+##                     embed = copy.deepcopy( embedHist )
+##                     self.AddHistogram(newName, embed.weighted, 3.5)
+##                     self.Hist(newName).stack = True
+##                     continue
+##                 self.Hist(newName).Add(embedHist)
        
-        # dyYield = dyHist.Yield()
-        # print '2', dyYield
-        if doEmbedding:
-            print 'embedding is used'
-            embedYield = self.Hist(newName).Yield()
-            self.Hist(newName).Scale( dyYield / embedYield ) 
-            self._ApplyPrefs()
-            self.Hist(name).on = False
+##         # dyYield = dyHist.Yield()
+##         # print '2', dyYield
+##         if doEmbedding:
+##             print 'embedding is used'
+##             embedYield = self.Hist(newName).Yield()
+##             self.Hist(newName).Scale( dyYield / embedYield ) 
+##             self._ApplyPrefs()
+##             self.Hist(name).on = False
 
     def groupDataComponents( self, dataComponents, name ):
         '''Groups all data components into a single component with name <name>.
@@ -143,7 +143,6 @@ class H2TauTauDataMC( AnalysisDataMC ):
         The resulting integrated luminosity is used to scale all the
         MC components.
         '''
-        # import pdb; pdb.set_trace()
         
         self.intLumi = 0
         # self.dataComponents = dataComponents
@@ -165,9 +164,6 @@ class H2TauTauDataMC( AnalysisDataMC ):
             self.Hist(name).Add( hist )
             # compute integrated luminosity for all data samples
         # print intLumi
-        if self.intLumi == 0:
-            self.intLumi = 1000.
-        # self.Hist(name).intLumi = intLumi
         # set lumi for all MC samples:
         for component, weight in self.weights.iteritems():
             if component not in dataComponents:
@@ -198,9 +194,3 @@ class H2TauTauDataMC( AnalysisDataMC ):
         self.histPref['DYJets'] = {'style':sYellow, 'layer':3}
         self.histPref['DYJets (emb)'] = {'style':sYellow, 'layer':3}
         self.histPref['DYJets_Fakes'] = {'style':sBlack, 'layer':2.5}
-        self.histPref['HiggsVBF110'] = {'style':sBlack, 'layer':4}
-        self.histPref['HiggsVBF115'] = {'style':sBlack, 'layer':5}
-        self.histPref['HiggsVBF120'] = {'style':sBlack, 'layer':6}
-        self.histPref['HiggsVBF125'] = {'style':sBlack, 'layer':7}
-        self.histPref['HiggsVBF130'] = {'style':sBlack, 'layer':8}
-        self.histPref['HiggsVBF135'] = {'style':sBlack, 'layer':9}

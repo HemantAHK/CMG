@@ -26,20 +26,14 @@ class TauMuAnalyzer( DiLeptonAnalyzer ):
 
 
     def process(self, iEvent, event):
+        # import pdb; pdb.set_trace()
         result = super(TauMuAnalyzer, self).process(iEvent, event)
         
         if result is False:
-            selDiLeptons = [ diL for diL in event.diLeptons if \
-                             self.testMass(diL) ]
-            if len(selDiLeptons)==0:
-                return False
-            event.diLepton = self.bestDiLepton( selDiLeptons )
-            event.leg1 = event.diLepton.leg1()
-            event.leg2 = event.diLepton.leg2()
-            event.isSignal = False
-        else:
-            event.isSignal = True
+            return result
 
+        # Simone, that's what you probably want to check.
+        # Also have a look at CMGTools.RootTools.physicsobjects.DiObject
         event.genMatched = None
         if self.cfg_comp.isMC:
             genParticles = self.mchandles['genParticles'].product()
@@ -54,62 +48,61 @@ class TauMuAnalyzer( DiLeptonAnalyzer ):
         return True
         
     def testLeg1(self, leg):
+        # import pdb; pdb.set_trace()
         return self.testTau(leg) and \
                super( TauMuAnalyzer, self).testLeg1( leg )
 
 
     def testLeg2(self, leg):
-        # import pdb; pdb.set_trace()
         return self.testMuonTight(leg) and \
                super( TauMuAnalyzer, self).testLeg2( leg )
 
-
     def testTau(self, tau):
         '''Returns True if a tau passes a set of cuts.
-        Can be used in testLeg1 and testLeg2, in child classes.'''
+        Can be used in testLeg1 and testLeg2, in child classes.
+        
+        WARNING: the muon filter should be used only in the muon channel.'''
         if tau.decayMode() == 0 and \
                tau.calcEOverP() < 0.2: #reject muons faking taus in 2011B
             return False
-        return tau.tauID("byLooseIsoMVA")>0.5 and \ 
-               tau.tauID("againstMuonTight")>0.5 and \
-               tau.tauID("againstElectronLoose")>0.5 and \
-               self.testVertex( tau )
-               # tau.tauID("byLooseCombinedIsolationDeltaBetaCorr")>0.5 and \   
+        elif tau.tauID("byLooseCombinedIsolationDeltaBetaCorr")==False:
+            return False
+        elif tau.tauID("againstMuonTight")==False:
+            return False
+        elif tau.tauID("againstElectronLoose")==False:
+            return False        
+        else:
+            return True
 
-
-    def testVertex(self, lepton):
-        '''Tests vertex constraints, for mu and tau'''
-        return abs(lepton.dxy()) < 0.045 and \
-               abs(lepton.dz()) < 0.2 
+    def testMuonID(self, muon):
+        return ( muon.looseId() and \
+                 abs(muon.dxy()) < 0.045 and \
+                 abs(muon.dz()) < 0.2 )
 
 
     def testMuonTight(self, muon ):
-        '''Tight muon selection'''
-        if muon.pt() > self.cfg_ana.pt2 and \
-           abs( muon.eta() ) < self.cfg_ana.eta2 and \
-           muon.tightId() and \
-           self.testVertex( muon ) and \
-           self.muonIso(muon)<self.cfg_ana.iso2: 
+        '''basically recoding the muon selection of muCuts_cff.'''
+        if muon.pt()>self.cfg_ana.pt2 and \
+               abs( muon.eta() ) < self.cfg_ana.eta2 and \
+               self.testMuonID(muon) and \
+               self.muonIso(muon)<0.1:
             return True
         else:
             return False
 
+    def muonIso(self, muon ):
+        return muon.relIso(0.5)
 
     def testMuonLoose( self, muon ):
         '''Loose muon selection, for the lepton veto'''
         #COLIN: not sure the vertex constraints should be kept 
-        if muon.pt() > 15 and \
+        if muon.pt()>15 and \
                abs( muon.eta() ) < 2.5 and \
-               muon.looseId() and \
-               self.testVertex( muon ) and \
+               self.testMuonID(muon) and \
                self.muonIso(muon)<0.3:
             return True
         else:
             return False
-
-
-    def muonIso(self, muon ):
-        return muon.relIso(0.5)
     
 
     def leptonAccept(self, leptons):
