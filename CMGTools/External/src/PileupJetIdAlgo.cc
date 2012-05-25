@@ -18,7 +18,7 @@ PileupJetIdAlgo::PileupJetIdAlgo(const edm::ParameterSet & ps)
 {
 	impactParTkThreshod_ = 1.;/// ps.getParameter<double>("impactParTkThreshod");
 	cutBased_ = false;
-	std::string label    = ps.getParameter<std::string>("label");
+	//std::string label    = ps.getParameter<std::string>("label");
 	cutBased_ =  ps.getParameter<bool>("cutBased");
 	if(!cutBased_) 
 	  {
@@ -303,6 +303,9 @@ PileupJetIdentifier PileupJetIdAlgo::computeIdVariables(const reco::Jet * jet, f
 	if( patjet != 0 && jec == 0. ) { // if this is a pat jet and no jec has been passed take the jec from the object
 		jec = patjet->pt()/patjet->correctedJet(0).pt();
 	}
+	//// else if( patjet != 0 && patjet->pt() > 20. ) {
+	//// 	std::cout <<  patjet->pt() << " " << jet->pt() << " " << jec << std::endl;
+	//// }
 	if( jec < 0. ) {
 		jec = 1.;
 	}
