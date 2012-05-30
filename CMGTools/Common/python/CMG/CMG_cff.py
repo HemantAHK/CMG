@@ -22,7 +22,6 @@ CMGSequence = cms.Sequence(
     # triggerSequence +
     muonSequence + 
     electronSequence +
-    photonSequence +
     jetSequence +
     tauSequence +
     cmgPFMET +
