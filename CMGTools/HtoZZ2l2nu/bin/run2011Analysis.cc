@@ -229,7 +229,13 @@ int main(int argc, char* argv[])
    for(size_t ivar=0; ivar<nvarsToInclude; ivar++)
    {
        Hoptim_systs->GetXaxis()->SetBinLabel(ivar+1, varNames[ivar]);
-       mon.addHistogram( new TH2F (TString("mt_shapes")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 32,150,950) );
+       mon.addHistogram( new TH2F (TString("mt_shapes")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];#events (/25GeV)",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 32,150,950) );
+       mon.addHistogram( new TH2F (TString("mt_shapesZ10")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];#events (/25GeV)",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 1,150,950) );//only cut&count
+       mon.addHistogram( new TH2F (TString("mt_shapesZ5")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];#events (/25GeV)",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 1,150,950) );//only cut&count
+
+       //3lepton SB
+       mon.addHistogram( new TH2F (TString("mt_shapes_3rdLepton")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 1,150,950) );
+
        if(ivar==0)mon.addHistogram( new TH2F (TString("mt_shapesBTagSB")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 32,150,950) );
        mon.addHistogram( new TH2F (TString("mt_redMet_shapes")+varNames[ivar],";cut index;M_{T} [GeV/c^{2}];",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 32,150,950) );
        mon.addHistogram( new TH2F (TString("mt3")+varNames[ivar],";cut index;M_{T}^{3rd lepton} [GeV/c^{2}];",optim_Cuts1_met.size(),0,optim_Cuts1_met.size(), 50,0,250) );
@@ -331,7 +337,6 @@ int main(int argc, char* argv[])
       //if( duplicatesChecker.isDuplicate( ev.run, ev.lumi, ev.event) ) { nDuplicates++; continue; }
       PhysicsEvent_t phys=getPhysicsEventFrom(ev);
       bool mustBlind = (!isMC && runBlinded && evSummaryHandler.hasSpoilerAlert(!isMC));
-
             
       //categorize events
       TString tag_cat;
@@ -380,20 +385,20 @@ int main(int argc, char* argv[])
       //require 2012 ID and isolation
       bool pass2012IdAndIso(true);
       for(size_t ilep=0; ilep<2; ilep++){
-	  int lpid=phys.leptons[ilep].pid;
-	  if(fabs(phys.leptons[ilep].id)==13){
-	      float relIso = phys.leptons[ilep].muPFRelIsoCorrected2012(ev.rho25Neut);
-	      pass2012IdAndIso &= hasObjectId(ev.mn_idbits[lpid], MID_TIGHT);
-	      pass2012IdAndIso &= (relIso<0.2);
-	  }else{
-	      float relIso = phys.leptons[ilep].ePFRelIsoCorrected2012(ev.rho);
-	      pass2012IdAndIso &= hasObjectId(ev.en_idbits[lpid], EID_MEDIUM);
-	      pass2012IdAndIso &= (relIso<0.15);
-	 }
+          int lpid=phys.leptons[ilep].pid;
+          if(fabs(phys.leptons[ilep].id)==13){
+              float relIso = phys.leptons[ilep].muPFRelIsoCorrected2012(ev.rho25Neut);
+              pass2012IdAndIso &= hasObjectId(ev.mn_idbits[lpid], MID_TIGHT);
+              pass2012IdAndIso &= (relIso<0.2);
+          }else{
+              float relIso = phys.leptons[ilep].ePFRelIsoCorrected2012(ev.rho);
+              pass2012IdAndIso &= hasObjectId(ev.en_idbits[lpid], EID_MEDIUM);
+              pass2012IdAndIso &= (relIso<0.15);
+         }
       }
       if(!pass2012IdAndIso)continue;
- 
 
+      //analyze the leptons
       LorentzVector lep1=phys.leptons[0];
       LorentzVector lep2=phys.leptons[1];
       LorentzVector zllraw=lep1+lep2;
@@ -401,10 +406,10 @@ int main(int argc, char* argv[])
       if(!isMC)
 	{
 	  //apply regression corrections for SC energy
-          float l1corr(1.0f);
-          float l2corr(1.0f);
-//	  float l1corr( fabs(phys.leptons[0].id)==ELECTRON ? ev.en_corren[phys.leptons[0].pid]/phys.leptons[0].energy() : 1.0); if(l1corr==0) l1corr=1;
-//	  float l2corr( fabs(phys.leptons[1].id)==ELECTRON ? ev.en_corren[phys.leptons[1].pid]/phys.leptons[1].energy() : 1.0); if(l2corr==0) l2corr=1;
+          float l1corr = phys.leptons[0].ensf;
+          float l2corr = phys.leptons[1].ensf;
+	  //float l1corr( fabs(phys.leptons[0].id)==ELECTRON ? ev.en_corren[phys.leptons[0].pid]/phys.leptons[0].energy() : 1.0); if(l1corr==0) l1corr=1;
+	  //float l2corr( fabs(phys.leptons[1].id)==ELECTRON ? ev.en_corren[phys.leptons[1].pid]/phys.leptons[1].energy() : 1.0); if(l2corr==0) l2corr=1;
 	  zll = LorentzVector(l1corr*lep1+l2corr*lep2);
 	}
 
@@ -454,6 +459,7 @@ int main(int argc, char* argv[])
 	if(ivar==5)                        iweight *=TotalWeight_plus;        //pu up
 	if(ivar==6)                        iweight *=TotalWeight_minus;       //pu down
 	if(ivar<=10 && ivar>=7 && isMC_GG) iweight *=ev.hptWeights[ivar-6];   //ren/fact scales
+
 
 	Float_t zmassraw=zllraw.mass();
 	Float_t zmass=zll.mass();
@@ -515,13 +521,14 @@ int main(int argc, char* argv[])
         if(tag_subcat=="geq2jets" || tag_subcat=="vbf")tags_full.push_back(tag_cat + "geq2jetsInc");
         if(tag_subcat!="vbf")tags_full.push_back(tag_cat + "novbf");
         mustBlind |= (ivar==0 && !isMC && runBlinded && tag_subcat=="vbf" && zvv.pt()>70);
-
 	
 	//##############################################
 	//########     PRESELECTION             ########
 	//##############################################
 	if(zmass<40) continue; // this is required by the HZZ skim anyhow
 	bool passZmass(fabs(zmass-91)<15);
+        bool passZmass10(fabs(zmass-91)<10);
+        bool passZmass5(fabs(zmass-91)<5);
 	bool isZsideBand( (zmass>40 && zmass<70) || (zmass>110 && zmass<200));
 	bool isZsideBandPlus( (zmass>110 && zmass<200));
 	bool passDphijmet(mindphijmet>0.5); 
@@ -529,7 +536,11 @@ int main(int argc, char* argv[])
 	bool pass3dLeptonVeto(true); int nExtraLep(0); for(unsigned int i=2;i<phys.leptons.size();i++) { if(phys.leptons[i].pt()>10){ nExtraLep++; pass3dLeptonVeto=false;} }
 	bool passBveto(nbtags==0);
 	bool passBaseMet(zvv.pt()>70);
-     
+      
+        bool passZmass3dLepton = false;        
+        if( fabs((phys.leptons[0]+phys.leptons[2]).mass()-91)<15 && phys.leptons[0].id!=phys.leptons[2].id)passZmass3dLepton=true;
+        if( fabs((phys.leptons[1]+phys.leptons[2]).mass()-91)<15 && phys.leptons[1].id!=phys.leptons[2].id)passZmass3dLepton=true;
+ 
 
 // 	LorentzVector genRes(0,0,0,0);
 // 	for(size_t igl=0;igl<phys.genleptons.size(); igl++) genRes+= phys.genleptons[igl];
@@ -573,8 +584,8 @@ int main(int argc, char* argv[])
 		  //mon.fillHisto("wzdecaymode",tags_full,getWZdecayMode(ev).first,iweight);
 
 		  if(passDphijmet){
+		    mon.fillHisto("eventflow",tags_full,5,iweight);
                     if(!mustBlind){
-                       mon.fillHisto("eventflow",tags_full,5,iweight);
                        mon.fillHisto("met_met",tags_full,zvv.pt(),iweight);
                        mon.fillHisto("met_min3Met",tags_full,min3Met.pt(),iweight);
                        mon.fillHisto("met_met_vspu",tags_full,ev.ngenITpu,zvv.pt(),iweight);
@@ -587,11 +598,11 @@ int main(int argc, char* argv[])
                        mon.fillHisto("met_redMetRaw",tags_full,redMetRaw.pt(),iweight);
                        mon.fillHisto("mt",tags_full,mt,iweight);
                        mon.fillHisto("mtRaw",tags_full,mtRaw,iweight);
-                                     
+
                        if(passBaseMet){
                          mon.fillHisto  ("eventflow",tags_full,6,iweight);
                        }
-                    }
+		    }	  
 		  }
 		}
 	      }
@@ -599,8 +610,7 @@ int main(int argc, char* argv[])
 	  }
 	}
 
-
-          if(!mustBlind){	  
+ 	  if(!mustBlind){
              //Fill histogram for posterior optimization, or for control regions
              bool passPreselection             (passZmass && passZpt && pass3dLeptonVeto && passDphijmet && passBveto);
              bool passPreselectionMbvetoMzmass (             passZpt && pass3dLeptonVeto && passDphijmet             );          
@@ -613,6 +623,12 @@ int main(int argc, char* argv[])
                if(zvv.pt()>optim_Cuts1_met[index] && mt>optim_Cuts1_mtmin[index] && mt<optim_Cuts1_mtmax[index])
                  {
                    if(passPreselection                                                    )   mon.fillHisto(TString("mt_shapes")+varNames[ivar],tags_full,index, mt,iweight);
+                   if(passPreselection && passZmass10                                     )   mon.fillHisto(TString("mt_shapesZ10")+varNames[ivar],tags_full,index, mt,iweight);
+                   if(passPreselection && passZmass5                                      )   mon.fillHisto(TString("mt_shapesZ5")+varNames[ivar],tags_full,index, mt,iweight);
+
+//                   if(passPreselectionM3dlep       && !pass3dLeptonVeto && nExtraLep==1 && passZmass3dLepton && ivar==0)   mon.fillHisto(TString("mt_shapes_3rdLepton")+varNames[ivar],tags_full,index, mt,iweight);
+                   if(passPreselectionM3dlep       && !pass3dLeptonVeto && nExtraLep==1 && ivar==0)   mon.fillHisto(TString("mt_shapes_3rdLepton")+varNames[ivar],tags_full,index, mt,iweight);
+
                    if(passPreselectionMbvetoMzmass && passZmass   && !passBveto && ivar==0)   mon.fillHisto(TString("mt_shapesBTagSB")+varNames[ivar],tags_full,index, mt,iweight);
                    if(passPreselectionM3dlep       && !pass3dLeptonVeto && nExtraLep==1   )   mon.fillHisto(TString("mt3")+varNames[ivar],tags_full,index, mt3,iweight);
                    if(passPreselectionMbvetoMzmass && passZmass         && passBveto      )   mon.fillHisto("nonresbckg_ctrl"+varNames[ivar],tags_full,index,0,iweight);
