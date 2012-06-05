@@ -7,7 +7,7 @@ import math
 def substractMCbackground(QCDtightSS, plotVarDataSS):
       QCDtightSS.Add(plotVarDataSS.Hist("DYJets"),-1)
       QCDtightSS.Add(plotVarDataSS.Hist("DYJets_Fakes"),-1)
-      QCDtightSS.Add(plotVarDataSS.Hist("DYJets_Photon"),-1)
+      #QCDtightSS.Add(plotVarDataSS.Hist("DYJets_Photon"),-1)
       QCDtightSS.Add(plotVarDataSS.Hist("DYJets_Electron"),-1)
       QCDtightSS.Add(plotVarDataSS.Hist("WJets"),-1)
       QCDtightSS.Add(plotVarDataSS.Hist("WJets_Fakes"),-1)
@@ -172,14 +172,11 @@ def QCDEstimate(prefix,prefix1,xmin,xmax,\
       tightOSLooseSShErr=tightOSLooseSSh*math.sqrt(1./QCDlooseHighControlOS.Integral() + 1./QCDlooseHighControlLooseIsoSS.Integral())
       print "QCDlooseHighControlOS / QCDlooseHighControlLooseIsoSS",tightOSLooseSSh, "+-", tightOSLooseSShErr
       
+      if tightOSLooseSSm<tightOSLooseSSmErr/2.:
+          tightOSLooseSSm=tightOSLooseSSmErr/2.
+      
       QCDScale=tightOSLooseSSm
       
-      for i in range(QCDlooseSS.obj.GetXaxis().GetNbins()):
-          if QCDlooseSS.obj.GetBinContent(i+1)<=0:
-	      QCDlooseSS.obj.SetBinContent(i+1,0.001)
-          if QCDlooseSS.weighted.GetBinContent(i+1)<=0:
-	      QCDlooseSS.weighted.SetBinContent(i+1,0.001)
-
       return QCDlooseSS,QCDScale
 
 def QCDEstimate1(prefix,prefix1,xmin,xmax,\
@@ -310,14 +307,14 @@ def QCDEstimate1(prefix,prefix1,xmin,xmax,\
       #osSShErr=osSSh*math.sqrt(1./QCDlooseHighControlLooseIsoOS.Integral() + 1./QCDlooseHighControlLooseIsoSS.Integral())
       #print "QCDlooseHighControlLooseIsoOS / QCDlooseHighControlLooseIsoSS",osSSh, "+-", osSShErr
       
+      if osSSm<osSSmErr/2.:
+          osSSm=osSSmErr/2.
+      
+      if tightLoose<tightLooseErr/2.:
+          tightLoose=tightLooseErr/2.
+      
       QCDScale=osSSm*tightLoose
       
-      for i in range(QCDlooseSS.obj.GetXaxis().GetNbins()):
-          if QCDlooseSS.obj.GetBinContent(i+1)<=0:
-	      QCDlooseSS.obj.SetBinContent(i+1,0.001)
-          if QCDlooseSS.weighted.GetBinContent(i+1)<=0:
-	      QCDlooseSS.weighted.SetBinContent(i+1,0.001)
-
       return QCDlooseSS,QCDScale
 
 def QCDEstimate2(prefix,prefix1,xmin,xmax,\
@@ -362,20 +359,18 @@ def QCDEstimate2(prefix,prefix1,xmin,xmax,\
       QCDtightSS=copy.deepcopy(plotVarDataSS.Hist("Data"))
       substractMCbackground(QCDtightSS, plotVarDataSS)
 
+      print "QCDlooseOS:", QCDlooseOS.Integral()
       print "QCDlooseSS:", QCDlooseSS.Integral()
       print "QCDtightSS:", QCDtightSS.Integral()
       tightLoose=QCDtightSS.Integral()/QCDlooseSS.Integral()
       tightLooseErr=tightLoose*math.sqrt(1./abs(QCDtightSS.Integral()) + 1./abs(QCDlooseSS.Integral()))
       print "QCDtightSS / QCDlooseSS", tightLoose, "+-", tightLooseErr
       
+      if tightLoose<tightLooseErr/2.:
+          tightLoose=tightLooseErr/2.
+      
       QCDScale=tightLoose
       
-      for i in range(QCDlooseOS.obj.GetXaxis().GetNbins()):
-          if QCDlooseOS.obj.GetBinContent(i+1)<=0:
-	      QCDlooseOS.obj.SetBinContent(i+1,0.001)
-          if QCDlooseOS.weighted.GetBinContent(i+1)<=0:
-	      QCDlooseOS.weighted.SetBinContent(i+1,0.001)
-
       return QCDlooseOS,QCDScale
 
 def QCDEstimate3(prefix,prefix1,xmin,xmax,\
@@ -450,13 +445,142 @@ def QCDEstimate3(prefix,prefix1,xmin,xmax,\
       #osSShErr=osSSh*math.sqrt(1./QCDlooseHighControlLooseIsoOS.Integral() + 1./QCDlooseHighControlLooseIsoSS.Integral())
       #print "QCDlooseHighControlLooseIsoOS / QCDlooseHighControlLooseIsoSS",osSSh, "+-", osSShErr
       
+      if osSSm<osSSmErr/2.:
+          osSSm=osSSmErr/2.
+      
+      if tightLoose<tightLooseErr/2.:
+          tightLoose=tightLooseErr/2.
+      
       QCDScale=osSSm*tightLoose
       
-      for i in range(QCDlooseSS.obj.GetXaxis().GetNbins()):
-          if QCDlooseSS.obj.GetBinContent(i+1)<=0:
-	      QCDlooseSS.obj.SetBinContent(i+1,0.001)
-          if QCDlooseSS.weighted.GetBinContent(i+1)<=0:
-	      QCDlooseSS.weighted.SetBinContent(i+1,0.001)
-
       return QCDlooseSS,QCDScale
 
+def QCDEstimate4(prefix,prefix1,xmin,xmax,\
+                 plotVarDataSS, plotVarDataLooseIsoOS, plotVarDataLooseIsoSS, plotVarDataSemiLooseIsoSS,\
+                 log):
+      ymax=plotVarDataLooseIsoOS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataLooseIsoOS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataLooseIsoOS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataLooseIsoOS.varName+"_qcdLooseOS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataLooseIsoSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataLooseIsoSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataLooseIsoSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataLooseIsoSS.varName+"_qcdLooseSS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataSemiLooseIsoSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataSemiLooseIsoSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataSemiLooseIsoSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataSemiLooseIsoSS.varName+"_qcdSemiLooseSS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataSS.varName+"_qcdTightSS.png")
+      #gPad.WaitPrimitive()
+      
+      QCDlooseOS=copy.deepcopy(plotVarDataLooseIsoOS.Hist("Data"))
+      substractMCbackground(QCDlooseOS, plotVarDataLooseIsoOS)
+
+      QCDlooseSS=copy.deepcopy(plotVarDataLooseIsoSS.Hist("Data"))
+      substractMCbackground(QCDlooseSS, plotVarDataLooseIsoSS)
+
+      QCDtightSS=copy.deepcopy(plotVarDataSS.Hist("Data"))
+      substractMCbackground(QCDtightSS, plotVarDataSS)
+
+      print "QCDlooseSS:", QCDlooseSS.Integral()
+      print "QCDtightSS:", QCDtightSS.Integral()
+      tightLoose=QCDtightSS.Integral()/QCDlooseSS.Integral()
+      tightLooseErr=tightLoose*math.sqrt(1./abs(QCDtightSS.Integral()) + 1./abs(QCDlooseSS.Integral()))
+      print "QCDtightSS / QCDlooseSS", tightLoose, "+-", tightLooseErr
+      
+      if tightLoose<tightLooseErr/2.:
+          tightLoose=tightLooseErr/2.
+      
+      QCDScale=tightLoose
+      
+      return QCDlooseOS,QCDScale
+
+def QCDEstimate5(prefix,prefix1,xmin,xmax,\
+                 plotVarDataSS, plotVarDataLooseIsoOS, plotVarDataLooseIsoSS, plotVarDataSemiLooseIsoSS,\
+                 log):
+      ymax=plotVarDataLooseIsoOS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataLooseIsoOS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataLooseIsoOS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataLooseIsoOS.varName+"_qcdLooseOS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataLooseIsoSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataLooseIsoSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataLooseIsoSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataLooseIsoSS.varName+"_qcdLooseSS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataSemiLooseIsoSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataSemiLooseIsoSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataSemiLooseIsoSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataSemiLooseIsoSS.varName+"_qcdSemiLooseSS.png")
+      #gPad.WaitPrimitive()
+      
+      ymax=plotVarDataSS.Hist("Data").GetMaximum()*1.5
+      if log:
+          plotVarDataSS.DrawStack("HIST",xmin,xmax,0.1,ymax)
+	  gPad.SetLogy()
+      else:
+          plotVarDataSS.DrawStack("HIST",xmin,xmax,0,ymax)
+	  gPad.SetLogy(False)
+      gPad.SaveAs(prefix1+prefix+'_'+plotVarDataSS.varName+"_qcdTightSS.png")
+      #gPad.WaitPrimitive()
+      
+      QCDlooseOS=copy.deepcopy(plotVarDataLooseIsoOS.Hist("Data"))
+      substractMCbackground(QCDlooseOS, plotVarDataLooseIsoOS)
+
+      QCDlooseSS=copy.deepcopy(plotVarDataLooseIsoSS.Hist("Data"))
+      substractMCbackground(QCDlooseSS, plotVarDataLooseIsoSS)
+
+      QCDtightSS=copy.deepcopy(plotVarDataSS.Hist("Data"))
+      substractMCbackground(QCDtightSS, plotVarDataSS)
+
+      print "QCDlooseSS:", QCDlooseSS.Integral()
+      print "QCDlooseOS:", QCDlooseOS.Integral()
+      OSSS=QCDlooseOS.Integral()/QCDlooseSS.Integral()
+      OSSSErr=OSSS*math.sqrt(1./abs(QCDlooseOS.Integral()) + 1./abs(QCDlooseSS.Integral()))
+      print "QCDlooseOS / QCDlooseSS", OSSS, "+-", OSSSErr
+      
+      if OSSS<OSSSErr/2.:
+          OSSS=OSSSErr/2.
+      
+      QCDScale=OSSS
+      
+      return QCDtightSS,QCDScale

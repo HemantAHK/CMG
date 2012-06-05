@@ -4,8 +4,9 @@ import CMGTools.RootTools.fwlite.Config as cfg
 from CMGTools.H2TauTau.triggerMap import pathsAndFilters
 
 
-period = 'Period_2012'
+period = 'Period_2011AB'
 
+baseDir = '2011'
 
 mc_vertexWeight = None
 mc_tauEffWeight = None
@@ -24,21 +25,10 @@ elif period == 'Period_2011AB':
     mc_vertexWeight = 'vertexWeightFall112011AB'
     mc_tauEffWeight = 'effTau2011AB'
     mc_muEffWeight = 'effMu2011AB'
-elif period == 'Period_2012':
-    mc_tauEffWeight_mc = None
-    mc_muEffWeight_mc = None
-   
+
 
 triggerAna = cfg.Analyzer(
     'TriggerAnalyzer'
-    )
-
-vertexAna = cfg.Analyzer(
-    'VertexAnalyzer',
-    # goodVertices = 'offlinePrimaryVertices', # hum... collection not available in old tuples
-    goodVertices = 'goodPVFilter',
-    vertexWeight = mc_vertexWeight,
-    verbose = False
     )
 
 TauMuAna = cfg.Analyzer(
@@ -51,6 +41,7 @@ TauMuAna = cfg.Analyzer(
     iso2 = 0.1,
     m_min = 10,
     m_max = 99999,
+    # diLeptonCutString = 'cuts_baseline',
     triggerMap = pathsAndFilters
     )
 
@@ -70,7 +61,12 @@ muonWeighter = cfg.Analyzer(
     verbose = False
     )
 
-
+vertexAna = cfg.Analyzer(
+    'VertexAnalyzer',
+    # fixedWeight = 1,
+    vertexWeight = mc_vertexWeight,
+    verbose = False
+    )
 
 # defined for vbfAna and eventSorter
 vbfKwargs = dict( Mjj = 400,
@@ -79,12 +75,22 @@ vbfKwargs = dict( Mjj = 400,
 
 vbfAna = cfg.Analyzer(
     'VBFAnalyzer',
-    jetCol = 'cmgPFJetSel',
+    jetCol = 'cmgPFJetSelCHS',
     jetPt = 30,
     jetEta = 4.5,
     **vbfKwargs
     )
 
+eventSorter = cfg.Analyzer(
+    'H2TauTauEventSorter',
+    # vertexWeight = mc_vertexWeight,
+    leg1 = 'tau',
+    leg2 = 'mu',
+    MT_low = 40,
+    MT_high = 60,
+    Boosted_JetPt = 150,
+    **vbfKwargs
+    )
 
 treeProducer = cfg.Analyzer(
     'H2TauTauTreeProducerTauMu'
@@ -92,8 +98,7 @@ treeProducer = cfg.Analyzer(
 
 #########################################################################################
 
-from CMGTools.H2TauTau.proto.samples.run2012.tauMu_ColinMay30 import * 
-# from CMGTools.H2TauTau.proto.samples.tauMu_ColinMay18_CHS import * 
+from CMGTools.H2TauTau.proto.samples.tauMu_ColinMay18_CHS import * 
 # from CMGTools.H2TauTau.proto.samples.tauMu_ColinMay18 import * 
 # from CMGTools.H2TauTau.proto.samples.tauMu_ColinMay15 import * 
 
@@ -107,7 +112,7 @@ for mc in MC:
     mc.jetSmear = mc_jet_smear
 
 
-# MC = [DYJets, WJets, TTJets]
+MC = [DYJets, WJets, TTJets]
 # MC.extend( mc_higgs )
 selectedComponents =  copy.copy(MC)
 
@@ -120,17 +125,14 @@ elif period == 'Period_2011B':
 elif period == 'Period_2011AB':
     selectedComponents.extend( data_2011 )
     selectedComponents.extend( embed_2011 )    
-elif period == 'Period_2012':
-    selectedComponents.extend( data_2012 )
-    
 
 
 
 sequence = cfg.Sequence( [
     triggerAna,
-    vertexAna,
     TauMuAna,
     vbfAna,
+    vertexAna,
     tauWeighter, 
     muonWeighter, 
     treeProducer
@@ -140,28 +142,30 @@ sequence = cfg.Sequence( [
 DYJets.fakes = True
 DYJets.splitFactor = 40
 WJets.splitFactor = 10
-TTJets.splitFactor = 100
+TTJets.splitFactor = 100 
+data_Run2011B_PromptReco_v1.splitFactor = 50
+data_Run2011A_PromptReco_v4.splitFactor = 40
+data_Run2011A_May10ReReco_v1.splitFactor = 40
+data_Run2011A_05Aug2011_v1.splitFactor = 20
+data_Run2011A_03Oct2011_v1.splitFactor = 20
 
-if period != 'Period_2012':
-    data_Run2011B_PromptReco_v1.splitFactor = 50
-    data_Run2011A_PromptReco_v4.splitFactor = 40
-    data_Run2011A_May10ReReco_v1.splitFactor = 40
-    data_Run2011A_05Aug2011_v1.splitFactor = 20
-    data_Run2011A_03Oct2011_v1.splitFactor = 20
-    
-    embed_Run2011B_PromptReco_v1.splitFactor = 10
-    embed_Run2011A_PromptReco_v4.splitFactor = 10
-    embed_Run2011A_May10ReReco_v1.splitFactor = 5
-    embed_Run2011A_05Aug2011_v1.splitFactor = 5
-    embed_Run2011A_03Oct2011_v1.splitFactor = 5
+embed_Run2011B_PromptReco_v1.splitFactor = 10
+embed_Run2011A_PromptReco_v4.splitFactor = 10
+embed_Run2011A_May10ReReco_v1.splitFactor = 5
+embed_Run2011A_05Aug2011_v1.splitFactor = 5
+embed_Run2011A_03Oct2011_v1.splitFactor = 5
 
-test = 1
+test = 0
+# selectedComponents = embed_2011
 if test==1:
-    comp = DYJets
-    comp.files = comp.files[:20]
-    # comp = data_2012[0]
+    # comp = HiggsVBF120
+    # comp.files = ['tauMu_fullsel_tree_CMG.root']
+    # comp.files = ['/data/c/cbern/Tests/CMGTools/44X/May05/CMGTools/CMSSW_4_4_4/src/CMGTools/H2TauTau/prod/tauMu_fullsel_tree_CMG.root']
+    comp = data_Run2011A_May10ReReco_v1
     selectedComponents = [comp]
     comp.splitFactor = 1
+    comp.files = comp.files[:5]
+    # TTJets.files = TTJets.files[:1]
 elif test==2:
     for comp in selectedComponents:
         comp.splitFactor = 1
