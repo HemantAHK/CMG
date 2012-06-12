@@ -35,16 +35,6 @@ class FileOps(object):
         self._integrity = None
         self._valid = False
         self._castorGroups = None
-        self._totalJobs = None
-        self._totalFilesMissing = None
-        self._totalFilesBad = None
-        self._totalFilesGood = None
-        self._primaryDatasetFraction = None
-        self._fileEntries = None
-        self._badJobs = None
-        self._validDuplicates = None
-        self._allMissingFiles = []
-        self._allBadFiles = []
         self._force = force
         self._min_run = -1
         self._max_run = -1
@@ -87,19 +77,13 @@ class FileOps(object):
             self._castor =  castor
             self._LFN = eostools.eosToLFN(castor)
             self._castorTags()
-            try:
-                self._readNJobs()
-            except:
-                print "No jobs file found in Logger"
             self._checkContiguity()
-            self.printStats()
             print "File is directory on EOS"
         # If logger is not present but directory exists
         elif eostools.isDirectory(castor) and self._force:
             self._castor = castor
             self._LFN = eostools.eosToLFN(castor)
             self._checkContiguity()
-            self.printStats()
             roots = self.getRootFiles() 
             
             if roots is None or len(roots) == 0: 
@@ -157,32 +141,14 @@ class FileOps(object):
         # Stage logger file to temp file and extract
         os.system("cmsStage -f "+self.getLFN() + "/Logger.tgz "+f.name)
         tar =tarfile.open(fileobj=f)
-        showtagsFile=tar.extractfile("Logger/logger_showtags.txt")
-        lines = showtagsFile.read().split("\n")
-        
+        file=tar.extractfile("Logger/logger_showtags.txt")
+        lines = file.read().split("\n")
         tar.close()
         f.close()
-        
         
         # Convert the tags in showtags to a Dict() object using findTags method
         self._findTags(lines)
-
-    # Check for the total jobs file and record
-    def _readNJobs(self):
-        """Read the total number of jobs from file in the logger"""
-        # Create temporary file to get logger info
-        f = tempfile.NamedTemporaryFile()
-        # Stage logger file to temp file and extract
-        os.system("cmsStage -f "+self.getLFN() + "/Logger.tgz "+f.name)
-        tar =tarfile.open(fileobj=f)
-        # Open the file in the logger and get the value
-        nJobsFile=tar.extractfile("Logger/logger_jobs.txt")
-        nJobs = nJobsFile.read().split(": ")[2].split("\n")[1]
-        tar.close()
-        f.close()
-        # Set the class variable
-        self._nJobs=nJobs
-
+ 
     # Return castor directory name
     def getCastor(self):
         """Return the EOS path that was stored when the checkDirectory command was executed
@@ -258,19 +224,20 @@ class FileOps(object):
                     if re.search(".root",file):
                         # convert output to TB
                         output += float(float(file.split('size=')[1].split("\n")[0])/1000/1000/1000/1000)
-        # If the root file is a PFAOD file
-        elif re.search("V", self._setName.split("/")[-1]):
-            output = 0
-        #Add the size of each file to the total size variable
-        for file in files:
-            if re.search('PFAOD',file):
-                if re.search(".root",file):
-                    # convert output to TB
-                    output += float(float(file.split('size=')[1].split("\n")[0])/1000/1000/1000/1000)
-                        
-        return output
+	# If the root file is a PFAOD file
+	elif re.search("V", self._setName.split("/")[-1]):
+	    output = 0
+	    # Add the size of each file to the total size variable
+	    for file in files:
+	        if re.search('PFAOD',file):
+	            if re.search(".root",file):
+	                # convert output to TB
+	                output += float(float(file.split('size=')[1].split("\n")[0])/1000/1000/1000/1000)
+	                    
+	if output is not None: print "Dataset size =",output,"TB"
+	return output
 
-    # Method to check validity of root files, returns python dict
+	# Method to check validity of root files, returns python dict
     def _checkContiguity(self):
         """Checks the contiguity of the files
         
@@ -325,33 +292,28 @@ class FileOps(object):
                 if report['Status'] == "VALID":
                     self._valid = True
                 if 'BadJobs' in report:
-                    self._badJobs = report['BadJobs']
+                    integrityCheck['BadJobs'] = report['BadJobs']
                 if 'FilesBad' in report:
-                    self._totalFilesBad = report['FilesBad']
-                if 'FilesGood' in report:
-                    self._totalFilesGood = report['FilesGood']
+                    integrityCheck['NumFilesBad'] = report['FilesBad']
                 if 'Files' in report:
-                    self._filesBad = []
+                    integrityCheck['FilesBad'] = []
                     for i in report['Files']:
                         if report['Files'][i][0] is False:
-                            self._filesBad.append(i)
-                    if len(self._filesBad)>0:
-                        if checkRootType(self._filesBad[0]):
-                            self._filesBad.sort(key=lambda x: int(x.split("_")[-3]))
+                            integrityCheck['FilesBad'].append(i)
+                    if len(integrityCheck['FilesBad'])>0:
+                        if checkRootType(integrityCheck['FilesBad'][0]):
+                            integrityCheck['FilesBad'].sort(key=lambda x: int(x.split("_")[-3]))
                         else:
-                            self._filesBad.sort(key=lambda x: int(x.rstrip(".root").split("_")[-1]))
+                            integrityCheck['FilesBad'].sort(key=lambda x: int(x.rstrip(".root").split("_")[-1]))
                 if 'FilesEntries' in report:
-                    self._filesEntries = report['FilesEntries']
+                    integrityCheck['FilesEntries'] = report['FilesEntries']
                 if 'PrimaryDatasetFraction' in report:
-                    self._primaryDatasetFraction = report['PrimaryDatasetFraction']
+                    integrityCheck['PrimaryDatasetFraction'] = report['PrimaryDatasetFraction']
                 if 'PrimaryDatasetEntries' in report:
-                    self._primaryDatasetEntries = report['PrimaryDatasetEntries']
+                    integrityCheck['PrimaryDatasetEntries'] = report['PrimaryDatasetEntries']
                 if 'ValidDuplicates' in report:
-                    self._validDuplicates = report['ValidDuplicates']
-                self._integrity = report
-        
-
-        
+                    integrityCheck['ValidDuplicates'] = report['ValidDuplicates']
+                self._integrity = integrityCheck
         # Loop while there are still filenames that do not belong to a file group
         while len(fileNames)>0:
             # Set filename for this pass as the current first element of the filename array
@@ -385,7 +347,6 @@ class FileOps(object):
         
 
         self._castorGroups = self._groups
-        self._totalFilesMissing = 0
         if self._groups is not None:
             for group in self._castorGroups:
                 group['name'] = self.getLFN()+ "/" + group['name'].split("/")[-1]
@@ -394,9 +355,9 @@ class FileOps(object):
                 for file in group['duplicateFiles']:
                     file = self.getLFN() + file.split("/")[-1]
                 
-                if self._validDuplicates is not None:
+                if self._integrity is not None and 'ValidDuplicates' in self._integrity:
                     for file in group['duplicateFiles']:
-                        for valid in self._validDuplicates:
+                        for valid in self._integrity['ValidDuplicates']:
                             if file == valid:
                                 
                                 del(group['duplicateFiles'][group['duplicateFiles'].index(file)])
@@ -406,22 +367,9 @@ class FileOps(object):
                 
                 for file in group['missingFiles']:
                     file = self.getLFN() + file.split("/")[-1]
-                    self._totalFilesMissing += 1
             
+        
     
-    # Give printout of dataset good/bad/missing/total files/jobs
-    def printStats(self):
-        """Prints the basic stats of the dataset"""
-        print "\nDataset Overview:"
-        if self._totalJobs is not None: print "Total jobs: %d" % self._totalJobs
-        if self._totalFilesGood is not None: print "Total files good: %d" % self._totalFilesGood
-        if self._totalFilesMissing is not None: print "Total files missing: %d" % self._totalFilesMissing
-        if self._totalFilesBad is not None: print "Total files bad: %d" % self._totalFilesBad
-        if self._primaryDatasetFraction is not None: print "Fraction of primary dataset used: %f" % self._primaryDatasetFraction
-        if self._primaryDatasetEntries is not None: print "Total entries in primary dataset: %d" % self._primaryDatasetEntries    
-        if self._fileEntries is not None: print "Total file entries in dataset: %d" % self._fileEntries
-        if self.getDatasetSize is not None: print "Dataset Size = %f TB" % self.getDatasetSize()
-        print ""
     
     # Check if group is valid and return python dictionary with details
     def _checkGroup(self, group):
@@ -436,9 +384,7 @@ class FileOps(object):
             if groupInfo['bottom'] > 1: count = 1
             # Check that all numbers are there and index every element
             if checkRootType(group[0]):
-                top = groupInfo['top']+1
-                if self._totalJobs is not None: top = self._totalJobs - 1
-                for i in range(count, top):
+                for i in range(count, groupInfo['top']+1):
                     if i not in groupInfo['fileNums']:
                         parts = groupInfo['name'].split("_")
                         parts[-3] = str(i)
@@ -455,7 +401,7 @@ class FileOps(object):
                             if str(i) == duplicateFile.split("_")[-3]:
                                 groupInfo['duplicateFiles'].append(duplicateFile)
             else:
-                for i in range(count, top):
+                for i in range(count, groupInfo['top']+1):
                     if i not in groupInfo['fileNums']:
                         parts = groupInfo['name'].rstrip(".root").split("_")
                         parts[-1] = str(i)
