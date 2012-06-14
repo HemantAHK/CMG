@@ -23,6 +23,7 @@ class SavannahBrowser(object):
 		self.user = username
 		self._br = mechanize.Browser()
 		self._valid = False
+		print self.taskID
 		if self.newDS:
 			self._br.open("https://savannah.cern.ch/projects/cmgsample/")
 			if self._login(username, password):
