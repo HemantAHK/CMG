@@ -20,7 +20,8 @@ runOnMC = True
 
 from CMGTools.Production.datasetToSource import *
 process.source = datasetToSource(
-   'cmgtools_group',
+    'cmgtools_group',
+    #'/DYToTauTau_M_20_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S8_START52_V9-v1/AODSIM/V5'
     '/GluGluToHToZZTo4L_M-126_8TeV-powheg-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM/V5'
    # '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START42_V14B-v1/AODSIM/V5',
    # 'CMS',
@@ -28,19 +29,16 @@ process.source = datasetToSource(
    #'/TauPlusX/Run2011A-PromptReco-v4/AOD/V5'
    # 'CMS',
    # '/TauPlusX/Run2011A-03Oct2011-v1/AOD'
+   #'CMS',
+   # '/DoubleMu/Run2012B-PromptReco-v1/AOD'
    )
-
-## if runOnMC is False:
-##     print 'OVERRIDING datasetToSource TO TEST RUNNING ON DATA'
-##     process.source.fileNames = ['/store/data/Run2012A/DoubleMu/AOD/PromptReco-v1/000/191/859/66D9EE0B-EC8C-E111-9346-001D09F2AD84.root']
-## process.source.fileNames = process.source.fileNames[:1]
 
 print sep_line
 print process.source.fileNames
 print sep_line 
 
 ## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 print 'loading the main CMG sequence'
 
@@ -132,9 +130,8 @@ process.p += process.postPathCounter
 ## Setup electron energy corrections
 ########################################################
 
-if cmsswIs44X():
-    from CMGTools.Common.Tools.setupGsfElectronCalibration import setupGsfElectronCalibration
-    setupGsfElectronCalibration( process, runOnMC )
+from CMGTools.Common.Tools.setupGsfElectronCalibration import setupGsfElectronCalibration
+setupGsfElectronCalibration( process, runOnMC )
 
 
 ########################################################
@@ -196,7 +193,7 @@ else:
     if runOnMC:
         GT = 'START52_V9::All'
     else:
-        GT = 'GR_R_52_V7::All'
+        GT = 'GR_R_52_V8::All'
 process.GlobalTag.globaltag = GT
 
 print 'Global tag       : ', process.GlobalTag.globaltag
