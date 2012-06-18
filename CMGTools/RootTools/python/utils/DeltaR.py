@@ -22,7 +22,6 @@ def deltaPhi( p1, p2):
     return res
 
 
-
 def cleanObjectCollection2( objects, masks, deltaRMin ):
     '''Masks objects using a deltaR cut, another algorithm (same results).'''
     if len(objects)==0:
@@ -52,11 +51,10 @@ def cleanObjectCollection2( objects, masks, deltaRMin ):
 
 def cleanObjectCollection( objects, masks, deltaRMin ):
     '''Masks objects using a deltaR cut.'''
-    if len(objects)==0 or len(masks)==0:
-        return objects, []
+    if len(objects)==0:
+        return objects
     deltaR2Min = deltaRMin*deltaRMin
     cleanObjects = []
-    dirtyObjects = []
     for object in objects:
         ok = True 
         for mask in masks:
@@ -66,9 +64,7 @@ def cleanObjectCollection( objects, masks, deltaRMin ):
                 ok = False
         if ok:
             cleanObjects.append( object )
-        else:
-            dirtyObjects.append( object )
-    return cleanObjects, dirtyObjects
+    return cleanObjects
 
 
 
@@ -85,7 +81,7 @@ def bestMatch( object, matchCollection):
     return bm, deltaR2Min
 
 
-def matchObjectCollection( objects, matchCollection, deltaR2Max):
+def matchObjectCollection( objects, matchCollection, deltaRMax):
     pairs = {}
     if len(objects)==0:
         return pairs
@@ -93,7 +89,7 @@ def matchObjectCollection( objects, matchCollection, deltaR2Max):
         return dict( zip(objects, [None]*len(objects)) )
     for object in objects:
         bm, dr2 = bestMatch( object, matchCollection )
-        if dr2<deltaR2Max:
+        if dr2<deltaRMax:
             pairs[object] = bm
         else:
             pairs[object] = None            

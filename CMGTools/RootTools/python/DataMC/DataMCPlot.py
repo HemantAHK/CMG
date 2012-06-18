@@ -22,22 +22,10 @@ class DataMCPlot(object):
         self.stack = None
         self.legendOn = True
         self.legend = None
-        self.legendBorders = 0.13,0.46,0.44,0.89
+        self.legendBorders = 0.13,0.66,0.44,0.89
         self.lastDraw = None
         self.lastDrawArgs = None
         self.stack = None
-        self.nostack = None
-        self.blindminx = None
-        self.blindmaxx = None
-
-    def Blind(self, minx, maxx, blindStack):
-        self.blindminx = minx
-        self.blindmaxx = maxx
-        if self.stack and blindStack:
-            self.stack.Blind(minx, maxx)
-        if self.nostack:
-            for hist in self.nostack:
-                hist.Blind(minx, maxx)
         
     def AddHistogram(self, name, histo, layer=0, legendLine = None):
         '''Add a ROOT histogram, with a given name.
@@ -50,18 +38,12 @@ class DataMCPlot(object):
 
     def Replace(self, name, pyhist):
         oldh = self.histosDict.get(name, None)
-        pythist = copy.deepcopy(pyhist)
-        pyhist.layer = oldh.layer
-        pyhist.stack = oldh.stack
-        pyhist.name = oldh.name
-        pyhist.legendLine = oldh.legendLine
-        pyhist.SetStyle( oldh.style )
-        pyhist.weighted.SetFillStyle( oldh.weighted.GetFillStyle())
         if oldh is None:
             print 'histogram', name, 'does not exist, cannot replace it.'
             return
         else:
             index = self.histos.index( oldh )
+            import pdb; pdb.set_trace
             self.histosDict[name] = pyhist
             self.histos[index] = pyhist
             
@@ -112,8 +94,6 @@ class DataMCPlot(object):
     def CreateLegend(self, ratio=False):
         if self.legend is None:
             self.legend = TLegend( *self.legendBorders )
-            self.legend.SetFillColor(0)
-            self.legend.SetLineColor(0)
         else:
             self.legend.Clear()
         hists = self._SortedHistograms(reverse=True)
@@ -128,6 +108,7 @@ class DataMCPlot(object):
         if self.legendOn:
             self.CreateLegend(ratio)
             self.legend.Draw('same')
+
                 
     def DrawRatio(self, opt=''):
         '''Draw ratios : h_i / h_0.
@@ -161,25 +142,20 @@ class DataMCPlot(object):
 
         The stack is considered as a single histogram.'''
         denom = None
-        # import pdb; pdb.set_trace()
         histForRatios = []
         for hist in self._SortedHistograms():
-            # if denom == None:
-            #     denom = hist
-            #    continue
+            if denom == None:
+                denom = hist
+                continue
             histForRatios.append( hist )
-        denom = histForRatios[-1]
-        histForRatios.pop()
         self._BuildStack( histForRatios, ytitle='MC/Data')
         self.stack.Divide( denom.obj )
-        if self.blindminx and self.blindmaxx:
-            self.stack.Blind(self.blindminx, self.blindmaxx)
         self.stack.Draw(opt,
                         xmin=xmin, xmax=xmax,
                         ymin=ymin, ymax=ymax )
         self.ratios = []
         for hist in self.nostack:
-            if hist is denom: continue
+            # print 'nostack ', hist
             ratio = copy.deepcopy( hist )
             ratio.obj.Divide( denom.obj )
             ratio.obj.Draw('same')
@@ -249,12 +225,7 @@ class DataMCPlot(object):
 
         if Histogram.stack is True, the histogram is put in the stack.'''
         self._BuildStack(self._SortedHistograms(), ytitle='Events')
-        for hist in self.nostack:
-            if self.blindminx:
-                hist.Blind(self.blindminx, self.blindmaxx)
-            hist.Draw()
-            hist.GetYaxis().SetRangeUser(0.01, hist.GetMaximum()*1.3)
-        self.stack.Draw(opt+'same',
+        self.stack.Draw(opt,
                         xmin=xmin, xmax=xmax,
                         ymin=ymin, ymax=ymax )
         for hist in self.nostack:
