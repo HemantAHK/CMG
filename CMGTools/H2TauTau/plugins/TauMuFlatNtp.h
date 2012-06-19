@@ -219,7 +219,6 @@ private:
   
   RecoilCorrector corrector_;
   int recoilCorreciton_;
-  double recoiliScale_;
   std::string fileZmmData_;
   std::string fileZmmMC_;
 

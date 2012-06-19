@@ -5,7 +5,7 @@ import sys
 import os
 import copy
 from CMGTools.RootTools.RootInit import *
-from CMGTools.RootTools.Style import sData, sBlue, styleSet
+from CMGTools.RootTools.Style import sBlack, sBlue, styleSet
 from ROOT import TTree
 
 
@@ -33,7 +33,7 @@ files = args
 
 
 
-styles = [sBlue, sData]
+styles = [sBlue, sBlack]
 
 keeper = []
 
