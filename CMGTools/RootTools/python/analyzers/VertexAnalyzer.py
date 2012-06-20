@@ -1,4 +1,3 @@
-from CMGTools.RootTools.analyzers.VertexHistograms import VertexHistograms
 from CMGTools.RootTools.fwlite.Analyzer import Analyzer
 from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.RootTools.statistics.Average import Average
@@ -40,9 +39,8 @@ class VertexAnalyzer( Analyzer ):
         self.count.register('All Events')
         self.count.register('Events With Good Vertex')
 
-        self.pileup = VertexHistograms('/'.join([self.dirName,
-                                                 'pileup.root']))
-        
+
+
     def process(self, iEvent, event):
         self.readCollections( iEvent )
         event.rho = self.handles['rho'].product()[0]
@@ -71,8 +69,6 @@ class VertexAnalyzer( Analyzer ):
         if len(event.goodVertices)==0:
             return False
 
-        self.pileup.hist.Fill( len(event.goodVertices) )
-
         self.count.inc('Events With Good Vertex')
         return True
 
@@ -90,6 +86,3 @@ class VertexAnalyzer( Analyzer ):
      
         return True
                                                                  
-    def write(self):
-        super(VertexAnalyzer, self).write()
-        self.pileup.write()

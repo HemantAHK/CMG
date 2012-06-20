@@ -1,5 +1,4 @@
 import os 
-from CMGTools.RootTools.analyzers.VertexHistograms import VertexHistograms
 from CMGTools.RootTools.fwlite.Analyzer import Analyzer
 from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.RootTools.statistics.Average import Average
@@ -33,10 +32,10 @@ class PileUpAnalyzer( Analyzer ):
         super(PileUpAnalyzer, self).__init__(cfg_ana, cfg_comp, looperName)
 
         if self.cfg_comp.isMC:
-            self.rawmcpileup = VertexHistograms('/'.join([self.dirName,
-                                                          'rawMCPU.root']))
-
-        if self.cfg_comp.isMC or self.cfg_comp.isEmbed:           
+            self.rawmcfile = TFile( '/'.join([self.dirName,
+                                              'rawMCPU.root']), 'recreate')
+            self.rawmcpileup = TH1F('pileup','raw mc pile-up', 70, 0, 70)
+            
             assert( os.path.isfile(self.cfg_comp.puFileMC) )
             assert( os.path.isfile(self.cfg_comp.puFileData) )
             
@@ -61,10 +60,6 @@ class PileUpAnalyzer( Analyzer ):
             'addPileupInfo',
             'std::vector<PileupSummaryInfo>' 
             ) 
-        self.handles['vertices'] =  AutoHandle(
-            'goodPVFilter',
-            'std::vector<reco::Vertex>' 
-            ) 
 
     def beginLoop(self):
         super(PileUpAnalyzer,self).beginLoop()
@@ -74,28 +69,26 @@ class PileUpAnalyzer( Analyzer ):
     def process(self, iEvent, event):
         self.readCollections( iEvent )
 
-        event.vertexWeight = 1
-        nPU = None
-        if self.cfg_comp.isMC:
-            event.pileUpInfo = map( PileUpSummaryInfo,
-                                    self.mchandles['pusi'].product() )
-            for puInfo in event.pileUpInfo:
-                if puInfo.getBunchCrossing()==0:
-                    # import pdb; pdb.set_trace()
-                    if self.cfg_ana.true is False:
-                        nPU = puInfo.nPU()
-                    else:
-                        nPU = puInfo.nTrueInteractions()
-                    self.rawmcpileup.hist.Fill( nPU )
+        event.vertexWeight = 1 
+        if not self.cfg_comp.isMC:
+            return True 
 
-            if nPU is None:
-                raise ValueError('nPU cannot be None! means that no pu info has been found for bunch crossing 0.')
-        elif self.cfg_comp.isEmbed:
-            vertices = self.handles['vertices'].product()
-            nPU = len(vertices)
-        else:
-            return True
-        
+        event.pileUpInfo = map( PileUpSummaryInfo,
+                                self.mchandles['pusi'].product() )
+
+        nPU = None
+        for puInfo in event.pileUpInfo:
+            if puInfo.getBunchCrossing()==0:
+                # import pdb; pdb.set_trace()
+                if self.cfg_ana.true is False:
+                    nPU = puInfo.nPU()
+                else:
+                    nPU = puInfo.nTrueInteractions()
+                self.rawmcpileup.Fill( nPU )
+
+        if nPU is None:
+            raise ValueError('nPU cannot be None! means that no pu info has been found for bunch crossing 0.')
+
         bin = self.datahist.FindBin(nPU)
         if bin<1 or bin>self.datahist.GetNbinsX():
             event.vertexWeight = 0
@@ -110,9 +103,9 @@ class PileUpAnalyzer( Analyzer ):
                 
         event.eventWeight *= event.vertexWeight
         self.averages['vertexWeight'].add( event.vertexWeight )
-        return True
+
         
     def write(self):
         super(PileUpAnalyzer, self).write()
         if self.cfg_comp.isMC:
-            self.rawmcpileup.write()
+            self.rawmcfile.Write()
