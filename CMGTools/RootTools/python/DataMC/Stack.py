@@ -1,17 +1,14 @@
 import copy
-from ROOT import THStack, gPad, kGray
+from ROOT import THStack, gPad
 from CMGTools.RootTools.Style import sBlue,sBlack
 
 class Stack:
-    '''Attempt to overcome the deficiencies of the THStack class.
+    '''Attempt to overcome the defficiencies of the THStack class.
 
     Contains:
     - hists    : a list of Histogram (from this package,
     we\'re not taking about ROOT histograms here
-    - integral : the integral of the stack.
-    - totalHist, the sum of all histograms in the stack with a layer < 1000.
-    
-    '''
+    - integral : the integral of the stack.'''
 
     STAT_ERRORS = True
     STYLE = copy.copy(sBlack)
@@ -43,7 +40,7 @@ class Stack:
             self.obj.Add(hist.weighted)
             if self.totalHist is None:
                 self.totalHist = copy.deepcopy( hist )
-            elif hist.layer<1000.:
+            else: 
                 self.totalHist.Add( hist )
         self._Draw( opt, self.hists, xmin, xmax, ymin, ymax)
 
@@ -54,8 +51,7 @@ class Stack:
         # otherwise, can't change y axis range (ROOT!@#!)
         # we draw it as hist so that the markers don't appear.
         hist = hists[0]
-        # hist.Draw('hist')
-        hist.Draw(opt)
+        hist.Draw('hist')
         if self.ytitle is not None:
             hist.GetYaxis().SetTitle( self.ytitle )
         self.obj.Draw( opt+'same' )
@@ -65,7 +61,7 @@ class Stack:
         if ymin is None:
             ymin = 0.1
         if ymax is None:
-            ymax = hist.GetMaximum()*1.3
+            ymax = self.totalHist.GetMaximum()*1.1
         hist.GetYaxis().SetRangeUser( ymin, ymax )
         if xmin is not None and xmax is not None:
             # without the little offset,
@@ -80,9 +76,6 @@ class Stack:
         '''Draw statistical errors if statErrors is True.'''
         if self.statErrors is False:
             return
-        self.totalHist.weighted.SetFillColor(kGray)
-        self.totalHist.weighted.SetFillColor(kGray)
-        self.totalHist.weighted.SetLineColor(4)
         self.totalHist.Draw('same')
         
     def SetStyle(self, style ):
@@ -133,7 +126,3 @@ class Stack:
         self.obj.GetXaxis().SetTitle( hist.GetXaxis().GetTitle() )
         self.obj.GetYaxis().SetTitle( hist.GetYaxis().GetTitle() )
         
-    def Blind(self,minx, maxx):
-        for hist in self.hists:
-            hist.Blind(minx, maxx)
-        # self.totalHist.Blind(minx, maxx)
