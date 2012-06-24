@@ -1,12 +1,9 @@
 """
 Load the libraries needed to use RootTools  
 """
-# import ROOT as rt
-
-from ROOT import TH1F, TH2F, TProfile, TTree, TFile, TLegend
+import ROOT as rt
 
 def loadLibs():
-    print 'loading FWLite.'
     #load the libaries needed
     from ROOT import gROOT,gSystem
     gSystem.Load("libFWCoreFWLite")
@@ -27,13 +24,11 @@ Aliases.__doc__ = """
 A class for managing branch aliases in TTree instances
 """
 
-
-from CMGTools.RootTools.Chain import Chain
-# from ROOT import Chain as CChain
-# Chain = CChain
-# Chain.__doc__ = """
-# An extention of TChain so that it can take a glob in its constructor
-# """
+from ROOT import Chain as CChain
+Chain = CChain
+Chain.__doc__ = """
+An extention of TChain so that it can take a glob in its constructor
+"""
 
 from ROOT import DataSet as CDataSet
 DataSet = CDataSet
