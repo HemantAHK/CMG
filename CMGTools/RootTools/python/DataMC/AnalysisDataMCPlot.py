@@ -1,7 +1,6 @@
 
 import glob
 import os
-import fnmatch
 
 from ROOT import TFile
 
@@ -66,16 +65,11 @@ class AnalysisDataMC( DataMCPlot ):
 
     def _GetHistPref(self, name):
         '''Return the preference dictionary for a given component'''
-        thePref = None
-        for prefpat, pref in self.histPref.iteritems():
-            if fnmatch.fnmatch( name, prefpat):
-                if thePref is not None:
-                    print 'several matching preferences for', name 
-                thePref = pref
-        if thePref is None:
+        try:
+            return self.histPref[name]
+        except KeyError:
             print 'cannot find preference for hist',name
-            thePref = {'style':sBlack, 'layer':999}
-        return thePref
+            return {'style':sBlack, 'layer':999}
 
     def _ReadWeights(self, dirName):
         '''Read weight information from the weight directory.
@@ -98,9 +92,14 @@ class AnalysisDataMC( DataMCPlot ):
 
         Styles and weights are applied to each histogram.
         See AnalysisDataMC._GetFileNames().'''
+        # layer = 0
+        # COLIN files can't be deepcopied?
+        # self.files = []
         fileNames = self._GetFileNames(directory)
-        for layer, compInfo in enumerate( sorted(fileNames) ):
-            compName, fileName = compInfo
+        # print 'reading files:'
+        for layer, fileName in enumerate( sorted(fileNames) ):
+            # COLIN files can't be deepcopied?
+            # self.files.append(TFile(fileName))
             file = TFile(fileName)
             hist = copy.deepcopy(file.Get(self.histName))
             if hist == None:
@@ -108,9 +107,16 @@ class AnalysisDataMC( DataMCPlot ):
                                            'does not exist in file', fileName]))
             hist.SetStats(0)
             hist.Sumw2()
-            componentName = compName
+            componentName = self._ComponentName(fileName)
+            # print '\t', componentName, fileName
             legendLine = componentName
             self.AddHistogram( componentName, hist, layer, legendLine)
+            # pref = self._GetHistPref( componentName )
+            # layer = pref['layer']
+            # if componentName.lower().find('data')>-1:
+            #     print '\t\tremoving from stack', hist
+            #     self.Hist(componentName).stack = False
+            # self.Hist(componentName).SetStyle( pref['style'] )
         self._ApplyWeights()
         self._ApplyPrefs()
 
