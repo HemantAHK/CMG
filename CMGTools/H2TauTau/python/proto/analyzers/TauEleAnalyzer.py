@@ -65,7 +65,7 @@ class TauEleAnalyzer( DiLeptonAnalyzer ):
         for index, lep in enumerate(cmgLeptons):
             pyl = self.__class__.LeptonClass(lep)
             pyl.associatedVertex = event.goodVertices[0]
-            if not pyl.looseIdForEleTau():
+            if not self.testEleLoosePhil( pyl ):
                 continue
             leptons.append( pyl )
         return leptons
@@ -159,15 +159,13 @@ class TauEleAnalyzer( DiLeptonAnalyzer ):
 
 
     def testLeg2ID(self, leg):
-        leg.tightIdResult = leg.tightIdForEleTau()
+        leg.tightIdResult = self.testElectronTwiki_2012(leg) 
         if abs (leg.dxy())  >= 0.045                                : return False
         if abs (leg.dz())   >= 0.2                                  : return False
         if leg.pt ()        <= self.cfg_ana.pt2                     : return False # FIXME should be in kine
         if abs( leg.eta())  >= self.cfg_ana.eta2                    : return False # FIXME should be in kine
-        if not leg.tightIdForEleTau()                               : return False
-        if not leg.looseIdForEleTau()                               : return False
-#        if not self.testEleLoosePhil (leg, self.cfg_ana.pt2, 99999) : return False
-#        if not leg.tightIdResult                                    : return False
+        if not self.testEleLoosePhil (leg, self.cfg_ana.pt2, 99999) : return False
+        if not leg.tightIdResult                                    : return False
         return True
 
 
@@ -183,7 +181,31 @@ class TauEleAnalyzer( DiLeptonAnalyzer ):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
-#PG eleID parameters (implemented in Electron)
+    def testElectronTwiki_2012(self, leg):
+        """reference numbers form the Htautau twiki, to be updated
+        
+        https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2012#2012_Baseline_Selection
+        """
+        eta = abs( leg.eta() )
+        if eta > 2.1 : return False
+        lmvaID = -99999 # identification
+        if leg.pt() < 20 :
+            if   eta<0.8:   
+                lmvaID = 0.925
+            elif eta<1.479: 
+                lmvaID = 0.915
+            else :          
+                lmvaID = 0.965
+        else:
+            if   eta<0.8:   
+                lmvaID = 0.925
+            elif eta<1.479: 
+                lmvaID = 0.975
+            else :          
+                lmvaID = 0.985
+        result = leg.mvaNonTrigV0()  > lmvaID
+        return result
+
 # 30.05.12, from Lorenzo
 # loose, pt > 20: {0.925, 0.975, 0.985}
 # tight, pt > 20: {0.925, 0.985, 0.985}
@@ -193,10 +215,43 @@ class TauEleAnalyzer( DiLeptonAnalyzer ):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
+    def testEleLoosePhil( self, ele, ptCut = 15, isoCut = 0.3 ):
+        """Loose electron selection, for the lepton veto, 
+        
+        according to Phil sync prescription for the sync exercise 16/05/12
+        """
+        nInnerHits = ele.numberOfHits()
+        if nInnerHits != 0 : return False
+        if ele.passConversionVeto() == False   : return False 
+        if ele.pt()                   < ptCut  : return False
+        if ele.relIsoAllChargedDB05() > isoCut : return False
+        if abs(ele.dxy())             >= 0.045 : return False
+        if abs(ele.dz())              >= 0.2   : return False
+        hoe = ele.hadronicOverEm()
+        deta = ele.deltaEtaSuperClusterTrackAtVtx()
+        dphi = ele.deltaPhiSuperClusterTrackAtVtx()
+        sihih = ele.sigmaIetaIeta() 
+        if ele.sourcePtr().isEB() :
+            if sihih >= 0.010     : return False
+            if dphi  >= 0.80      : return False 
+            if deta  >= 0.007     : return False
+            if hoe   >= 0.15      : return False
+        elif ele.sourcePtr().isEE() :
+            if sihih >= 0.030     : return False
+            if dphi  >= 0.70      : return False 
+            if deta  >= 0.010     : return False
+#            if hoe   >= 0.07      : return False
+        else : return False #PG is this correct? does this take cracks into consideration?
+        return True
+
+
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+
     def leptonAccept(self, leptons, isoCut = 0.3) :
         ''' returns True if the additional lepton veto is successful'''
         #PG FIXME how do I pass the isolation argument to testEleLoosePhil?
-        looseLeptons = filter( Electron.looseIdForEleTau, leptons)
+        looseLeptons = filter( self.testEleLoosePhil, leptons)
         nLeptons = len(looseLeptons)
         if nLeptons < 2 : return True
         if nLeptons > 2 : return False
