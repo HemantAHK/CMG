@@ -25,8 +25,6 @@ if __name__ == '__main__':
 
     if options.finalState == 'EleEle':
         rootFile='FourLeptonTreeProducer_EleEleFourLeptonAnalyzer/FourLeptonTreeProducer_EleEleFourLeptonAnalyzer_tree.root'
-    if options.finalState == 'All':
-        rootFile='FourLeptonTreeProducer_AllFourLeptonAnalyzer/FourLeptonTreeProducer_AllFourLeptonAnalyzer_tree.root'
         
 
 
