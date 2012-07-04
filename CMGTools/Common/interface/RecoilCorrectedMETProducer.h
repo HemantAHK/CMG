@@ -224,26 +224,24 @@ void RecoilCorrectedMETProducer<RecBosonType>::produce(edm::Event & iEvent, cons
 
     jetMult = nJets( *jetH, recBoson, deltaRCut_ ); 
 
-    double zero = 0.;
-
     switch( correctionType_ ) {
     case Type1:
       corrector_->CorrectType1( met, metphi, 
 				genPt, genPhi, 
 				lepPt, lepPhi, 
-				u1, u2, fluc, zero, jetMult );
+				u1, u2, fluc, jetMult );
       break;
     case Type2:
       corrector_->CorrectType2( met, metphi, 
 				genPt, genPhi, 
 				lepPt, lepPhi, 
-				u1, u2, fluc, zero, jetMult );
+				u1, u2, fluc, jetMult );
       break;
     case All:
       corrector_->CorrectAll( met, metphi, 
 			      genPt, genPhi, 
 			      lepPt, lepPhi, 
-			      u1, u2, fluc, zero, jetMult );
+			      u1, u2, fluc, jetMult );
       break;
     default:
       throw cms::Exception("Undefined correction type.");
