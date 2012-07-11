@@ -1,12 +1,12 @@
-from CMGTools.Production.dataset import Dataset, CMSDataset
+import os
+from CMGTools.Production.dataset import Dataset, CMSDataset, LocalDataset, createDataset
+
 import FWCore.ParameterSet.Config as cms
 
-def datasetToSource( user, dataset, pattern='.*root'):
+def datasetToSource( user, dataset, pattern='.*root', readCache=False):
 
-    if user == 'CMS':
-        data = CMSDataset( dataset )
-    else:
-        data = Dataset( user, dataset, pattern )
+    # print user, dataset, pattern
+    data = createDataset(user, dataset, pattern, readCache)
     
     source = cms.Source(
 	"PoolSource",

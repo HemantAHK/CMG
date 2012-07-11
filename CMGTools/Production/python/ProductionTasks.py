@@ -1,11 +1,21 @@
 
 import copy, datetime, inspect, fnmatch, os, re, subprocess, sys, tempfile, time
+import errno
 
 import CMGTools.Production.eostools as castortools
 import CMGTools.Production.Das as Das
 
 from CMGTools.Production.dataset import Dataset
+from CMGTools.Production.datasetToSource import createDataset
 from CMGTools.Production.castorBaseDir import castorBaseDir
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST:
+            pass
+        else: raise
 
 class Task(object):
     """Base class for Task API"""
@@ -53,7 +63,7 @@ ProductionTasks.py -u cbern -w 'PFAOD*.root' -c -N 1 -q 8nh -t PAT_CMG_V2_2_0 --
 
 It is often useful to store the sample names in a file, in which case you could instead do:
 
-ProductionTasks.py -w PFAOD*.root -c -N 1 -q 8nh -t PAT_CMG_V2_2_0 --output_wildcard [!h]*.root --cfg patTuple_PF2PAT_forCMG_cfg.py `cat samples_mc.txt`
+ProductionTasks.py -w 'PFAOD*.root' -c -N 1 -q 8nh -t PAT_CMG_V2_2_0 --output_wildcard '[!h]*.root' --cfg patTuple_PF2PAT_forCMG_cfg.py `cat samples_mc.txt`
 
 An example file might contain:
 
@@ -81,31 +91,20 @@ documented below.
         return {'Options':self.options, 'Dataset':self.dataset}    
 
 class CheckDatasetExists(Task):
-    """Use 'listSamples.py' to check that the dataset exists in the production system.
-
-    Colin: one should rather use the CMGTools.Production.dataset module
+    """Use 'datasets.py' to check that the dataset exists in the production system.
     """
     def __init__(self, dataset, user, options):
         Task.__init__(self,'CheckDatasetExists', dataset, user, options)
-    def addOption(self, parser):
-        parser.add_option("-l", "--listLevel", dest="listLevel", help="list level", default=False)        
     def run(self, input):
-        script = 'listSamples.py'
         pattern = fnmatch.translate(self.options.wildcard)
-        listLevel = self.options.listLevel
-        cmd = [script,self.dataset,'-u',self.user]
-        if listLevel:
-            cmd.extend(['-l',listLevel])
-        stdout = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0]
-        if not stdout:
-            raise Exception("Dataset %s not found by listSamples.py. Please check. \n command: %s" % (self.dataset, cmd))
-        samples = [s for s in stdout.split('\n') if s]
-        if not len(samples) == 1:
-            if not self.dataset in samples:
-                raise Exception("Dataset '%s' not unique according to listSamples.py and no exact match found. Samples found were '%s'" % (self.dataset,samples) )
-        if '//' in samples[0]:
-            raise Exception("Too many slashes in sample name '%s'. Please check." % samples[0])
-        return {'Dataset':samples[0]}
+        run_range = (self.options.min_run, self.options.max_run)
+        data = createDataset(self.user, self.dataset, pattern, run_range = run_range)
+        if( len(data.listOfGoodFiles()) == 0 ):
+            raise Exception('no good root file in dataset %s | %s | %s | %s' % (self.user,
+                                                                            self.dataset,
+                                                                            self.options.wildcard,
+                                                                            run_range))        
+        return {'Dataset':self.dataset}
 
 class BaseDataset(Task):
     """Query DAS to find dataset name in DBS - see https://cmsweb.cern.ch/das/"""
@@ -123,7 +122,11 @@ class BaseDataset(Task):
         
         def check(ds):
             query = 'dataset=%s' % ds
-            data = eval(Das.get_data(host, query, idx, limit, debug))
+            result = Das.get_data(host, query, idx, limit, debug)
+            result = result.replace('null','None')
+            result = result.replace('true','True')
+            result = result.replace('false','False')
+            data = eval(result)
             if data['status'] != 'ok':
                 raise Exception("Das query failed: Output is '%s'" % data)
             return (data['data'],data)
@@ -201,6 +204,8 @@ class FindOnCastor(Task):
     def __init__(self, dataset, user, options):
         Task.__init__(self,'FindOnCastor', dataset, user, options)
     def run(self, input):
+        if self.user == 'CMS':
+            return {'Topdir':None,'Directory':None}
         topdir = castortools.lfnToCastor(castorBaseDir(user=self.user))
         directory = '%s/%s' % (topdir,self.dataset)
         directory = directory.replace('//','/')
@@ -219,8 +224,11 @@ class CheckForMask(Task):
     def addOption(self, parser):
         parser.add_option("-c", "--check", dest="check", default=False, action='store_true',help='Check filemask if available')        
     def run(self, input):
+        #skip for DBS
+        if self.user == 'CMS':
+            return {'MaskPresent':True,'Report':'Files taken from DBS'}
+        
         dir = input['FindOnCastor']['Directory']
-
         mask = "IntegrityCheck"
         file_mask = []  
 
@@ -240,6 +248,8 @@ class CheckForWrite(Task):
         Task.__init__(self,'CheckForWrite', dataset, user, options)
     def run(self, input):
         """Check that the directory is writable"""
+        if self.user == 'CMS':
+            return {'Directory':None,'WriteAccess':True}
         dir = input['FindOnCastor']['Directory']
         if self.options.check:
             
@@ -301,24 +311,28 @@ class CreateJobDirectory(Task):
         if self.options.output is not None:
             output = self.options.output
         else:
-            output = '%s_%s' % (self.dataset.replace('/','.'),datetime.datetime.now().strftime("%s"))
-            if output.startswith('.'):
-                output = output[1:]
+            # output = '%s_%s' % (self.dataset.replace('/','.'),datetime.datetime.now().strftime("%s"))
+            # if output.startswith('.'):
+            output = '%s_%s' % (self.dataset,datetime.datetime.now().strftime("%s"))
+            output = output.lstrip('/')
         if not os.path.exists(output):
-            os.mkdir(output)
+            mkdir_p(output)
         return {'JobDir':output,'PWD':os.getcwd()}
 
 class SourceCFG(Task):
     """Generate a source CFG using 'sourceFileList.py' by listing the CASTOR directory specified. Applies the file wildcard, '--wildcard'"""
     def __init__(self, dataset, user, options):
         Task.__init__(self,'SourceCFG', dataset, user, options)    
+    def addOption(self, parser):
+        parser.add_option("--min-run", dest="min_run", default=-1, type=int, help='When querying DBS, require runs >= than this run')
+        parser.add_option("--max-run", dest="max_run", default=-1, type=int, help='When querying DBS, require runs <= than this run')
     def run(self, input):
-        dir = input['FindOnCastor']['Directory']
-        jobdir = input['CreateJobDirectory']['JobDir']
-        
-        pattern = fnmatch.translate(self.options.wildcard)
 
-        data = Dataset(self.user, self.dataset, pattern)
+        jobdir = input['CreateJobDirectory']['JobDir']
+        pattern = fnmatch.translate(self.options.wildcard)
+        
+        run_range = (self.options.min_run, self.options.max_run)
+        data = createDataset(self.user, self.dataset, pattern, run_range = run_range)
         good_files = data.listOfGoodFiles()
         bad_files = [fname for fname in data.listOfFiles() if not fname in good_files]
         
@@ -416,9 +430,9 @@ class RunTestEvents(Task):
         config = file(full).readlines()
         source = os.path.join(jobdir,'test_cfg.py')
         output = file(source,'w')
-        toInsert = ['\nprocess.out.outputCommands = cms.untracked.vstring("drop *")\n',
+        toInsert = ['\n',
                     'process.maxEvents.input = cms.untracked.int32(5)\n',
-                    'if hasattr(process,"source"): process.source.fileNames = process.source.fileNames[:1]\n'
+                    'if hasattr(process,"source"): process.source.fileNames = process.source.fileNames[:10]\n'
                     ]
         config = insertLines( config, toInsert )
         output.writelines(config)
@@ -509,7 +523,6 @@ class RunCMSBatch(Task):
                           help="Tier: extension you can give to specify you are doing a new production. If you give a Tier, your new files will appear in sampleName/tierName, which will constitute a new dataset.",
                           default="")               
     def run(self, input):
-        
         find = FindOnCastor(self.dataset,self.options.batch_user,self.options)
         find.create = True
         out = find.run({})
@@ -525,7 +538,7 @@ class RunCMSBatch(Task):
         if self.options.run_batch:
             jname = "%s/%s" % (self.dataset,self.options.tier)
             jname = jname.replace("//","/") 
-            cmd.extend(['-b',"'bsub -q %s -J %s < ./batchScript.sh | tee job_id.txt'" % (self.options.queue,jname)])
+            cmd.extend(['-b',"'bsub -q %s -J %s -u cmgtoolslsf@gmail.com < ./batchScript.sh | tee job_id.txt'" % (self.options.queue,jname)])
         print " ".join(cmd)
         
         pwd = os.getcwd()
@@ -798,7 +811,7 @@ class WriteJobReport(Task):
                 continue
             for j in jobs:
                 jdir = os.path.join(jobdir,j)
-                output.write('pushd %s; bsub -q %s -J RESUB < ./batchScript.sh | tee job_id_resub.txt; popd\n' % (jdir,self.options.queue))
+                output.write('pushd %s; bsub -q %s -J RESUB -u cmgtoolslsf@gmail.com < ./batchScript.sh | tee job_id_resub.txt; popd\n' % (jdir,self.options.queue))
         output.close()
             
         return {'SummaryFile':report_file}

@@ -1,4 +1,4 @@
-
+from optparse import OptionParser
 import sys,os, re, subprocess, datetime
 
 import CMGTools.Production.eostools as castortools
@@ -7,10 +7,9 @@ class logger:
 
     def __init__(self, dirLocalOrTgzDirOnCastor):
 
-
         self.dirLocal = None
         self.tgzDirOnCastor = None
-        
+        self.tagPackage = True
         dirLocalOrTgzDirOnCastor = dirLocalOrTgzDirOnCastor.rstrip('/')
 
         if self.isDirLocal( dirLocalOrTgzDirOnCastor ):
@@ -20,7 +19,7 @@ class logger:
         else:
             raise ValueError( dirLocalOrTgzDirOnCastor + ' is neither a tgz directory on castor (provide a LFN!) nor a local directory')
             
-
+        
     def isDirLocal(self, file ):
         if os.path.isdir( file ):
             return True
@@ -64,6 +63,13 @@ class logger:
         self.addFile(showtagsLog)
         self.addFile(diffLog) 
 
+    def logJobs(self, n):
+        nJobs = 'logger_jobs.txt'
+        out = file(nJobs,'w')
+        out.write('NJobs: %i\n' % n)
+        out.close()
+        self.addFile(nJobs)
+
     def logPackages(self):
         # Records the working directory of the samples
         oldPwd = os.getcwd()
@@ -95,9 +101,11 @@ class logger:
         print 'logging package', package
         if curtag == 'NoTag':
             print 'package has not been tagged'
-            self.cvstag( tag, package )
-            self.cvsupdate( tag, package )
-     
+            if self.tagPackage==True:
+                self.cvstag( tag, package )
+                self.cvsupdate( tag, package )
+            else:
+                print 'No tagging requested'
     def cvstag(self, tag, package):
         oldPwd = os.getcwd()
         os.chdir( os.getenv('CMSSW_BASE') + '/src/' )

@@ -181,11 +181,10 @@ ls: /store: No such file or directory
 
 False
     """
-    lfn = eosToLFN(path)
-    entity = cmsIO.cmsFile( os.path.dirname(lfn), tfcProt )
-    return lfn in entity.ls(lfn)
-#also define an alias for backwards compatibility
+    _, _, ret = runEOSCommand( path, 'ls')
+    return ret == 0
 
+#also define an alias for backwards compatibility
 isCastorFile = isEOSFile
 
 
@@ -207,6 +206,20 @@ def fileExists( path ):
     return result
 
 
+def eosDirSize(path):
+    '''Returns the size of a directory on EOS in GB.'''
+    lfn = eosToLFN(path)
+    res = runEOSCommand(lfn, 'find', '--size')
+    output = res[0].split('\n')
+    size = 0
+    for file in output:
+        try:
+            size += float(file.split('=')[2])
+        except IndexError:
+            pass
+    return size/1024/1024/1024
+
+
 def createEOSDir( path ):
     """Makes a directory in EOS
 
@@ -217,10 +230,13 @@ def createEOSDir( path ):
     if not isEOSFile(lfn):
     # if not isDirectory(lfn):
         runEOSCommand(lfn,'mkdir','-p')
-#        entity = cmsIO.cmsFile( lfn,"stageout")
-#        entity.mkdir([])
-#        # print 'created ', path
-    return path
+        #        entity = cmsIO.cmsFile( lfn,"stageout")
+        #        entity.mkdir([])
+        #        # print 'created ', path
+    if isDirectory(path):
+        return path
+    else:
+        raise OSError('cannot create directory '+ path)
 
 #also define an alias for backwards compatibility
 createCastorDir = createEOSDir
@@ -332,6 +348,15 @@ def ls(path, rec = False):
     """Provides a simple list of the specified directory, works on EOS and locally"""
     return [eosToLFN(t) for t in listFiles(path, rec)]
 
+def ls_EOS(path, rec = False):
+    """Provides a simple list of the specified directory, works on EOS only, but is faster than the xrd version"""
+    if rec:
+        stdout, _, ret = runEOSCommand(path,'find','-f')
+        return [eosToLFN(line) for line in stdout.split('\n') if line]
+    else:
+        stdout, _, ret = runEOSCommand(path,'ls')
+        lfn = eosToLFN(path)
+        return [os.path.join(lfn,line) for line in stdout.split('\n') if line]
 
 def rm(path, rec=False):
     """rm, works on EOS and locally.
@@ -493,7 +518,7 @@ def matchingFiles( path, regexp):
 
     # print path, regexp
     pattern = re.compile( regexp )
-    files = ls(path)
+    files = ls_EOS(path)
     # print files
     return [f for f in files if pattern.match(os.path.basename(f)) is not None]
     
@@ -513,3 +538,5 @@ def cmsStage( absDestDir, files, force):
         print ' '.join(command)
         runner = cmsIO.cmsFileManip()
         runner.runCommand(command)
+
+

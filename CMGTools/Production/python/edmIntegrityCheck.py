@@ -7,7 +7,9 @@ import datetime, fnmatch, json, os, shutil, sys, tempfile
 import subprocess
 
 import CMGTools.Production.eostools as castortools
+from CMGTools.Production.timeout import timed_out, TimedOutExc
 from CMGTools.Production.castorBaseDir import castorBaseDir
+from CMGTools.Production.dataset import CMSDataset
 
 class PublishToFileSystem(object):
     """Write a report to storage"""
@@ -93,20 +95,8 @@ class IntegrityCheck(object):
             
         if data is None:
             raise Exception("Dataset '%s' not found in Das. Please check." % self.dataset)
-        self.eventsTotal = 0
-        
-        #there can be multiple datasets with the same name. If so we take the most recent
-        #eliminates double counting of entries in DAS and so we get the fractions right
-        datasets = []
-        for result in data['data']:
-            datasets.append( (result['das']['expire'], result) )
-        datasets.sort()
-        if datasets:
-            ds = datasets[-1][1]['dataset']
-            if ds and type(ds) == type([]):
-                self.eventsTotal = datasets[-1][1]['dataset'][0]['nevents']
-            else:
-                self.eventsTotal = datasets[-1][1]['dataset']['nevents']
+        #get the number of events in the dataset
+        self.eventsTotal = CMSDataset.findPrimaryDatasetEntries(self.options.name, self.options.min_run, self.options.max_run)
     
     def stripDuplicates(self):
         
@@ -163,7 +153,7 @@ class IntegrityCheck(object):
                 bad_jobs.add(i)
         return good_duplicates, sorted(list(bad_jobs)), sum_dup
     
-    def test(self):
+    def test(self, previous = None, timeout = -1):
         if not castortools.fileExists(self.directory):
             raise Exception("The top level directory '%s' for this dataset does not exist" % self.directory)
 
@@ -171,6 +161,12 @@ class IntegrityCheck(object):
 
         test_results = {}
 
+        #support updating to speed things up
+        prev_results = {}
+        if previous is not None:
+            for name, status in previous['Files'].iteritems():
+                prev_results[name] = status
+        
         filesToTest = self.sortByBaseDir(self.listRootFiles(self.directory))
         for dir, filelist in filesToTest.iteritems():
             filemask = {}
@@ -181,9 +177,18 @@ class IntegrityCheck(object):
             count = 0
             for ff in filtered:
                 fname = os.path.join(dir, ff)
-                if self.options.printout:
-                    print '[%i/%i]\t Checking %s...' % (count, len(filtered),fname),
-                OK, num = self.testFile(castortools.castorToLFN(fname))
+                lfn = castortools.castorToLFN(fname)
+                
+                #try to update from the previous result if available 
+                if lfn in prev_results and prev_results[lfn][0]:
+                    if self.options.printout:
+                        print '[%i/%i]\t Skipping %s...' % (count, len(filtered),fname),
+                    OK, num = prev_results[lfn]
+                else:
+                    if self.options.printout:
+                        print '[%i/%i]\t Checking %s...' % (count, len(filtered),fname),
+                    OK, num = self.testFileTimeOut(lfn, timeout)
+
                 filemask[ff] = (OK,num)
                 if self.options.printout:
                     print (OK, num)
@@ -215,7 +220,10 @@ class IntegrityCheck(object):
                     print '\t\t %s: %s (Valid duplicate)' % (name, str(status))
         print 'Total entries in DBS: %i' % self.eventsTotal
         print 'Total entries in processed files: %i' % self.eventsSeen
-        print 'Fraction of dataset processed: %f' % (self.eventsSeen/(1.*self.eventsTotal))
+        if self.eventsTotal>0:
+            print 'Fraction of dataset processed: %f' % (self.eventsSeen/(1.*self.eventsTotal))
+        else:
+            print 'Total entries in DBS not determined' 
         if self.bad_jobs:
             print "Bad Crab Jobs: '%s'" % ','.join([str(j) for j in self.bad_jobs])
         
@@ -228,7 +236,7 @@ class IntegrityCheck(object):
         totalBad = 0
 
         report = {'data':{},
-                  'ReportVersion':2,
+                  'ReportVersion':3,
                   'PrimaryDataset':self.options.name,
                   'Name':self.dataset,
                   'PhysicsGroup':'CMG',
@@ -254,7 +262,10 @@ class IntegrityCheck(object):
                     totalBad += 1
                 
         report['PrimaryDatasetEntries'] = self.eventsTotal
-        report['PrimaryDatasetFraction'] = (self.eventsSeen/(1.*self.eventsTotal))
+        if self.eventsTotal>0:
+            report['PrimaryDatasetFraction'] = (self.eventsSeen/(1.*self.eventsTotal))
+        else:
+            report['PrimaryDatasetFraction'] = -1.
         report['FilesEntries'] = self.eventsSeen
 
         report['FilesGood'] = totalGood
@@ -263,6 +274,9 @@ class IntegrityCheck(object):
         
         report['BadJobs'] = self.bad_jobs
         report['ValidDuplicates'] = self.duplicates
+        
+        report['MinRun'] = self.options.min_run
+        report['MaxRun'] = self.options.max_run
 
         return report
     
@@ -304,6 +318,20 @@ class IntegrityCheck(object):
         for error in ["Fatal Root Error","Could not open file","Not a valid collection"]:
             if error in stdout: return (False,-1)
         return (True,self.getParseNumberOfEvents(stdout))
+    
+    def testFileTimeOut(self,lfn, timeout):
+        @timed_out(timeout)
+        def tf(lfn):
+            try:
+                return self.testFile(lfn)
+            except TimedOutExc, e:
+                print >> sys.stderr, "ERROR:\tedmFileUtil timed out for lfn '%s' (%d)" % (lfn,timeout)
+                return (False,-1)
+        if timeout > 0:
+            return tf(lfn)
+        else:
+            return self.testFile(lfn)
+
 
 
 if __name__ == '__main__':

@@ -3,12 +3,21 @@
 # batch mode for cmsRun, March 2009
 
 
-import os, sys,  imp, re, pprint, string, time,shutil,copy,pickle,math
-from optparse import OptionParser
+import os
+import sys
+import imp
+# import re
+# import pprint
+import string
+# import time
+# import shutil
+# import copy
+# import pickle
+import math
+# from optparse import OptionParser
+import subprocess
 
-# particle flow specific
 from CMGTools.Production.batchmanager import BatchManager
-# import CMGTools.Production.eostools as castortools
 
 # cms specific
 import FWCore.ParameterSet.Config as cms
@@ -165,19 +174,11 @@ class MyBatchManager( BatchManager ):
       scriptFile.close()
       os.system('chmod +x %s' % scriptFileName)
       
-      
-      #prepare the cfg
-      # replace the list of fileNames by a chunk of filenames:
-      if generator:
-         randSvc = RandomNumberServiceHelper(process.RandomNumberGeneratorService)
-         randSvc.populate()
-      else:
-         print "grouping : ", grouping
-         print "value : ", value 
-         iFileMin = (value)*grouping 
-         iFileMax = (value+1)*grouping 
-         process.source.fileNames = fullSource.fileNames[iFileMin:iFileMax]
-         print process.source
+      # here, grouping is a number of events for the output file
+      # process.source.skipEvents = cms.untracked.uint32( value*grouping )
+      skipEvents = value*grouping 
+      maxEvents = grouping
+      # import pdb; pdb.set_trace() 
       cfgFile = open(jobDir+'/run_cfg.py','w')
       cfgFile.write('import FWCore.ParameterSet.Config as cms\n\n')
       cfgFile.write('import os,sys\n')
@@ -185,6 +186,8 @@ class MyBatchManager( BatchManager ):
       cfgFile.write("sys.path.append('%s')\n" % os.path.dirname(jobDir) )
       cfgFile.write('from base_cfg import *\n')
       cfgFile.write('process.source = ' + process.source.dumpPython() + '\n')
+      cfgFile.write('process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32({maxEvents}))\n'.format(maxEvents=maxEvents))      
+      cfgFile.write('process.source.skipEvents = cms.untracked.uint32( {skipEvents} )\n'.format(skipEvents=skipEvents))      
       cfgFile.close()
 
 
@@ -260,7 +263,6 @@ except CmsBatchException as err:
    sys.exit(1)
 
 grouping = int(args[0])
-nJobs = grouping
 cfgFileName = args[1]
 
 print 'Loading cfg'
@@ -282,33 +284,37 @@ handle.close()
 # Restore original sys.argv
 sys.argv = trueArgv
 
-
 # keep track of the original source
 fullSource = process.source.clone()
 
+if len( fullSource.fileNames )!=1:
+   print 'your source must contain only one file, so that you can split it.'
+   sys.exit(1)
 
+# getting the total number of events:
+fileName = process.source.fileNames[0].replace('file:','')
 
-generator = False
+def nEvents( fileName ):
+   '''Get the number of events in an edm file'''
+   edmf = subprocess.Popen( ['edmFileUtil', fileName], stdout=subprocess.PIPE, stderr=subprocess.PIPE ).communicate()[0]
+   nEvents = None
+   for line in edmf.split('\n'):
+      spl = line.split()
+      try:
+         if spl[6]=='events,':
+            nEvents = int(spl[5])
+            return nEvents
+      except IndexError:
+         pass
+   return None
 
-try:
-   process.source.fileNames
-except:
-   print 'No input file. This is a generator process.'
-   generator = True
-   listOfValues = range( 0, nJobs)
-else:
-   print "Number of files in the source:",len(process.source.fileNames), ":"
-   pprint.pprint(process.source.fileNames)
-   
-   nFiles = len(process.source.fileNames)
-   nJobs = nFiles / grouping
-   if (nJobs!=0 and (nFiles % grouping) > 0) or nJobs==0:
-      nJobs = nJobs + 1
-      
-   print "number of jobs to be created: ", nJobs
+def nJobs(nEvents, grouping):
+   nJ = int(math.ceil(nEvents/grouping))
+   if nEvents % grouping != 0:
+      nJ += 1
+   return nJ
 
-   listOfValues = range( 0, nJobs)
-
+listOfValues = range( nJobs(nEvents(fileName), grouping) ) 
 
 batchManager.PrepareJobs( listOfValues )
 
@@ -330,28 +336,27 @@ batchManager.SubmitJobs( waitingTime )
 
 # logging
 
-from logger import logger
+## from CMGTools.Production.logger import logger
 
-oldPwd = os.getcwd()
-os.chdir(batchManager.outputDir_)
-logDir = 'Logger'
-os.system( 'mkdir ' + logDir )
-log = logger( logDir )
-if doCVSTag==False:
-   print 'cmsBatch2L2Q will NOT tag CVS'
+## oldPwd = os.getcwd()
+## os.chdir(batchManager.outputDir_)
+## logDir = 'Logger'
+## os.system( 'mkdir ' + logDir )
+## log = logger( logDir )
+## if doCVSTag==False:
+##    print 'cmsBatch2L2Q will NOT tag CVS'
 
-log.tagPackage=doCVSTag
-log.logCMSSW()
-log.logJobs(nJobs)
-#COLIN not so elegant... but tar is behaving in a strange way.
-log.addFile( oldPwd + '/' + cfgFileName )
+## log.tagPackage=doCVSTag
+## log.logCMSSW()
+## #COLIN not so elegant... but tar is behaving in a strange way.
+## log.addFile( oldPwd + '/' + cfgFileName )
 
-if not batchManager.options_.negate:
-   if batchManager.remoteOutputDir_ != "":
-      # we don't want to crush an existing log file on castor
-      #COLIN could protect the logger against that.
-      log.stageOut( batchManager.remoteOutputDir_ )
+## if not batchManager.options_.negate:
+##    if batchManager.remoteOutputDir_ != "":
+##       # we don't want to crush an existing log file on castor
+##       #COLIN could protect the logger against that.
+##       log.stageOut( batchManager.remoteOutputDir_ )
       
-os.chdir( oldPwd )
+## os.chdir( oldPwd )
 
 

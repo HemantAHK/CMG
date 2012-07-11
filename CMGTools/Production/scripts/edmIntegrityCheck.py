@@ -11,7 +11,7 @@ if __name__ == '__main__':
     
     usage = """usage: %prog [options] /Sample/Name/On/Castor
 
-e.g.: %prog -u wreece -p -w PFAOD_*.root /MultiJet/Run2011A-05Aug2011-v1/AOD/V2
+e.g.: %prog -u wreece -p -w 'PFAOD_*.root' /MultiJet/Run2011A-05Aug2011-v1/AOD/V2
     """
     das = Das.DASOptionParser(usage=usage)
     group = OptionGroup(das.parser,'edmIntegrityCheck Options','Options related to checking files on CASTOR')
@@ -22,6 +22,10 @@ e.g.: %prog -u wreece -p -w PFAOD_*.root /MultiJet/Run2011A-05Aug2011-v1/AOD/V2
     group.add_option("-r", "--recursive", dest="resursive", default=False, action='store_true',help='Walk the mass storage device recursively')
     group.add_option("-u", "--user", dest="user", default=os.getlogin(),help='The username to use when looking at mass storage devices')
     group.add_option("-w", "--wildcard", dest="wildcard", default=None,help='A UNIX style wildcard to specify which files to check')
+    group.add_option("--update", dest="update", default=False, action='store_true',help='Only update the status of corrupted files')
+    group.add_option("-t","--timeout", dest="timeout", default=-1, type=int, help='Set a timeout on the edmFileUtil calls')
+    group.add_option("--min-run", dest="min_run", default=-1, type=int, help='When querying DBS, require runs >= than this run')
+    group.add_option("--max-run", dest="max_run", default=-1, type=int, help='When querying DBS, require runs <= than this run')
     das.parser.add_option_group(group)    
     (opts, datasets) = das.get_opt()
 
@@ -40,10 +44,15 @@ e.g.: %prog -u wreece -p -w PFAOD_*.root /MultiJet/Run2011A-05Aug2011-v1/AOD/V2
             d = tokens[1]
         
         check = IntegrityCheck(d,op)
-        check.test()
+        pub = PublishToFileSystem(check)
+
+        previous = None
+        if op.update:
+            previous = pub.get(check.directory)
+
+        check.test(previous = previous, timeout = op.timeout)
         if op.printout:
             check.report()
         report = check.structured()
-        pub = PublishToFileSystem(check)
         pub.publish(report)
 
