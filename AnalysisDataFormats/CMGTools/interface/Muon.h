@@ -19,7 +19,7 @@ namespace cmg
 
 //forward def needed
 class Muon;
- class MuonFactory;
+class MuonFactory;
 
  class Muon : public cmg::Lepton<pat::MuonPtr>{
  public:
@@ -36,7 +36,9 @@ class Muon;
 	   globalNormChi2_(UnSet(double)),
 	   dBS2D_(UnSet(double)),
 	   muonHits_(UnSet(int)),
-	   nMatches_(UnSet(int)){
+	   nMatches_(UnSet(int)),
+	   trackerLayersWithMeasurement_(UnSet(int)),
+	   type_(0){
       }
       virtual ~Muon(){
 	  }
@@ -69,12 +71,23 @@ class Muon;
      Int_t numberOfMatches() const{
        return nMatches_;
      }
-     // from LeafCandidate 
-     virtual bool isMuon() const {
-       return true;
+     Int_t trackerLayersWithMeasurement() const{
+       return trackerLayersWithMeasurement_;
      }
+
+     unsigned int type() const{
+       return type_;
+     }
+     // override of method in base class reco::Candidate
+     bool isMuon() const { return true; }
+     bool isGlobalMuon()     const { return type_ & reco::Muon::GlobalMuon; }
+     bool isTrackerMuon()    const { return type_ & reco::Muon::TrackerMuon; }
+     bool isStandAloneMuon() const { return type_ & reco::Muon::StandAloneMuon; }
+     bool isCaloMuon() const { return type_ & reco::Muon::CaloMuon; }
+     //bool isPFMuon() const {return type_ & reco::Muon::PFMuon; }
+     //bool isRPCMuon() const {return type_ & reco::Muon::RPCMuon;}
 	
-     friend class cmg::MuonFactory;
+    friend class cmg::MuonFactory;
 	
  private:
 
@@ -89,7 +102,11 @@ class Muon;
      Double_t dBS2D_;
      Int_t muonHits_;
      Int_t nMatches_;
-     //eta...
+     Int_t trackerLayersWithMeasurement_;
+     
+     //used for all the isMuon type flags
+     unsigned int type_;
+     
 
  };
 

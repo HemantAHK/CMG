@@ -26,7 +26,7 @@ class MuonFactory : public Factory<cmg::Muon>, public SettingTool<pat::MuonPtr,c
             muonIDType_(ps.getParameter<std::string>("muonIDType")),
             leptonFactory_(ps.getParameter<edm::ParameterSet>("leptonFactory")){
 		}
-		virtual event_ptr create(const edm::Event&, const edm::EventSetup&) const;
+        event_ptr create(const edm::Event&, const edm::EventSetup&) const;
         virtual void set(const pat::MuonPtr& input, cmg::Muon* const output, const edm::Event&, const edm::EventSetup&) const;
         
         enum track_type {Global=0,Inner,Track,Other=-1};
@@ -45,6 +45,7 @@ class MuonFactory : public Factory<cmg::Muon>, public SettingTool<pat::MuonPtr,c
         }
         
         reco::TrackRef getTrack(const pat::MuonPtr& input) const;
+        reco::TrackRef getTrackerTrack(const pat::MuonPtr& input) const;
 
 		const edm::InputTag muonLabel_;
         const track_type type_;
