@@ -96,18 +96,18 @@ MVAMETProducer< RecBosonType >::MVAMETProducer(const edm::ParameterSet & iConfig
   deltaRCut_(0.5),
   enable_( iConfig.getParameter<bool>("enable") ),
   verbose_( iConfig.getUntrackedParameter<bool>("verbose", false ) ) {
-    
+  
+/*   std::string fileCorrectTo = iConfig.getParameter<std::string>("fileCorrectTo"); */
+/*   std::string fileZmmData = iConfig.getParameter<std::string>("fileZmmData"); */
+/*   std::string fileZmmMC = iConfig.getParameter<std::string>("fileZmmMC"); */
+  
+
   mvaMet_ = new MVAMet(0.1);
-/*   mvaMet_->Initialize(iConfig, */
-/* 		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmet_42.root"))),        //U */
-/* 		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetphi_42.root"))),     //U Phi */
-/* 		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetu1cov_42.root"))),   //U1 Cov */
-/* 		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetu2cov_42.root"))));    //U2 Cov ); */
   mvaMet_->Initialize(iConfig,
-		      TString(iConfig.getParameter<std::string>("weights_gbrmet")),        //U
-		      TString(iConfig.getParameter<std::string>("weights_gbrmetphi")),     //U Phi
-		      TString(iConfig.getParameter<std::string>("weights_gbrmetu1cov")),   //U1 Cov
-		      TString(iConfig.getParameter<std::string>("weights_gbrmetu2cov")));  //U2 Cov
+		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmet_42.root"))),        //U
+		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetphi_42.root"))),     //U Phi
+		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetu1cov_42.root"))),   //U1 Cov
+		      TString((getenv("CMSSW_BASE")+string("/src/CMGTools/Common/data/MVAMet/gbrmetu2cov_42.root"))));    //U2 Cov );
 		      
    
   // will produce one BaseMET for each recBoson 
@@ -276,24 +276,19 @@ void MVAMETProducer<RecBosonType>::produce(edm::Event & iEvent, const edm::Event
     reco::PFMET cleanpucmet( pucmet->getSpecific(),
 			     cleanpucmetsumet, cleanpucmetp4, dummyVertex);
 
-    LorentzVector tau1Chargedp4 = recBoson.leg1().p4();
-    if(typeid(recBoson.leg1())==typeid(cmg::Tau))
-        tau1Chargedp4 *= dynamic_cast<const cmg::Tau&>(recBoson.leg1()).signalChargedFraction();
-    LorentzVector tau2Chargedp4 = recBoson.leg2().p4();
-    if(typeid(recBoson.leg2())==typeid(cmg::Tau))
-        tau2Chargedp4 *= dynamic_cast<const cmg::Tau&>(recBoson.leg2()).signalChargedFraction();
+    LorentzVector tauChargedp4 = recBoson.leg1().p4()*recBoson.leg1().signalChargedFraction();
     
     LorentzVector cleantkmetp4 = tkmet->p4();
-    cleantkmetp4 += tau1Chargedp4;
-    cleantkmetp4 += tau2Chargedp4;
-    double cleantkmetsumet = tkmet->sumEt() - tau1Chargedp4.Et() - tau2Chargedp4.Et();    
+    cleantkmetp4 += tauChargedp4;
+    cleantkmetp4 += recBoson.leg2().p4();
+    double cleantkmetsumet = tkmet->sumEt() - tauChargedp4.Et() - recBoson.leg2().et();    
     reco::PFMET cleantkmet( tkmet->getSpecific(),
 			    cleantkmetsumet, cleantkmetp4, dummyVertex);
 
     LorentzVector cleannopumetp4 = nopumet->p4();
-    cleannopumetp4 += tau1Chargedp4;
-    cleannopumetp4 += tau2Chargedp4;
-    double cleannopumetsumet = nopumet->sumEt() - tau1Chargedp4.Et() - tau2Chargedp4.Et();    
+    cleannopumetp4 += tauChargedp4;
+    cleannopumetp4 += recBoson.leg2().p4();
+    double cleannopumetsumet = nopumet->sumEt() - tauChargedp4.Et() - recBoson.leg2().et();    
     reco::PFMET cleannopumet( nopumet->getSpecific(),
 			      cleannopumetsumet, cleannopumetp4, dummyVertex);
 

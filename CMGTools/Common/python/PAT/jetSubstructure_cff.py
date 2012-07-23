@@ -70,19 +70,10 @@ if cmsswIs52X():
         patJetGenJetMatchCHSpruned
         )
 
-    from CMGTools.Common.factories.cmgStructuredPFJet_cfi import cmgStructuredPFJet
-    from CMGTools.Common.skims.cmgStructuredPFJetSel_cfi import cmgStructuredPFJetSel
-
-    pfStructuredJetSequence = cms.Sequence(
-        cmgStructuredPFJet + 
-        cmgStructuredPFJetSel
-    )
-
     PATCMGJetSequenceCHSpruned = cms.Sequence(
         ak5PFJetsCHSpruned +
         jetMCSequenceCHSpruned +
         patJetCorrFactorsCHSpruned +
         patJetsCHSpruned +
-        selectedPatJetsCHSpruned +
-	pfStructuredJetSequence
+        selectedPatJetsCHSpruned
         )

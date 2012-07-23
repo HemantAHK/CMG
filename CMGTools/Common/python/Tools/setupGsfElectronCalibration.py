@@ -17,15 +17,13 @@ def getEleEnergyCorrectionType(fileName):
         return "Fall11"
     elif lookup(fileName, 'Summer11' ):
         return "Summer11"
-    elif lookup(fileName, 'Summer12' ):
-        return "Summer12"
-    elif lookup(fileName, 'Jan16ReReco' ) or lookup(fileName, '16Jan2012' ):
+    elif lookup(fileName, 'Run2012A' ) or lookup(fileName, 'START52' ):
+        return "None"                    #No correction for 2012 data and MC!
+    elif lookup(fileName, 'Jan16ReReco' ):
         return "Jan16ReReco"
     elif lookup(fileName, 'ReReco' ):
         return "ReReco"
-    elif (lookup(fileName, 'Run2012') and lookup(fileName, 'PromptReco')):
-        return "Prompt2012"        
-    elif lookup(fileName, 'Prompt' ) or lookup(fileName, 'Nov2011' ):
+    elif lookup(fileName, 'Prompt' ):
         return "Prompt"
     else :
         return "Unknown"
@@ -39,5 +37,5 @@ def setupGsfElectronCalibration( process, runOnMC, type=None):
         err = 'ERROR: Could not determine electron scale correction to be applied from dataset name {file}'.format(process.source.fileNames[0])
         raise ValueError(err)
     print "Setting process.calibratedGsfElectrons.inputDataset = ", eleCorrectionType
-    process.gsfElectrons.inputDataset = cms.string(eleCorrectionType)
+    process.gsfElectrons.inputDataset = eleCorrectionType
     process.gsfElectrons.isMC = cms.bool(runOnMC)

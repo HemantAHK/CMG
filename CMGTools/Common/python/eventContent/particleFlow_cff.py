@@ -6,9 +6,8 @@ particleFlowJets = cms.untracked.vstring(
     'keep *_cmgPFJetLead*_*_*',    
     'keep *_cmgPFBaseJetLead*_*_*',
     'keep cmgAbstractPhysicsObjects_*PF*Jet*_*_*',
-    'keep *_cmgPFJet*JetId*Failed_*_*',
+    'keep *_cmgPFJet*JetId*Failed_*_*'
     # here add all PF jet objects, even the base ones. 
-    'keep *_cmgStructuredPFJetSel*_*_*',
     )
 
 particleFlowMET = cms.untracked.vstring(

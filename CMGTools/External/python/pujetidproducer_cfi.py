@@ -1,13 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
-from CMGTools.External.puJetIDAlgo_cff import * 
+from CMGTools.External.puJetIDAlgo_cff import PhilV1, full, simple, cutbased, full_5x, simple_5x
 
-stdalgos_4x = cms.VPSet(simple,   full,   cutbased,PhilV1)
-stdalgos_5x = cms.VPSet(simple_5x,full_5x,cutbased,PhilV1)
-
-chsalgos_4x = cms.VPSet(simple,   full,   cutbased)
-chsalgos_5x = cms.VPSet(simple_5x_chs,full_5x_chs,cutbased)
-chsalgos = chsalgos_5x
+stdalgos_4x = cms.VPSet(simple,   full,   cutbased)
+stdalgos_5x = cms.VPSet(simple_5x,full_5x,cutbased)
 
 import os
 try:
@@ -17,10 +13,8 @@ except:
 
 if cmssw_version.startswith("4"):
     stdalgos    = stdalgos_4x
-    chsalgos    = chsalgos_4x
 else:
     stdalgos    = stdalgos_5x
-    chsalgos    = chsalgos_5x
 
 pileupJetIdProducer = cms.EDProducer('PileupJetIdProducer',
                          produceJetIds = cms.bool(True),
@@ -28,30 +22,6 @@ pileupJetIdProducer = cms.EDProducer('PileupJetIdProducer',
                          runMvas = cms.bool(True),
                          jets = cms.InputTag("selectedPatJetsPFlow"),
                          vertexes = cms.InputTag("offlinePrimaryVertices"),
-                         algos = cms.VPSet(stdalgos),
-                                     
-                         rho     = cms.InputTag("kt6PFJets","rho"),
-                         jec     = cms.string("AK5PF"),
-                         applyJec = cms.bool(False),
-                         inputIsCorrected = cms.bool(True),                                     
-                         residualsFromTxt = cms.bool(False),
-                         residualsTxt     = cms.FileInPath("CMGTools/External/data/dummy.txt"),
-)
-
-pileupJetIdProducerChs = cms.EDProducer('PileupJetIdProducer',
-                         produceJetIds = cms.bool(True),
-                         jetids = cms.InputTag(""),
-                         runMvas = cms.bool(True),
-                         jets = cms.InputTag("selectedPatJetsPFlow"),
-                         vertexes = cms.InputTag("offlinePrimaryVertices"),
-                         algos = cms.VPSet(chsalgos),
-                                        
-                         rho     = cms.InputTag("kt6PFJets","rho"),
-                         jec     = cms.string("AK5PFchs"),
-                         applyJec = cms.bool(False),
-                         inputIsCorrected = cms.bool(True),
-                         residualsFromTxt = cms.bool(False),
-                         residualsTxt     = cms.FileInPath("CMGTools/External/data/dummy.txt"),
-
+                         algos = cms.VPSet(stdalgos)
 )
 
