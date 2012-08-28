@@ -17,8 +17,11 @@ class HTauTauElectron( Electron ):
         if self.photonIsoCache is None:
             myVetoes = reco.IsoDeposit.Vetos()
             pfGammaIsoType = 6
-            iso = self.sourcePtr().isoDeposit(pfGammaIsoType).depositWithin(0.4,myVetoes,True)
-            iso_veto = self.sourcePtr().isoDeposit(pfGammaIsoType).depositWithin(0.08,myVetoes,True)
+            iso = self.sourcePtr().isoDeposit(pfGammaIsoType).depositWithin(0.4,myVetoes,False)
+            # if self.sourcePtr().isEE() :
+            # Colin Why 13?? Changing the isodeposit type to PF photon
+            # also, the veto seems to be 0.08 in both EB and EE
+            iso_veto = self.sourcePtr().isoDeposit(pfGammaIsoType).depositWithin(0.08,myVetoes,False)
             iso -= iso_veto
             self.photonIsoCache = iso
         return self.photonIsoCache
@@ -29,12 +32,12 @@ class HTauTauElectron( Electron ):
             chargedAllIsoType = 13
             myVetoes = reco.IsoDeposit.Vetos()
             iso = self.sourcePtr().isoDeposit(chargedAllIsoType).depositWithin(0.4,
-                                                                               myVetoes,True)
+                                                                               myVetoes,False)
             vetoSize = 0.01
             if self.sourcePtr().isEE():
-                vetoSize = 0.015
+                coneSize = 0.015
             iso_veto = self.sourcePtr().isoDeposit(chargedAllIsoType).depositWithin(vetoSize,
-                                                                                    myVetoes,True)
+                                                                                    myVetoes,False)
             iso -= iso_veto
             self.chargedAllIsoCache = iso
         return self.chargedAllIsoCache
@@ -45,19 +48,8 @@ class HTauTauElectron( Electron ):
 
         https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2012#2012_Baseline_Selection
         """
-##         if self.eventId == 14636: 
-##             print 'STOPPING'
-##             import pdb
-##             pdb.set_trace()
-
-        #COLIN: loose id shouldn't be required here (Jose said)
-        # if self.looseIdForEleTau() == False : return False
-        #BUT: need to apply conversion rejection and missing inner hits cuts
-        if self.numberOfHits() != 0: return False
-        if not self.passConversionVeto(): return False
-        
-        # eta = abs( self.eta() )
-        eta = abs( self.sourcePtr().superCluster().eta() )
+        if self.looseIdForEleTau() == False : return False
+        eta = abs( self.eta() )
         if eta > 2.1 : return False
         lmvaID = -99999 # identification
         if self.pt() < 20 :
@@ -69,32 +61,24 @@ class HTauTauElectron( Electron ):
             elif eta<1.479: lmvaID = 0.975
             else :          lmvaID = 0.985
         result = self.mvaNonTrigV0()  > lmvaID
-        #self.tightIdResult = result
         return result
     
-
-    def tightId( self ):
-        return self.tightIdForEleTau()
-        
 
     def looseIdForEleTau(self):
         """Loose electron selection, for the lepton veto, 
         according to Phil sync prescription for the sync exercise 18/06/12
         """
-        #COLIN inner hits and conversion veto not on the twiki
-        # nInnerHits = self.numberOfHits()
-        # if nInnerHits != 0 : return False
-        # if self.passConversionVeto() == False   : return False
-        #COLIN: we might want to keep the vertex constraints separated
-        #COLIN: in the twiki there is no cut on dxy
-        # if abs(self.dxy())             >= 0.045 : return False
+        nInnerHits = self.numberOfHits()
+        if nInnerHits != 0 : return False
+        if self.passConversionVeto() == False   : return False
+        #COLIN : we might want to keep the vertex constraints separated
+        if abs(self.dxy())             >= 0.045 : return False
         if abs(self.dz())              >= 0.2   : return False
         # Below, part of WP95 without vertex constraints (applied above)
         hoe = self.hadronicOverEm()
-        deta = abs(self.deltaEtaSuperClusterTrackAtVtx())
-        dphi = abs(self.deltaPhiSuperClusterTrackAtVtx())
-        sihih = self.sigmaIetaIeta()
-        # print sihih
+        deta = self.deltaEtaSuperClusterTrackAtVtx()
+        dphi = self.deltaPhiSuperClusterTrackAtVtx()
+        sihih = self.sigmaIetaIeta() 
         if self.sourcePtr().isEB() :
             if sihih >= 0.010     : return False
             if dphi  >= 0.80      : return False 
