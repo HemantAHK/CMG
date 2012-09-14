@@ -20,7 +20,6 @@ from CMGTools.Production.nameOps import *
 from CMGTools.Production.dataset import *
 from datetime import *
 from CMGTools.Production.eostools import *
-from CMGTools.Production.fileNameUtils import getFileGroup
 
 class DatasetInformation(object):
 	
@@ -433,12 +432,11 @@ class DatasetInformation(object):
 		def getIndex(name):
 			isCrab, base = isCrabFile(name)
 			tokens = base.split('_')
-			index = None
 			if isCrab and len(tokens) > 2:
-				index = int(tokens[-3])
+				return int(tokens[-3])
 			else:
-				index = int(tokens[-1])
-			return index
+				return int(tokens[-1])
+			return None
 		
 		def createFileName(groupName, number, isCrab):
 			if isCrab:
@@ -451,18 +449,11 @@ class DatasetInformation(object):
 		for group_name in self.dataset_details['FileGroups']:
 			numbers = []
 			file_list = self.dataset_details['FileGroups'][group_name]['Files']
-			
-			#crab starts indexing at 1, while cmsBatch uses 0
-			crab_files = [c for c in map(isCrabFile,file_list) if c[0]]
-			start_index = 0
-			if crab_files:
-				start_index = 1
-
 			missing_files = []
 			for file_name in file_list:
 				#create a list of found file numbers
 				numbers.append(getIndex(file_name))
-			for number in range(start_index, self.dataset_details['FileGroups'][group_name]['TotalJobs']):
+			for number in range(0, self.dataset_details['FileGroups'][group_name]['TotalJobs']):
 				if number not in numbers:
 					missing_files.append(createFileName(group_name,number,self.dataset_details['FileGroups'][group_name]['IsCrab']))
 			if len(missing_files)>0:
@@ -569,8 +560,9 @@ class DatasetInformation(object):
 		for group_name in self.dataset_details['FileGroups']:
 			entries = 0
 			for file_name in files:
-				gr = getFileGroup(file_name)
-				if gr is not None and gr == group_name:
+				if  re.split('_\d+\.root',
+					     os.path.basename(file_name))[0]==group_name:
+				# if file_name.split("/")[-1].split("_")[0]==group_name:
 					entries += files[file_name][1]
 			self.dataset_details['FileGroups'][group_name]['FileEntries']=entries
 			if self.dataset_details['PrimaryDatasetEntries'] is not None and entries != 0 and self.dataset_details['PrimaryDatasetEntries'] > 0:
@@ -597,21 +589,3 @@ class DatasetInformation(object):
 			self.dataset_details['ValidDuplicates'] = self._report['ValidDuplicates']
 		
 	
-if __name__ == '__main__':
-
-	import sys, os, getpass
-
-	dataset = sys.argv[1]
-	owner = sys.argv[2]
-	user = os.environ['USER']
-	pw = getpass.getpass()
-
-	#sampleName,fileOwner,comment, force, test, primary, username, password
-	d = DatasetInformation(dataset, owner, 'This is a test',True, True, False, user, pw)
-	d.buildMissingFileReport()
-	d.buildFileEntriesReport()
-
-	#print d.dataset_details
-	for group_name in d.dataset_details['FileGroups']:
-		print '='*72
-		print group_name, d.dataset_details['FileGroups'][group_name]['FileEntries']
