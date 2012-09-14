@@ -33,8 +33,6 @@ ak5JetTracksAssociatorAtVertex.jets = jetSource
 from RecoBTag.Configuration.RecoBTag_cff import * # btagging sequence
 softMuonTagInfos.jets = jetSource
 softElectronTagInfos.jets = jetSource
-from CMGTools.Common.Tools.cmsswRelease import isNewerThan
-from CMGTools.Common.skims.cmgCandSel_cfi import cmgCandSel
 
 ## add secondar vertex mass information
 ## can be used in analysis level: jet->sourcePtr()->get()->userFloat("secvtxMass"); 
@@ -54,6 +52,7 @@ patJets.userData.userFunctionLabels = cms.vstring('secvtxMass','Lxy','LxyErr')
 # parton and gen jet matching
 
 from CommonTools.ParticleFlow.genForPF2PAT_cff import * 
+
 from PhysicsTools.PatAlgos.mcMatchLayer0.jetMatch_cfi import *
 patJetPartonMatch.src = jetSource
 patJetGenJetMatch.src = jetSource
@@ -62,11 +61,8 @@ patJetGenJetMatch.matched = 'ak5GenJetsNoNu'
 from PhysicsTools.PatAlgos.mcMatchLayer0.jetFlavourId_cff import *
 patJetPartonAssociation.jets = jetSource
 
-jetsPtGt1Cut = '(neutralHadronEnergy())/(correctedJet(0).pt()/pt()*energy())  < 0.99 && (neutralEmEnergy()/(correctedJet(0).pt()/pt()*energy())) < 0.99 && (nConstituents()) > 1    && ((abs(eta())  < 2.4  && chargedHadronEnergy()/(correctedJet(0).pt()/pt()*energy()) > 0 && chargedEmEnergy()      /(correctedJet(0).pt()/pt()*energy()) < 0.99 && chargedMultiplicity() > 0)   ||  abs(eta())  > 2.4) '
-if not isNewerThan('CMSSW_5_2_0'):
-    # addtl cut needed due to different MVA MET training in 44X
-    jetsPtGt1Cut = ' && '.join([jetsPtGt1Cut,'pt()>1'])
-jetsPtGt1 = cmgCandSel.clone( src = 'patJets', cut = jetsPtGt1Cut )
+from CMGTools.Common.skims.cmgCandSel_cfi import cmgCandSel
+jetsPtGt1 = cmgCandSel.clone( src = 'patJets', cut ='(neutralHadronEnergy())/(correctedJet(0).pt()/pt()*energy())  < 0.99 && (neutralEmEnergy()/(correctedJet(0).pt()/pt()*energy())) < 0.99 && (nConstituents()) > 1    && ((abs(eta())  < 2.4  && chargedHadronEnergy()/(correctedJet(0).pt()/pt()*energy()) > 0 && chargedEmEnergy()      /(correctedJet(0).pt()/pt()*energy()) < 0.99 && chargedMultiplicity() > 0)   ||  abs(eta())  > 2.4) ')
 
 from CMGTools.Common.miscProducers.collectionSize.candidateSize_cfi import candidateSize
 nJetsPtGt1 = candidateSize.clone( src = 'jetsPtGt1' )
