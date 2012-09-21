@@ -1,5 +1,9 @@
 #include "CMGTools/Common/interface/MuonFactory.h"
 
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
 
 #include "TrackingTools/AnalyticalJacobians/interface/JacobianCurvilinearToCartesian.h"
 #include "TrackingTools/TrajectoryParametrization/interface/GlobalTrajectoryParameters.h"
@@ -47,9 +51,19 @@ void cmg::MuonFactory::set(const pat::MuonPtr& input, cmg::Muon* const output, c
     //NOT NEEDED as implemented in Muon.h accessing the source pointer 
     //output->nMatchedStations_ = input->numberOfMatchedStations(); 
 
-    output->dB3D_ = input->dB( pat::Muon::PV3D );
-    output->edB3D_ = input->edB( pat::Muon::PV3D );
+    edm::ESHandle<TransientTrackBuilder> trackBuilder;    
+    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", trackBuilder);
 
+    edm::Handle<reco::VertexCollection> vertices;
+    iEvent.getByLabel("offlinePrimaryVertices",vertices);
+    if( input->innerTrack().isNonnull() && vertices->size()>0 && vertices->at(0).isValid()) {
+      reco::TransientTrack tt = trackBuilder->build(input->innerTrack());
+      std::pair<bool,Measurement1D> result =IPTools::signedImpactParameter3D(tt,
+     GlobalVector(input->innerTrack()->px(),input->innerTrack()->py(),input->innerTrack()->pz()),vertices->at(0));
+
+      output->dB3D_ = result.second.value();
+      output->edB3D_ = result.second.error();
+    }
 
     //get the magnetic field and calculate the covariance
     //matrix in cartesian coordinates
