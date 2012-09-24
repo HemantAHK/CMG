@@ -32,13 +32,7 @@ class PileUpAnalyzer( Analyzer ):
     def __init__(self, cfg_ana, cfg_comp, looperName):
         super(PileUpAnalyzer, self).__init__(cfg_ana, cfg_comp, looperName)
 
-        self.doHists=True
-
-        if (hasattr(self.cfg_ana,'makeHists')) and (not self.cfg_ana.makeHists):
-            self.doHists=False
-
-
-        if self.cfg_comp.isMC and self.doHists:
+        if self.cfg_comp.isMC:
             self.rawmcpileup = VertexHistograms('/'.join([self.dirName,
                                                           'rawMCPU.root']))
         self.enable = True
@@ -95,9 +89,7 @@ class PileUpAnalyzer( Analyzer ):
                         nPU = puInfo.nPU()
                     else:
                         nPU = puInfo.nTrueInteractions()
-
-                    if self.doHists:
-                        self.rawmcpileup.hist.Fill( nPU )
+                    self.rawmcpileup.hist.Fill( nPU )
 
             if nPU is None:
                 raise ValueError('nPU cannot be None! means that no pu info has been found for bunch crossing 0.')
@@ -126,5 +118,5 @@ class PileUpAnalyzer( Analyzer ):
         
     def write(self):
         super(PileUpAnalyzer, self).write()
-        if self.cfg_comp.isMC and self.doHists:
+        if self.cfg_comp.isMC:
             self.rawmcpileup.write()

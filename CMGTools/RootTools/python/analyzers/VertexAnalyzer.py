@@ -40,12 +40,7 @@ class VertexAnalyzer( Analyzer ):
         self.count.register('All Events')
         self.count.register('Events With Good Vertex')
 
-        self.doHists=True
-        
-        if (hasattr(self.cfg_ana,'makeHists')) and (not self.cfg_ana.makeHists):
-            self.doHists=False
-        if self.doHists:    
-            self.pileup = VertexHistograms('/'.join([self.dirName,
+        self.pileup = VertexHistograms('/'.join([self.dirName,
                                                  'pileup.root']))
         
     def process(self, iEvent, event):
@@ -76,8 +71,7 @@ class VertexAnalyzer( Analyzer ):
         if len(event.goodVertices)==0:
             return False
 
-        if self.doHists:
-            self.pileup.hist.Fill( len(event.goodVertices) )
+        self.pileup.hist.Fill( len(event.goodVertices) )
 
         self.count.inc('Events With Good Vertex')
         return True
@@ -98,5 +92,4 @@ class VertexAnalyzer( Analyzer ):
                                                                  
     def write(self):
         super(VertexAnalyzer, self).write()
-        if self.doHists:
-            self.pileup.write()
+        self.pileup.write()
