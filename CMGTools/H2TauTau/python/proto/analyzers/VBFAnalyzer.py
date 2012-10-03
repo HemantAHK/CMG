@@ -145,5 +145,4 @@ class VBFAnalyzer( Analyzer ):
         # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagPerformanceOP#B_tagging_Operating_Points_for_3
         return jet.pt()>20 and \
                abs( jet.eta() ) < 2.4 and \
-               jet.btag("combinedSecondaryVertexBJetTags")>0.679 and \
-               jet.passPuJetId('full', 2)
+               jet.btag("combinedSecondaryVertexBJetTags")>0.679
