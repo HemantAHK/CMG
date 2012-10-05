@@ -6,7 +6,7 @@ import re
 
 #from CMGTools.H2TauTau.proto.HistogramSet import histogramSet
 from CMGTools.H2TauTau.proto.plotter.H2TauTauDataMC import H2TauTauDataMC
-from CMGTools.H2TauTau.proto.plotter.prepareComponents import prepareComponents, readPickles
+from CMGTools.H2TauTau.proto.plotter.prepareComponents import prepareComponents #, readPickles
 from CMGTools.H2TauTau.proto.plotter.rootutils import buildCanvas, draw
 from CMGTools.H2TauTau.proto.plotter.categories_TauEle import *
 from CMGTools.H2TauTau.proto.plotter.binning import binning_svfitMass
@@ -43,6 +43,9 @@ def plotPurity (orig, num, den,plotname):
     can0.Print(plotname+'.png','png')
 
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+
 def replaceShapeInclusive(plot, var, anaDir,
                           comp, weights, 
                           cut, weight,
@@ -67,11 +70,14 @@ def replaceShapeInclusive(plot, var, anaDir,
     # plotWithNewShape.Hist(comp.name).on = False 
     return plotWithNewShape
 
-    
+
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
 
 def makePlot( var, anaDir, selComps, weights, wJetScaleSS, wJetScaleOS,
               nbins=None, xmin=None, xmax=None,
-              cut='', weight='weight', embed=False, shift=None, replaceW=False):
+              cut='', weight='weight', embed=False, shift=None, replaceW=False,
+              useExclusiveVV=True):
     
     print 'making the plot:', var, 'cut', cut
 
@@ -118,20 +124,34 @@ def makePlot( var, anaDir, selComps, weights, wJetScaleSS, wJetScaleOS,
 #        # qcd_shape.Scale( qcd_yield )
 #        osQCD.Replace('QCD', qcd_shape)
 
-    osQCD.Group('VV', ['WW','WZ','ZZ'])
+    if useExclusiveVV :
+        osQCD.Group('VV', ['WW2l2v', 'WZ2l2q', 'WZ3lv', 'ZZ2l2q', 'ZZ2l2v', 'ZZ4l'])
+        print 'grouping the exclusive samples into VV:'
+        for VV in ['WW2l2v', 'WZ2l2q', 'WZ3lv', 'ZZ2l2q', 'ZZ2l2v', 'ZZ4l'] :
+            print '    - ',VV,selComps[VV].nGenEvents, selComps[VV].xSection, selComps[VV].effCorrFactor, selComps[VV].intLumi 
+    else :
+        osQCD.Group('VV', ['WW','WZ','ZZ'])
+        print 'grouping the inclusive samples into VV'
+        for VV in ['WW','WZ','ZZ'] :
+            print '    - ',VV,selComps[VV].nGenEvents, selComps[VV].xSection, selComps[VV].effCorrFactor, selComps[VV].intLumi 
+    
     osQCD.Group('EWK', ['WJets', 'Ztt_ZL', 'Ztt_ZJ','VV'])
     osQCD.Group('Higgs 125', ['HiggsVBF125', 'HiggsGGH125', 'HiggsVH125'])
     return ssign, osign, ssQCD, osQCD
 
 
-def drawAll(cut, plots, embed, selComps, weights, fwss, fwos):
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+
+
+def drawAll(cut, plots, embed, selComps, weights, fwss, fwos,useExcusiveVV):
     '''See plotinfo for more information'''
     for plot in plots.values():
         print plot.var
         ss, os, ssQ, osQ = makePlot( plot.var, anaDir,
                                      selComps, weights, fwss, fwos,
                                      plot.nbins, plot.xmin, plot.xmax,
-                                     cut, weight=weight, embed=embed)
+                                     cut, weight=weight, embed=embed,
+                                     useExclusiveVV=useExclusiveVV)
 
         osQ.legendOn = False
         print 'drawing ', plot.var
@@ -143,6 +163,7 @@ def drawAll(cut, plots, embed, selComps, weights, fwss, fwos):
         time.sleep(1)
 
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
 
 if __name__ == '__main__':
@@ -170,6 +191,11 @@ if __name__ == '__main__':
     parser.add_option("-E", "--embed", 
                       dest="embed", 
                       help="Use embedd samples.",
+                      action="store_true",
+                      default=False)
+    parser.add_option("-X", "--exclusiveVV", 
+                      dest="useExcusiveVV", 
+                      help="Use exclusive VV.",
                       action="store_true",
                       default=False)
     parser.add_option("-B", "--blind", 
@@ -244,6 +270,7 @@ if __name__ == '__main__':
     
     # WJet normalization
     comps = []
+    useExcusiveVV = True
     for comp in cfg.config.components:
         if comp.name == 'W3Jets': continue
         if comp.name == 'W2Jets': continue
@@ -252,6 +279,17 @@ if __name__ == '__main__':
             if comp.name == 'WJets': continue
         else:
             if comp.name == 'WJets11': continue
+        if options.useExcusiveVV :
+            if comp.name == 'WW' : continue
+            if comp.name == 'ZZ' : continue
+            if comp.name == 'WZ' : continue
+        else :
+            if comp.name == 'WW2l2v' : continue
+            if comp.name == 'WZ2l2q' : continue
+            if comp.name == 'WZ3lv' : continue
+            if comp.name == 'ZZ2l2q' : continue
+            if comp.name == 'ZZ2l2v' : continue
+            if comp.name == 'ZZ4l' : continue
         comps.append( comp )
     aliases = None
     if useW11:
@@ -275,7 +313,7 @@ if __name__ == '__main__':
 
     cutw = options.cut.replace('mt<40', '1')
     fwss, fwss_error, fwos, fwos_error, ss, os = plot_W(anaDir, selComps, weights,
-                                                        12, 70, 130, cutw,
+                                                        12, 60, 120, cutw,
                                                         weight=weight, embed=options.embed,
                                                         treeName='H2TauTauTreeProducerTauEle')
     #PG fwss = W normalization factor for the same sign plots
@@ -352,14 +390,15 @@ if __name__ == '__main__':
     #PG ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 
     if (options.plots == 'True') :
-        drawAll(options.cut, plots_TauEle, options.embed, selComps, weights, fwss, fwos)
+        drawAll(options.cut, plots_TauEle, options.embed, selComps, weights, fwss, fwos,
+                useExclusiveVV=options.useExcusiveVV)
         #PG this does not work yet, it does not get the DY right
     else :
     
         ssign, osign, ssQCD, osQCD = makePlot( options.hist, anaDir, selComps, weights, 
                                                fwss, fwos, NBINS, XMIN, XMAX, 
                                                options.cut, weight=weight, embed=options.embed, 
-                                               replaceW=replaceW )
+                                               replaceW=replaceW,useExclusiveVV=options.useExcusiveVV )
         # ssign = all cuts, same sign, before QCD estimate
         # osign = all cuts, opposite sign, before QCD estimate
         # ssQCD = all cuts, same sign, after QCD estimate, i.e. the QCD is in
@@ -394,65 +433,53 @@ if __name__ == '__main__':
         #PG ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
         
         #PG WJets
-        WJets_stats_component = 1. / math.sqrt(osQCD.Hist('WJets').obj.GetEntries())
-        WJets_tot_error = sqsum(WJets_stats_component, fwos_error/fwos)
-        print 'WJets total relative error', round(WJets_tot_error, 2)
-        #PG FIXME missing the error due to other bkg subtraction in the fwos_error calculation
-        #PG FIXME move getpickels in prepare components
-        #PG FIXME and assign to the compontents the number of intial events
-        #PG FIXME directly there, so that I am sure it can be used also to estimate
-        #PG FIXME the uncertainty on fos within plotmod.py
-        
-        #PG TTbar
-        TTJets_eff = osQCD.Hist('TTJets').obj.GetEntries() / selComps['TTJets'].totEvents
-        TTJet_eff_error = math.sqrt(TTJets_eff * (1 - TTJets_eff) / selComps['TTJets'].totEvents)
-        print 'TTjets relative eff error', TTJet_eff_error / TTJets_eff
-        #PG missing the error on the scale factor and the error on the total cross-section
-        #PG for 2011 and 2012 separately
-        
-        #PG QCD
-        QCD_norm_component = ssQCD.Hist('QCD').weighted.Integral()
-        print 'QCD norm component', round(QCD_norm_component,0)
-        QCD_extrap_scale = 1.10
-        QCD_extrap_error = 0.10 / QCD_extrap_scale
-        print 'QCD extrapolation factor (and relative error)',round(QCD_extrap_scale,2),'+-',round(QCD_extrap_error,2)
-        
-        #PG Z+jets
-        ZJets_total_stats = selComps['Ztt'].totEvents * \
-                            selComps['Ztt'].tree.GetEntries('isFake == 0') / selComps['Ztt'].tree.GetEntries()
-        if options.embed :
-            ZJets_total_stats = sum(comp.totEvents for name,comp in selComps.iteritems() if comp.isEmbed)
-        ZJets_eff = osQCD.Hist('Ztt').obj.GetEntries() / ZJets_total_stats
-        ZJets_eff_error = math.sqrt(ZJets_eff * (1 - ZJets_eff) / ZJets_total_stats)
-        print 'ZJets relative eff error:',round (ZJets_eff_error / ZJets_eff,2)
-        #PG FIXME normalization error is missing
-
-        #PG Z+jets, lepton tau fake
-        tauEle_fake_error = 0.2
-        ZJets_ZL_total_stats = selComps['Ztt'].totEvents * \
-                               selComps['Ztt'].tree.GetEntries('isFake == 1') / selComps['Ztt'].tree.GetEntries()
-        ZJets_ZL_eff = osQCD.Hist('Ztt_ZL').obj.GetEntries() / ZJets_ZL_total_stats
-        ZJets_ZL_eff_error = math.sqrt(ZJets_ZL_eff * (1 - ZJets_ZL_eff) / ZJets_ZL_total_stats)
-        ZJets_ZL_tot_error = sqsum(tauEle_fake_error, ZJets_ZL_eff_error/ZJets_ZL_eff)
-        print 'ZJets_ZL relative tot error:',round(ZJets_ZL_tot_error,2)
-
-        #PG Z+jets, jet tau fake
-        tauJet_fake_error = 0.2
-        ZJets_ZJ_total_stats = selComps['Ztt'].totEvents * \
-                               selComps['Ztt'].tree.GetEntries('isFake == 2') / selComps['Ztt'].tree.GetEntries()
-        ZJets_ZJ_eff = osQCD.Hist('Ztt_ZJ').obj.GetEntries() / ZJets_ZJ_total_stats
-        ZJets_ZJ_eff_error = math.sqrt(ZJets_ZJ_eff * (1 - ZJets_ZJ_eff) / ZJets_ZJ_total_stats)
-        ZJets_ZJ_tot_error = sqsum(tauJet_fake_error, ZJets_ZJ_eff_error/ZJets_ZJ_eff)
-        print 'ZJets_ZJ relative tot error:',round(ZJets_ZJ_tot_error,2)
-
-
-        
-        
-        
-       
-        
-        
-        
-
-        
-
+#        WJets_stats_component = 1. / math.sqrt(osQCD.Hist('WJets').obj.GetEntries())
+#        WJets_tot_error = sqsum(WJets_stats_component, fwos_error/fwos)
+#        print 'WJets total relative error', round(WJets_tot_error, 2)
+#        #PG FIXME missing the error due to other bkg subtraction in the fwos_error calculation
+#        #PG FIXME move getpickels in prepare components
+#        #PG FIXME and assign to the compontents the number of intial events
+#        #PG FIXME directly there, so that I am sure it can be used also to estimate
+#        #PG FIXME the uncertainty on fos within plotmod.py
+#        
+#        #PG TTbar
+#        TTJets_eff = osQCD.Hist('TTJets').obj.GetEntries() / selComps['TTJets'].totEvents
+#        TTJet_eff_error = math.sqrt(TTJets_eff * (1 - TTJets_eff) / selComps['TTJets'].totEvents)
+#        print 'TTjets relative eff error', TTJet_eff_error / TTJets_eff
+#        #PG missing the error on the scale factor and the error on the total cross-section
+#        #PG for 2011 and 2012 separately
+#        
+#        #PG QCD
+#        QCD_norm_component = ssQCD.Hist('QCD').weighted.Integral()
+#        print 'QCD norm component', round(QCD_norm_component,0)
+#        QCD_extrap_scale = 1.10
+#        QCD_extrap_error = 0.10 / QCD_extrap_scale
+#        print 'QCD extrapolation factor (and relative error)',round(QCD_extrap_scale,2),'+-',round(QCD_extrap_error,2)
+#        
+#        #PG Z+jets
+#        ZJets_total_stats = selComps['Ztt'].totEvents * \
+#                            selComps['Ztt'].tree.GetEntries('isFake == 0') / selComps['Ztt'].tree.GetEntries()
+#        if options.embed :
+#            ZJets_total_stats = sum(comp.totEvents for name,comp in selComps.iteritems() if comp.isEmbed)
+#        ZJets_eff = osQCD.Hist('Ztt').obj.GetEntries() / ZJets_total_stats
+#        ZJets_eff_error = math.sqrt(ZJets_eff * (1 - ZJets_eff) / ZJets_total_stats)
+#        print 'ZJets relative eff error:',round (ZJets_eff_error / ZJets_eff,2)
+#        #PG FIXME normalization error is missing
+#
+#        #PG Z+jets, lepton tau fake
+#        tauEle_fake_error = 0.2
+#        ZJets_ZL_total_stats = selComps['Ztt'].totEvents * \
+#                               selComps['Ztt'].tree.GetEntries('isFake == 1') / selComps['Ztt'].tree.GetEntries()
+#        ZJets_ZL_eff = osQCD.Hist('Ztt_ZL').obj.GetEntries() / ZJets_ZL_total_stats
+#        ZJets_ZL_eff_error = math.sqrt(ZJets_ZL_eff * (1 - ZJets_ZL_eff) / ZJets_ZL_total_stats)
+#        ZJets_ZL_tot_error = sqsum(tauEle_fake_error, ZJets_ZL_eff_error/ZJets_ZL_eff)
+#        print 'ZJets_ZL relative tot error:',round(ZJets_ZL_tot_error,2)
+#
+#        #PG Z+jets, jet tau fake
+#        tauJet_fake_error = 0.2
+#        ZJets_ZJ_total_stats = selComps['Ztt'].totEvents * \
+#                               selComps['Ztt'].tree.GetEntries('isFake == 2') / selComps['Ztt'].tree.GetEntries()
+#        ZJets_ZJ_eff = osQCD.Hist('Ztt_ZJ').obj.GetEntries() / ZJets_ZJ_total_stats
+#        ZJets_ZJ_eff_error = math.sqrt(ZJets_ZJ_eff * (1 - ZJets_ZJ_eff) / ZJets_ZJ_total_stats)
+#        ZJets_ZJ_tot_error = sqsum(tauJet_fake_error, ZJets_ZJ_eff_error/ZJets_ZJ_eff)
+#        print 'ZJets_ZJ relative tot error:',round(ZJets_ZJ_tot_error,2)
