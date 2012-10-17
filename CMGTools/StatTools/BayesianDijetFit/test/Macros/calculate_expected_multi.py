@@ -25,19 +25,10 @@ prefix="plots_LowAndHighMass_2011_118pbm1_4677pbm1/limit"
 
 statl=[6]
 
-shapes=["RSGraviton_2012_Z2star_ak5_GGtoGG_fat30", "RSGraviton_2012_Z2star_ak5_QQtoQQ_fat30", "Qstar_2012_Z2star_ak5_fat30"]
+#shapes=["RSGraviton_ak5_GGtoGG_fat30", "RSGraviton_ak5_QQtoQQ_fat30", "Qstar_ak5_fat30", "RSGraviton_HLT_ak5_GGtoGG_fat30", "RSGraviton_HLT_ak5_QQtoQQ_fat30", "Qstar_HLT_ak5_fat30", "RSGraviton_HLT_ak5_GGtoGG_pf", "RSGraviton_HLT_ak5_QQtoQQ_pf", "Qstar_HLT_ak5_pf"]
 
-
-#shapes=["RSGraviton_HLT_ak5_GGtoGG_fat30", "RSGraviton_HLT_ak5_QQtoQQ_fat30", "Qstar_HLT_ak5_fat30", "RSGraviton_HLT_ak5_GGtoGG_pf", "RSGraviton_HLT_ak5_QQtoQQ_pf", "Qstar_HLT_ak5_pf"]
-
-#shapes=["RSGraviton_ak5_GGtoGG_fat30", "RSGraviton_ak5_QQtoQQ_fat30", "Qstar_ak5_fat30", "RSGraviton_HLT_ak5_GGtoGG_fat30", "RSGraviton_HLT_ak5_QQtoQQ_fat30", "Qstar_HLT_ak5_fat30"]
-
-#shapes=["RSGraviton_ak5_GGtoGG_fat30", "RSGraviton_ak5_QQtoQQ_fat30", "Qstar_ak5_fat30"]
-
-
-#shapes=["Qstar_ak5_fat30"]
-#shapes=["Qstar_qW_ak5_fat", "Qstar_qZ_ak5_fat"]
-#shapes+=["RSGraviton_WW_ak5_fat", "RSGraviton_WZ_ak5_fat", "RSGraviton_ZZ_ak5_fat"]
+shapes=["Qstar_qW_ak5_fat", "Qstar_qZ_ak5_fat"]
+shapes+=["RSGraviton_WW_ak5_fat", "RSGraviton_WZ_ak5_fat", "RSGraviton_ZZ_ak5_fat"]
 #shapes=["Qstar_qZ_ak5_fat", "RSGraviton_WW_ak5_fat", "RSGraviton_WZ_ak5_fat", "RSGraviton_ZZ_ak5_fat"]
 
 
@@ -56,15 +47,13 @@ for statlevel in statl:
         twosigma_uppers=[]
 
         if "_HLT_" in sShapes:
-            masses =[600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000., 2100., 2200., 2300., 2400., 2500., 2600.]
+            masses =[600., 700., 800., 900., 1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000.]
         elif ("qW" in sShapes) or ("qZ" in sShapes):
             masses = [1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000., 2100., 2200., 2300., 2400., 2500., 2600., 2700., 2800., 2900., 3000., 3100., 3200., 3300.]
         elif ("WW" in sShapes) or ("ZZ" in sShapes) or ("WZ" in sShapes):
             masses = [1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000., 2100.]
         else: 
             masses =[1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000., 2100., 2200., 2300., 2400., 2500., 2600., 2700., 2800., 2900., 3000., 3100., 3200., 3300., 3400., 3500., 3600., 3700., 3800., 3900., 4000., 4100., 4200., 4300.]
-#            masses =[1000., 1100., 1200., 1300., 1400., 1500., 1600., 1700., 1800., 1900., 2000., 2100., 2200., 2300., 2400., 2500., 2600., 2700., 2800., 2900., 3000.]
-
         
 
         
@@ -74,35 +63,22 @@ for statlevel in statl:
             found=False
 	    nPE=200
 	    PElimits=[]
-#            max = nPE/40+1
-            max = nPE/40
-            for n in range(max):
+            for n in range(nPE/40):
 	      nPE=40+n
-
-              print "nPE = ",nPE," n = ",n," max = ",max
-            
-              massIn = mass
-                  
-              if os.path.isfile("out/res/masslimit_"+str(massIn)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt.tar.gz"):
-                  os.system("tar -xvf out/res/masslimit_"+str(massIn)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt.tar.gz")
-                  if os.path.isfile( "out/res/masslimit_"+str(massIn)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt"):
-                      f_fit=file(    "out/res/masslimit_"+str(massIn)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt")
-                      print "we look inside the fit output"
-                      for line in f_fit.readlines():
-                          if "];" in line:
-                              PElimits+=eval("["+line.strip(";\n"))
-                              found=True
-
-                      f_fit.close()
-                      os.system(  "rm out/res/masslimit_"+str(massIn)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt")
+              os.system("tar -xvf out/res/masslimit_"+str(mass)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt.tar.gz")
+              f_fit=file("out/res/masslimit_"+str(mass)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt")
+              print "we look inside the fit output"
+              for line in f_fit.readlines():
+            	if "];" in line:
+            	  PElimits+=eval("["+line.strip(";\n"))
+	          found=True
+              f_fit.close()
+              os.system("rm out/res/masslimit_"+str(mass)+"_" + str(statlevel) + "_"+str(nPE)+"_" + sShapes + ".txt")
 
             limits=array.array('d')
             for l in sorted(PElimits):
 	    	limits.append(l)
-
-	    vMedian = TMath.Median(len(limits), limits)
-
-            medians+=[vMedian]
+            medians+=[TMath.Median(len(limits), limits)]
 
             prob=array.array('d')
   	    prob.append(0.021)
@@ -120,47 +96,6 @@ for statlevel in statl:
   	    onesigma_lowers+=[quantiles[1]];
   	    onesigma_uppers+=[quantiles[2]];
   	    twosigma_uppers+=[quantiles[3]];
-
-	    if mass == 1000 or mass == 2000:
-
-
-                PEs = TH1F("PEs","",100,limits[0]*0.8,limits[len(limits)-1]*1.1)
-                for l in limits:
-                    PEs.Fill(l)
-
-                cPE = TCanvas("cPE","cPE",0,0,500,500)
-                cPE.Divide(1,1)
-                PEs.Draw()
-                
-                lTwoSigmaLower = TLine(quantiles[0], 0, quantiles[0], 5)
-                lTwoSigmaLower.SetLineWidth(2)
-                lTwoSigmaLower.SetLineColor(kYellow)
-                    
-                lTwoSigmaHigher = TLine(quantiles[3], 0, quantiles[3], 5)
-                lTwoSigmaHigher.SetLineWidth(2)
-                lTwoSigmaHigher.SetLineColor(kYellow)
-                
-                lOneSigmaLower = TLine(quantiles[1], 0, quantiles[1], 5)
-                lOneSigmaLower.SetLineWidth(2)
-                lOneSigmaLower.SetLineColor(kGreen)
-                
-                lOneSigmaHigher = TLine(quantiles[2], 0, quantiles[2], 5)
-                lOneSigmaHigher.SetLineWidth(2)
-                lOneSigmaHigher.SetLineColor(kGreen)
-                
-
-                lMedian = TLine(vMedian, 0, vMedian, 5)
-                lMedian.SetLineWidth(2)
-                lMedian.SetLineColor(kBlack)
-                    
-                lTwoSigmaLower.Draw()
-                lTwoSigmaHigher.Draw()
-                lOneSigmaLower.Draw()
-                lOneSigmaHigher.Draw()
-                lMedian.Draw()
-
-                cPE.SaveAs(prefix + '_expectedlimit50_' + sShapes + '_' + str(statlevel)+ '_' + str(mass) + '_PEs.png')
-
 
             if not found:
 	        print mass, "not found"
