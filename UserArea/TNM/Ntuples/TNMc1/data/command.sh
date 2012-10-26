@@ -1,1 +1,0 @@
-ProductionTasks.py -w 'patTuple*.root' -c -N 10 -q 2nd -t NTUPLE_Oct25 --output_wildcard '[!h]*.root' --cfg TNMc1_cfg.py --max_threads 6 `cat data/samples_53X.txt`
