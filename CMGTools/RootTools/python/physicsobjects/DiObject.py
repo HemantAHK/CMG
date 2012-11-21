@@ -85,10 +85,10 @@ class DiTau( DiObject ):
         #TODO move matching stuff even higher?
         # print self
         genTaus = []
-        ZorPhotonorHiggs = [22, 23, 25]
+        ZorPhoton = [22, 23]
         for gen in genParticles:
             # print '\t', gen
-            if abs(gen.pdgId())==15 and gen.mother().pdgId() in ZorPhotonorHiggs:
+            if abs(gen.pdgId())==15 and gen.mother().pdgId() in ZorPhoton:
                 genTaus.append( gen )
         # print 'Gen taus: '
         # print '\n'.join( map( str, genTaus ) )
