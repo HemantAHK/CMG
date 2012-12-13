@@ -26,9 +26,6 @@ class BoolToIntProducer : public edm::EDFilter{
     std::auto_ptr<int> output( new int(result) ); 
     iEvent.put( output );
 
-    if(!handle.product()){
-      std::cout << "Filter: " << result << std::endl;
-    }
     if(filter_){
         return handle.product();  
     }

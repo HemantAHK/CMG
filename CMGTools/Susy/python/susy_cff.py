@@ -1,22 +1,68 @@
 import FWCore.ParameterSet.Config as cms
 
+from CMGTools.Susy.common.susy_cff import *
 from CMGTools.Susy.MultiJet.multijet_cff import *
+from CMGTools.Susy.RA1.RA1_cff import *
+from CMGTools.Susy.RA2.RA2_cff import *
 from CMGTools.Susy.Razor.razor_cff import *
 from CMGTools.Susy.RazorMultiJet.razorMultijet_cff import *
+from CMGTools.Susy.LP.LP_cff import *
+from CMGTools.Susy.LeptonicStop.leptonicstop_cff import *
 from CMGTools.Common.countingSequences_cff import *
 
-razorMJSkimSequenceHadPath = cms.Path(
-    razorMJSkimSequenceHad
-)
+multijetPath = cms.Path(
+    susySequence +
+    multijetSkimSequence
+    )
 
-razorMJSkimSequenceElePath = cms.Path(
-    razorMJSkimSequenceEle
-)
+multijetTriggerPath = cms.Path(
+    susySequence +
+    multijetTriggerSkimSequence
+    )
 
-razorMJSkimSequenceMuPath = cms.Path(
-    razorMJSkimSequenceMu
-)
+leptonicStopPath = cms.Path(
+    susySequence +
+    leptonicStopSkimSequence
+    )
 
-razorMJSkimSequenceTauPath = cms.Path(
-    razorMJSkimSequenceTau
-)
+leptonicStopTriggerPath = cms.Path(
+    susySequence +
+    leptonicStopTriggerSkimSequence
+    )
+
+RA1Path = cms.Path(
+    susySequence *
+    RA1SkimSequence
+    )
+
+RA2Path = cms.Path(
+    susySequence +
+    RA2SkimSequence
+    )
+
+razorPath = cms.Path(
+    susySequence +
+    razorSkimSequence
+    )
+
+razorTriggerPath = cms.Path(
+    susySequence +
+    razorTriggerSkimSequence
+    )
+
+razorEleMuPath = cms.Path(
+    susySequence +
+    razorEleMuSequence
+    )
+
+razorMJPath = cms.Path(
+    susySequence +
+    razorMJSkimSequence
+    )
+
+LPPath = cms.Path(
+    susySequence +
+    LPSkimSequence
+    )
+
+
