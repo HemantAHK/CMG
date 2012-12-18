@@ -170,9 +170,9 @@ Double_t MVAMet::evaluateCovU1() {
   fCovVals[24] =  fUPhiMVA ;
   fCovVals[25] =  fUMVA    ;
   //COLIN old 52 recipe:
-  // return fCovU1Reader->GetResponse(fCovVals);
+  return fCovU1Reader->GetResponse(fCovVals);
   //COLIN 53 
-  return fCovU1Reader->GetResponse(fCovVals) * fCovU1Reader->GetResponse(fCovVals) * fUMVA * fUMVA;
+  // return fCovU1Reader->GetResponse(fCovVals) * fCovU1Reader->GetResponse(fCovVals) * fUMVA * fUMVA;
 }
 //--------------------------------------------------------------------------------------------------
 Double_t MVAMet::evaluateCovU2() { 
@@ -203,9 +203,9 @@ Double_t MVAMet::evaluateCovU2() {
   fCovVals[24] =  fUPhiMVA ;
   fCovVals[25] =  fUMVA    ;
   //COLIN old 52 recipe
-  // return fCovU2Reader->GetResponse(fCovVals);
+  return fCovU2Reader->GetResponse(fCovVals);
   //COLIN 53 
-  return fCovU2Reader->GetResponse(fCovVals) * fCovU2Reader->GetResponse(fCovVals) * fUMVA * fUMVA;
+  // return fCovU2Reader->GetResponse(fCovVals) * fCovU2Reader->GetResponse(fCovVals) * fUMVA * fUMVA;
 
 }
 //--------------------------------------------------------------------------------------------------
