@@ -100,6 +100,8 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         var('l2jetBtag')
         var('l1match')
         var('l2match')
+        var('l1VertexZ')
+        var('l2VertexZ')
 
         var('genMass')
         var('genMassSmeared')
@@ -119,6 +121,10 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         var('jet2Btag')
         var('jet1Bmatch')
         var('jet2Bmatch')
+
+        varInt('nbJets')
+        particleVars('bjet1')
+        particleVars('bjet2')
 
         var('weight')
         var('vertexWeight')
@@ -141,6 +147,15 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         varInt('hasW')
         varInt('hasZ')
 
+        var('electron1Pt')
+        var('muon1Pt')
+        var('electron1Eta')
+        var('muon1Eta')
+        var('electron1Phi')
+        var('muon1Phi')
+
+        var('NUP')
+
 	self.triggers=['HLT_LooseIsoPFTau35_Trk20_Prong1_v6',
          'HLT_LooseIsoPFTau35_Trk20_Prong1_MET70_v6',
          'HLT_LooseIsoPFTau35_Trk20_Prong1_MET75_v6',
@@ -152,7 +167,6 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
             varInt(trig)
 	
         self.tree.book()
-
 
     def process(self, iEvent, event):
 
@@ -260,6 +274,9 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
 	if l2jet:
           fill('l2jetWidth', l2jet.rms() )
           fill('l2jetBtag', l1jet.btag("combinedSecondaryVertexBJetTags") )
+
+        fill('l1VertexZ', leg1.tau.vz() )
+        fill('l2VertexZ', leg2.tau.vz() )
 	  
 	if hasattr(event,"leg1DeltaR"):
             fill('l1match', event.leg1DeltaR )
@@ -328,6 +345,13 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
 	    fill('nCentralJets', len(event.vbf.centralJets))
 	    fill('vbfMVA', event.vbf.mva)
 
+        nbJets = len(event.cleanBJets)
+        fill('nbJets', nbJets )
+        if nbJets>=1:
+            fParticleVars('bjet1', event.cleanBJets[0] )
+        if nbJets>=2:
+            fParticleVars('bjet2', event.cleanBJets[1] )
+
         fill('weight', event.eventWeight)
         if hasattr( event, 'vertexWeight'): 
             fill('vertexWeight', event.vertexWeight)
@@ -367,6 +391,26 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         hasZ = 0
         if hasattr(event,'hasZ') and event.hasZ == 1: hasZ = 1
         fill('hasZ', hasZ)
+
+        if len(event.muons)>0:
+            fill('muon1Pt', event.muons[0].pt() )
+            fill('muon1Eta', event.muons[0].eta() )
+            fill('muon1Phi', event.muons[0].phi() )
+	else:
+            fill('muon1Pt', -1 )
+            fill('muon1Eta', -1 )
+            fill('muon1Phi', -1 )
+
+        if len(event.electrons)>0:
+            fill('electron1Pt', event.electrons[0].pt() )
+            fill('electron1Eta', event.electrons[0].eta() )
+            fill('electron1Phi', event.electrons[0].phi() )
+	else:
+            fill('electron1Pt', -1 )
+            fill('electron1Eta', -1 )
+            fill('electron1Phi', -1 )
+
+        fill('NUP', event.NUP )
 
         for trig in self.triggers:
             fill(trig, getattr(event,trig))

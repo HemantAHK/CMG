@@ -150,7 +150,7 @@ treeProducerXCheck = cfg.Analyzer(
 # from CMGTools.H2TauTau.proto.samples.tauMu_Sync_ColinAug30 import *
 
 # from CMGTools.H2TauTau.proto.samples.tauMu_ColinSep20 import *
-from CMGTools.H2TauTau.proto.samples.tauMu_ColinOct23 import *
+from CMGTools.H2TauTau.proto.samples.tauMu_Sync_Colin import *
 
 #########################################################################################
 
@@ -180,10 +180,10 @@ diboson_list = [    WWJetsTo2L2Nu,
 WJetsSoup = copy.copy(WJets)
 WJetsSoup.name = 'WJetsSoup'
 VVgroup = [comp.name for comp in diboson_list]
-higgs = [HiggsVBF125, HiggsGGH125, HiggsVH125]
+# higgs = [HiggsVBF125, HiggsGGH125, HiggsVH125]
 selectedComponents =  [WJetsSoup, TTJets, DYJets]
-# selectedComponents = [WJets, W1Jets, W2Jets, W3Jets, W4Jets, TTJets, DYJets]
-# higgs = mc_higgs
+selectedComponents = [WJets, W1Jets, W2Jets, W3Jets, W4Jets, TTJets, DYJets]
+higgs = mc_higgs
 selectedComponents.extend( higgs )
 selectedComponents.extend( diboson_list )
 selectedComponents.extend( data_list_2011 )
@@ -209,12 +209,12 @@ if syncntuple:
     sequence.append( treeProducerXCheck)
 
 
-test = 0
+test = 1
 if test==1:
-    comp = data_Run2011B_PromptReco_v1
-    comp.files = comp.files[:2]
+    comp = HiggsVBF125
+    # comp.files = comp.files[:2]
     selectedComponents = [comp]
-    comp.splitFactor = 1
+    comp.splitFactor = 14
 elif test==2:
     selectedComponents = copy.copy(data_list_2011)
     selectedComponents.extend(embed_list_2011)
