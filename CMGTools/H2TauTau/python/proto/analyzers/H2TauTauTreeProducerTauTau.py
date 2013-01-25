@@ -31,6 +31,7 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
             var('{pName}Eta'.format(pName=pName))
             var('{pName}Phi'.format(pName=pName))
             var('{pName}Charge'.format(pName=pName))
+            var('{pName}Mass'.format(pName=pName))
             #var('{pName}Iso'.format(pName=pName))
             #var('{pName}Id'.format(pName=pName))
             
@@ -41,7 +42,8 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
 	
         var('visMass')
         var('svfitMass')
-        var('mt')
+        var('mt1')
+        var('mt2')
 	var('pThiggs')
         
 	var('mex')
@@ -100,6 +102,8 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         var('l2jetBtag')
         var('l1match')
         var('l2match')
+        var('l1VertexZ')
+        var('l2VertexZ')
 
         var('genMass')
         var('genMassSmeared')
@@ -108,6 +112,7 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         var('l2JetInvMass')
         varInt('l1TrigMatched')
         varInt('l2TrigMatched')
+        varInt('jetTrigMatched')
 
         #var('genTauVisMass')
         #var('genJetVisMass')
@@ -119,6 +124,10 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         var('jet2Btag')
         var('jet1Bmatch')
         var('jet2Bmatch')
+
+        varInt('nbJets')
+        particleVars('bjet1')
+        particleVars('bjet2')
 
         var('weight')
         var('vertexWeight')
@@ -134,12 +143,23 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         #var('l2EffMC')
         #var('l2Weight')
 
+        varInt('genMatched')
         varInt('isFake')
         varInt('isPhoton')
         varInt('isElectron')
+        varInt('isMuon')
 
         varInt('hasW')
         varInt('hasZ')
+
+        var('electron1Pt')
+        var('muon1Pt')
+        var('electron1Eta')
+        var('muon1Eta')
+        var('electron1Phi')
+        var('muon1Phi')
+
+        var('NUP')
 
 	self.triggers=['HLT_LooseIsoPFTau35_Trk20_Prong1_v6',
          'HLT_LooseIsoPFTau35_Trk20_Prong1_MET70_v6',
@@ -152,7 +172,6 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
             varInt(trig)
 	
         self.tree.book()
-
 
     def process(self, iEvent, event):
 
@@ -170,6 +189,7 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
             fill('{pName}Eta'.format(pName=pName), particle.eta() )
             fill('{pName}Phi'.format(pName=pName), particle.phi() )
             fill('{pName}Charge'.format(pName=pName), particle.charge() )
+            fill('{pName}Mass'.format(pName=pName), particle.mass()*scale )
             #if hasattr( particle, 'relIso' ):
             #    fill('{pName}Iso'.format(pName=pName), particle.relIso(0.5) )
             #if abs( particle.pdgId() )==11:
@@ -199,8 +219,9 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
                 
         fill('visMass', event.diLepton.mass()*scale)
         fill('svfitMass', event.diLepton.massSVFit()*scale)
-        fill('mt', event.diLepton.mTLeg2()*scale)
-        fill('pThiggs', sqrt(pow(event.diLepton.met().px()+event.diLepton.px(),2)+pow(event.diLepton.met().py()+event.diLepton.py(),2))*scale)
+        fill('mt1', event.diLepton.mTLeg1()*scale)
+        fill('mt2', event.diLepton.mTLeg2()*scale)
+        fill('pThiggs', sqrt(pow(event.diLepton.met().px()+event.diLepton.leg1().px()+event.diLepton.leg2().px(),2)+pow(event.diLepton.met().py()+event.diLepton.leg1().py()+event.diLepton.leg2().py(),2))*scale)
 
         fill('mex', event.diLepton.met().px()*scale)
         fill('mey', event.diLepton.met().py()*scale)
@@ -256,10 +277,13 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         fill('l2MVAEle', leg2.tauID("againstElectronMVA") )
         #fill('l2LooseMu', leg2.tauID("againstMuonLoose") )
         fill('l2jetMass', leg2.jetRefp4().mass() )
-        fill('l2jetPt', leg1.jetRefp4().pt() )
+        fill('l2jetPt', leg2.jetRefp4().pt() )
 	if l2jet:
           fill('l2jetWidth', l2jet.rms() )
           fill('l2jetBtag', l1jet.btag("combinedSecondaryVertexBJetTags") )
+
+        fill('l1VertexZ', leg1.tau.vz() )
+        fill('l2VertexZ', leg2.tau.vz() )
 	  
 	if hasattr(event,"leg1DeltaR"):
             fill('l1match', event.leg1DeltaR )
@@ -290,6 +314,11 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
             fill('l2TrigMatched', event.l2TrigMatched )
 	else:
             fill('l2TrigMatched', -1 )
+
+	if hasattr(event,"jetTrigMatched"):
+            fill('jetTrigMatched', event.jetTrigMatched )
+	else:
+            fill('jetTrigMatched', -1 )
 
         #if event.diLepton.leg1().genTaup4() and event.diLepton.leg2().genTaup4():
         #  fill('genTauVisMass', sqrt(
@@ -328,6 +357,13 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
 	    fill('nCentralJets', len(event.vbf.centralJets))
 	    fill('vbfMVA', event.vbf.mva)
 
+        nbJets = len(event.cleanBJets)
+        fill('nbJets', nbJets )
+        if nbJets>=1:
+            fParticleVars('bjet1', event.cleanBJets[0] )
+        if nbJets>=2:
+            fParticleVars('bjet2', event.cleanBJets[1] )
+
         fill('weight', event.eventWeight)
         if hasattr( event, 'vertexWeight'): 
             fill('vertexWeight', event.vertexWeight)
@@ -352,13 +388,21 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
                 isFake = 0
         fill('isFake', isFake)
 
+        genMatched = 0
+        if hasattr(event,'genMatched') and event.genMatched > 0: genMatched = event.genMatched
+        fill('genMatched', genMatched)
+
         isPhoton = 0
         if hasattr(event,'isPhoton') and event.isPhoton == 1: isPhoton = 1
         fill('isPhoton', isPhoton)
 
         isElectron = 0
-        if hasattr(event,'isElectron') and event.isElectron == 1: isElectron = 1
+        if hasattr(event,'isElectron') and event.isElectron > 0: isElectron = event.isElectron
         fill('isElectron', isElectron)
+
+        isMuon = 0
+        if hasattr(event,'isMuon') and event.isMuon > 0: isMuon = event.isMuon
+        fill('isMuon', isMuon)
 
         hasW = 0
         if hasattr(event,'hasW') and event.hasW == 1: hasW = 1
@@ -367,6 +411,26 @@ class H2TauTauTreeProducerTauTau( TreeAnalyzer ):
         hasZ = 0
         if hasattr(event,'hasZ') and event.hasZ == 1: hasZ = 1
         fill('hasZ', hasZ)
+
+        if len(event.muons)>0:
+            fill('muon1Pt', event.muons[0].pt() )
+            fill('muon1Eta', event.muons[0].eta() )
+            fill('muon1Phi', event.muons[0].phi() )
+	else:
+            fill('muon1Pt', -1 )
+            fill('muon1Eta', -1 )
+            fill('muon1Phi', -1 )
+
+        if len(event.electrons)>0:
+            fill('electron1Pt', event.electrons[0].pt() )
+            fill('electron1Eta', event.electrons[0].eta() )
+            fill('electron1Phi', event.electrons[0].phi() )
+	else:
+            fill('electron1Pt', -1 )
+            fill('electron1Eta', -1 )
+            fill('electron1Phi', -1 )
+
+        fill('NUP', event.NUP )
 
         for trig in self.triggers:
             fill(trig, getattr(event,trig))
