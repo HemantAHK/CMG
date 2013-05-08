@@ -144,7 +144,7 @@ sequence = cfg.Sequence( [
 
 
 # set test = 0 to run all jobs, in case you are using pybatch.py
-test = 1
+test = 0
 if test==1:
     # test a single component, using a single thread.
     # necessary to debug the code, until it doesn't crash anymore
