@@ -13,32 +13,37 @@ import urllib, urlparse, string, time, os, shutil
 # foldername = "results_test44X_100massPoints";
 # foldername = "results_test44X_RescaleToWJetsLumi";
 # foldername = "results_test44X_MCDATAcomparison";
-foldername = "results_test44X_correctPoles";
+# foldername = "results_test44X_correctPoles";
+# foldername = "test_BW_reweighting_normWsig";
+# foldername = "test_controlplots_smear1s";
+foldername = "test_controlplots";
 
 usePileupSF = 1; # 0=no, 1=yes
-useEffSF = 1; # 0=no, 1=yes
+useEffSF = 0; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
 smearRochCorrByNsigma = 0;
 ## CHOOSE WETHER IS MC CLOSURE OR NOT (half statistics used as DATA, half as MC)
 IS_MC_CLOSURE_TEST= 0; 
-normalize_lumi_MC_CLOSURE_TEST = 1;
-intLumi_MC_CLOSURE_TEST_fb = 5.1;# data = 4.7499 prescaled trigger, 5.1 unprescaled; works only if normalize_lumi_MC_CLOSURE_TEST is TRUE
-useAlsoGenPforSig= 0;
+
+indip_normalization_lumi_MC = 0; # independent normalization of MC (otherwise normalized to DATA)
+intLumi_MC_fb = 81293448/31314/1e3;# data = 4.7499 prescaled trigger, 5.1 unprescaled; works only if indip_normalization_lumi_MC is TRUE
+useAlsoGenPforSig= 1;
 
 ZMass = "91.188"; # 91.1876
 WMassCentral_MeV = "80419"; # 80385
-WMassStep_MeV = "5"; # 15
-WMassNSteps = "50"; # 60
-etaMuonNSteps = "2"; # 5
-etaMaxMuons = "0.6, 2.1"; # 0.6, 0.8, 1.2, 1.6, 2.1
+WMassStep_MeV = "3"; # 15
+WMassNSteps = "30"; # 60
+etaMuonNSteps = "1"; # 5
+etaMaxMuons = "0.6"; # 0.6, 0.8, 1.2, 1.6, 2.1
 
-parallelize = 1;
+parallelize = 0;
 resumbit_sample = ""
 
 runWanalysis = 0;
 runZanalysis = 0;
+controlplots = 0;
 
-mergeSigEWKbkg   = 0;
+mergeSigEWKbkg = 0;
 
 ExtractNumbers = 0;
 
@@ -50,14 +55,17 @@ run_BuildEvByEvTemplates= 0;
 
 ## PERFORM W MASS FIT
 runPrepareDataCards = 0;
+DataCards_systFromFolder="test_controlplots_RochCorr_EffSFCorr_PileupSFCorr" # evaluate systematics wrt folder (or leave it empty)
+
 runDataCardsParametrization = 0;
 
 ## NEW FIT
-print "if it doesn't work, try with this first: cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; setenv SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -";
-runClosureTest = 0;
-mergeResults = 1;
+print "if it doesn't work, try with this first: cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -";
+runClosureTestLikeLihoodRatio = 1;
+mergeResults = 0;
 
 ## OLD FIT
+runClosureTest = 0;
 run_MassFit         = 0;
 fitType             = 0; # 0 = ROOT, 1 = CUSTOM
 
@@ -83,6 +91,8 @@ runWandZcomparisonDATA = 0;
 ## ============================================================== #
 ## ============================================================== #
 ## ============================================================== #
+
+print "cd /afs/cern.ch/work/p/perrozzi/private/CMSSW_6_1_1/src; SCRAM_ARCH=slc5_amd64_gcc462;eval `scramv1 runtime -sh`; cd -;"
 
 if(IS_MC_CLOSURE_TEST==1):
     foldername+="_MCclosureTest";
@@ -167,18 +177,24 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
 
         if(CS_pb[i] >0): int_lumi_fb[i] = Nevts[i]/CS_pb[i]/1e3;
         
-        if IS_MC_CLOSURE_TEST:
-            if normalize_lumi_MC_CLOSURE_TEST:
-                WfileDATA_lumi_SF = intLumi_MC_CLOSURE_TEST_fb/int_lumi_fb[i]
-            else: 
-                WfileDATA_lumi_SF = 1
+        # if IS_MC_CLOSURE_TEST:
+            # if indip_normalization_lumi_MC:
+                # WfileDATA_lumi_SF = intLumi_MC_fb/int_lumi_fb[i]
+            # else: 
+                # WfileDATA_lumi_SF = 1
+        # else:
+            # WfileDATA_lumi_SF = int_lumi_fb[DATA]/int_lumi_fb[i]
+        # if IS_MC_CLOSURE_TEST:
+
+        if indip_normalization_lumi_MC:
+            WfileDATA_lumi_SF = intLumi_MC_fb/int_lumi_fb[i]
         else:
             WfileDATA_lumi_SF = int_lumi_fb[DATA]/int_lumi_fb[i]
         
         ZfileDATA_lumi_SF = WfileDATA_lumi_SF
         
-        # WfileDATA_lumi_SF = ((intLumi_MC_CLOSURE_TEST_fb/int_lumi_fb[i]) if normalize_lumi_MC_CLOSURE_TEST==1 else 1) if IS_MC_CLOSURE_TEST==1 else int_lumi_fb[DATA]/int_lumi_fb[i];
-        # ZfileDATA_lumi_SF = ((intLumi_MC_CLOSURE_TEST_fb/int_lumi_fb[i]) if normalize_lumi_MC_CLOSURE_TEST==1 else 1) if IS_MC_CLOSURE_TEST==1 else int_lumi_fb[DATA]/int_lumi_fb[i];
+        # WfileDATA_lumi_SF = ((intLumi_MC_fb/int_lumi_fb[i]) if indip_normalization_lumi_MC==1 else 1) if IS_MC_CLOSURE_TEST==1 else int_lumi_fb[DATA]/int_lumi_fb[i];
+        # ZfileDATA_lumi_SF = ((intLumi_MC_fb/int_lumi_fb[i]) if indip_normalization_lumi_MC==1 else 1) if IS_MC_CLOSURE_TEST==1 else int_lumi_fb[DATA]/int_lumi_fb[i];
         print "lumi_SF= ",ZfileDATA_lumi_SF
 
         #########################################/
@@ -231,7 +247,7 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
         # if(i==0): os.system("touch *.*");
         
         if(runWanalysis):
-            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)
+            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(controlplots)
             # print wstring
             if not parallelize:
                 os.system("root -l -b -q \'runWanalysis.C("+wstring+")\'");
@@ -241,7 +257,7 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
 
         if(runZanalysis):
             # os.system("touch *.*");
-            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)
+            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)
             # print zstring
             if not parallelize:
                 os.system("root -l -b -q \'runZanalysis.C("+zstring+")\'");
@@ -265,9 +281,9 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
                 # # gSystem->CompileMacro("rochcor_42X.C");
                 # # gSystem->CompileMacro("MuScleFitCorrector.cc");
                 # gSystem->CompileMacro("Zanalysis.C");
-                # # cout << "int_lumi_fb[IS_MC_CLOSURE_TEST? DYJetsSig : DATA]= "<<(IS_MC_CLOSURE_TEST? intLumi_MC_CLOSURE_TEST_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1) << endl;
-                # cout << Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_CLOSURE_TEST_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1) << endl;
-                # gROOT->ProcessLine(Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_CLOSURE_TEST_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1));
+                # # cout << "int_lumi_fb[IS_MC_CLOSURE_TEST? DYJetsSig : DATA]= "<<(IS_MC_CLOSURE_TEST? intLumi_MC_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1) << endl;
+                # cout << Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1) << endl;
+                # gROOT->ProcessLine(Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1));
                 # # gROOT->ProcessLine(Form("zTEMPLATESOnDATA.Loop(%d,1,%s,1)",IS_MC_CLOSURE_TEST,filename_outputdir.Data()));
                 # cout << "processing line " << Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample[DATA].Data()) << endl;
                 # gROOT->ProcessLine(Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample[DATA].Data()));
@@ -342,7 +358,7 @@ if(runPrepareDataCards):
       # if(i<nsamples-1) samples_datacards+="-";
     # }
     print "running .x prepareDatacards.C(\"../JobOutputs/"+foldername+"\",\"\")"
-    os.system("root -l -b -q \'prepareDatacards.C(\"../JobOutputs/"+foldername+"\",\"\")\'")
+    os.system("root -l -b -q \'prepareDatacards.C(\"../JobOutputs/"+foldername+"\",\"../JobOutputs/"+DataCards_systFromFolder+"\",\"\")\'")
     # gROOT->ProcessLine(Form(".! mv \*.png ../JobOutputs/%s/MC_WandZcomparisonPlots",foldername.Data()));
     # gROOT->ProcessLine(Form(".! cp PlotWvsZdistributionsDATA.C ../JobOutputs/%s/MC_WandZcomparisonPlots",foldername.Data()));
     # gSystem->ChangeDirectory("../");  
@@ -355,15 +371,24 @@ if(runDataCardsParametrization):
     os.chdir("../");
 
 if(runClosureTest):
-    # cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; setenv SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -;
+    # cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -;
     shutil.copyfile("AnalysisCode/ClosureTest_fits.C","JobOutputs/"+foldername+"/DataCards/ClosureTest_fits.C");
     # shutil.copyfile("includes/common.h","JobOutputs/"+foldername+"/DataCards/common.h")
     os.chdir("JobOutputs/"+foldername+"/DataCards");
     print os.getcwd()
-    os.system("cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; setenv SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -; root -l -b -q \'ClosureTest_fits.C()\'")
+    os.system("cd /afs/cern.ch/work/p/perrozzi/private/CMSSW_6_1_1/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -; root -l -b -q \'ClosureTest_fits.C()\'")
     os.chdir("../");
 
-if(mergeResults):
+if(runClosureTestLikeLihoodRatio):
+    # cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -;
+    shutil.copyfile("AnalysisCode/ClosureTest_fits_likelihoodratio.C","JobOutputs/"+foldername+"/DataCards/ClosureTest_fits.C");
+    # shutil.copyfile("includes/common.h","JobOutputs/"+foldername+"/DataCards/common.h")
+    os.chdir("JobOutputs/"+foldername+"/DataCards");
+    print os.getcwd()
+    os.system("cd /afs/cern.ch/work/p/perrozzi/private/CMSSW_6_1_1/src; SCRAM_ARCH=slc5_amd64_gcc462;eval `scramv1 runtime -sh`; cd -; root -l -b -q \'ClosureTest_fits.C()\'")
+    os.chdir("../../../");
+
+if(runClosureTestLikeLihoodRatio or mergeResults):
     shutil.copyfile("AnalysisCode/merge_results.C","JobOutputs/"+foldername+"/DataCards/merge_results.C");
     # shutil.copyfile("includes/common.h","JobOutputs/"+foldername+"/DataCards/common.h")
     os.chdir("JobOutputs/"+foldername+"/DataCards");
