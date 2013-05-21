@@ -1,4 +1,4 @@
-void runZanalysis(TString ZfileDATA, double ZfileDATA_lumi_SF, TString sample, int useAlsoGenPforSig, int IS_MC_CLOSURE_TEST, int isMCorDATA, TString filename_outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int usePileupSF, int run_BuildEvByEvTemplates)
+void runZanalysis(TString ZfileDATA, double ZfileDATA_lumi_SF, TString sample, int useAlsoGenPforSig, int IS_MC_CLOSURE_TEST, int isMCorDATA, TString filename_outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int usePileupSF, int run_BuildEvByEvTemplates, int controlplots)
 {
 
   // gSystem->CompileMacro("MuScleFitCorrector.cc");
@@ -9,8 +9,8 @@ void runZanalysis(TString ZfileDATA, double ZfileDATA_lumi_SF, TString sample, i
   gROOT->ProcessLine(".L Zanalysis.C+");
   cout << "processing line "<< Form("Zanalysis zDATA(\"%s\",%f,%d)",ZfileDATA.Data(),ZfileDATA_lumi_SF,sample.Contains("DYJetsSig")?useAlsoGenPforSig:0) << endl;
   gROOT->ProcessLine(Form("Zanalysis zDATA(\"%s\",%f,%d)",ZfileDATA.Data(),ZfileDATA_lumi_SF,sample.Contains("DYJetsSig")?useAlsoGenPforSig:0));
-  cout << Form("zDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),run_BuildEvByEvTemplates,useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample.Data()) << endl;
-  gROOT->ProcessLine(Form("zDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),run_BuildEvByEvTemplates,useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample.Data()));
+  cout << Form("zDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),run_BuildEvByEvTemplates,useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,controlplots,sample.Data()) << endl;
+  gROOT->ProcessLine(Form("zDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),run_BuildEvByEvTemplates,useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,controlplots,sample.Data()));
 
   TString outputfilename = run_BuildEvByEvTemplates ? "WEvByEvTemplates" : "ZanalysisOnDATA";
   gROOT->ProcessLine(Form(".! mv ../%s/Zanalysis.root ../%s/%s.root",filename_outputdir.Data(),filename_outputdir.Data(),outputfilename.Data()));

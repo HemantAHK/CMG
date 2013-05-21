@@ -12,13 +12,12 @@
 #include <TLorentzVector.h>
 #include <TGraphAsymmErrors.h>
 
-void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, TString sampleName)
+void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName)
 {
 
   TRandom3 *r = new TRandom3(0);
 
   cout << "output filename= " << Form("%s/Zanalysis.root",outputdir.Data()) << endl;
-  TFile*fout = new TFile(Form("%s/Zanalysis.root",outputdir.Data()),"RECREATE");
   
   // TFile*feffSF = new TFile(Form("../Zanalysis.root",outputdir.Data()),"RECREATE");
   
@@ -130,6 +129,9 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     TString eta_str = Form("%.1f",WMass::etaMaxMuons[i]); eta_str.ReplaceAll(".","p");
             
     for(int j=0; j<2*WMass::WMassNSteps+1; j++){
+      
+      if(!sampleName.Contains("DYJetsSig") && WMass::WMassNSteps!=j) continue;
+      
       int jWmass = WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV;
       hWlikePos_PtScaled_1_Gen[i][j]=new TH1D(Form("hWlikePos_PtScaled_1_Gen_eta%s_%d",eta_str.Data(),jWmass),Form("hWlikePos_PtScaled_1_Gen_eta%s_%d",eta_str.Data(),jWmass),nbins,bins_scaled);
       hWlikePos_PtScaled_1_Gen[i][j]->Sumw2();
@@ -162,75 +164,75 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       // hWlikePos_logiso_vs_logdxy[i][j]=new TH2D(Form("hWlikePos_logiso_vs_logdxy_eta%s_%d",eta_str.Data(),jWmass),Form("hWlikePos_logiso_vs_logdxy_eta%s_%d",eta_str.Data(),jWmass),1000,-5,1,1000,-5,1);
       // hWlikePos_iso_vs_dxy[i][j]=new TH2D(Form("hWlikePos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),Form("hWlikePos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),1000,-0.001,0.999,1000,0,1);
     
-    
-      for(int k=0; k<WMass::nSigOrQCD; k++){
-            
-        hnvtx[k][i][j]=new TH1D(Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,0,50);
-        Zmass[k][i][j]=new TH1D(Form("Zmass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("Zmass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),300,50,200);
-        Zmass_zoomed[k][i][j]=new TH1D(Form("Zmass_zoomed_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("Zmass_zoomed_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),6000,60,120);
-        ZmassVsMuPosEta[k][i][j]=new TH2D(Form("ZmassVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZmassVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,200,90,92);
-        
-        PosMuonPtCorrVsMuPosEta[k][i][j]=new TH2D(Form("PosMuonPtCorrVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("PosMuonPtCorrVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,300,60,120);
-        PosMuonPtCorrVsMuPosPhi[k][i][j]=new TH2D(Form("PosMuonPtCorrVsMuPosPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("PosMuonPtCorrVsMuPosPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2*TMath::Pi(),2*TMath::Pi(),300,60,120);
-        NegMuonPtCorrVsMuNegEta[k][i][j]=new TH2D(Form("NegMuonPtCorrVsMuNegEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("NegMuonPtCorrVsMuNegEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,300,60,120);
-        NegMuonPtCorrVsMuNegPhi[k][i][j]=new TH2D(Form("NegMuonPtCorrVsMuNegPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("NegMuonPtCorrVsMuNegPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2*TMath::Pi(),2*TMath::Pi(),300,60,120);
-        
-        ZDeltaRMuPosJet[k][i][j]=new TH1D(Form("ZDeltaRMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaRMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
-        ZDeltaEtaMuPosJet[k][i][j]=new TH1D(Form("ZDeltaEtaMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaEtaMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
-        ZDeltaPhiMuPosJet[k][i][j]=new TH1D(Form("ZDeltaPhiMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaPhiMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
-        ZDeltaRMuNegJet[k][i][j]=new TH1D(Form("ZDeltaRMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaRMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
-        ZDeltaEtaMuNegJet[k][i][j]=new TH1D(Form("ZDeltaEtaMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaEtaMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
-        ZDeltaPhiMuNegJet[k][i][j]=new TH1D(Form("ZDeltaPhiMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaPhiMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
-        ZlepDeltaEta[k][i][j]=new TH1D(Form("ZlepDeltaEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
-        ZlepEta1VsEta2[k][i][j]=new TH2D(Form("ZlepEta1VsEta2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepEta1VsEta2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,50,-2.5,2.5);
-        ZlepDeltaEtaVsEta1[k][i][j]=new TH2D(Form("ZlepDeltaEtaVsEta1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEtaVsEta1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,100,-5,5);
-        ZlepDeltaPt[k][i][j]=new TH1D(Form("ZlepDeltaPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-50,50);
-        ZlepPt1VsPt2[k][i][j]=new TH2D(Form("ZlepPt1VsPt2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepPt1VsPt2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,200,0,200);
-        ZlepDeltaPtVsPt1[k][i][j]=new TH2D(Form("ZlepDeltaPtVsPt1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPtVsPt1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,100,-50,50);
-        ZlepDeltaPhi[k][i][j]=new TH1D(Form("ZlepDeltaPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
-        ZlepPhi1VsPhi2[k][i][j]=new TH2D(Form("ZlepPhi1VsPhi2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepPhi1VsPhi2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi(),200,-2*TMath::Pi(),2*TMath::Pi());
-        ZlepDeltaPhiVsPhi1[k][i][j]=new TH2D(Form("ZlepDeltaPhiVsPhi1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhiVsPhi1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi(),200,-2*TMath::Pi(),2*TMath::Pi());
-        ZlepDeltaR[k][i][j]=new TH1D(Form("ZlepDeltaR_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaR_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
-        // ZlepDeltaPhiVsMass[k][i][j]=new TH2D(Form("ZlepDeltaPhiVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhiVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,200,-2*TMath::Pi(),2*TMath::Pi());
-        // ZlepDeltaEtaVsMass[k][i][j]=new TH2D(Form("ZlepDeltaEtaVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEtaVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,50,-2.5,2.5);
-        // ZlepDeltaPtVsMass[k][i][j]=new TH2D(Form("ZlepDeltaPtVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPtVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,100,-50,50);
-        // ZlepDeltaRVsMass[k][i][j]=new TH2D(Form("ZlepDeltaRVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaRVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,1000,0,10);
+      if(controlplots){
+        for(int k=0; k<WMass::nSigOrQCD; k++){
+              
+          hnvtx[k][i][j]=new TH1D(Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,0,50);
+          Zmass[k][i][j]=new TH1D(Form("Zmass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("Zmass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),300,50,200);
+          Zmass_zoomed[k][i][j]=new TH1D(Form("Zmass_zoomed_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("Zmass_zoomed_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),6000,60,120);
+          ZmassVsMuPosEta[k][i][j]=new TH2D(Form("ZmassVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZmassVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,200,90,92);
+          
+          PosMuonPtCorrVsMuPosEta[k][i][j]=new TH2D(Form("PosMuonPtCorrVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("PosMuonPtCorrVsMuPosEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,300,60,120);
+          PosMuonPtCorrVsMuPosPhi[k][i][j]=new TH2D(Form("PosMuonPtCorrVsMuPosPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("PosMuonPtCorrVsMuPosPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2*TMath::Pi(),2*TMath::Pi(),300,60,120);
+          NegMuonPtCorrVsMuNegEta[k][i][j]=new TH2D(Form("NegMuonPtCorrVsMuNegEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("NegMuonPtCorrVsMuNegEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,300,60,120);
+          NegMuonPtCorrVsMuNegPhi[k][i][j]=new TH2D(Form("NegMuonPtCorrVsMuNegPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("NegMuonPtCorrVsMuNegPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2*TMath::Pi(),2*TMath::Pi(),300,60,120);
+          
+          ZDeltaRMuPosJet[k][i][j]=new TH1D(Form("ZDeltaRMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaRMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
+          ZDeltaEtaMuPosJet[k][i][j]=new TH1D(Form("ZDeltaEtaMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaEtaMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
+          ZDeltaPhiMuPosJet[k][i][j]=new TH1D(Form("ZDeltaPhiMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaPhiMuPosJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
+          ZDeltaRMuNegJet[k][i][j]=new TH1D(Form("ZDeltaRMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaRMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
+          ZDeltaEtaMuNegJet[k][i][j]=new TH1D(Form("ZDeltaEtaMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaEtaMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
+          ZDeltaPhiMuNegJet[k][i][j]=new TH1D(Form("ZDeltaPhiMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZDeltaPhiMuNegJet_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
+          ZlepDeltaEta[k][i][j]=new TH1D(Form("ZlepDeltaEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEta_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-5,5);
+          ZlepEta1VsEta2[k][i][j]=new TH2D(Form("ZlepEta1VsEta2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepEta1VsEta2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,50,-2.5,2.5);
+          ZlepDeltaEtaVsEta1[k][i][j]=new TH2D(Form("ZlepDeltaEtaVsEta1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEtaVsEta1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),50,-2.5,2.5,100,-5,5);
+          ZlepDeltaPt[k][i][j]=new TH1D(Form("ZlepDeltaPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-50,50);
+          ZlepPt1VsPt2[k][i][j]=new TH2D(Form("ZlepPt1VsPt2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepPt1VsPt2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,200,0,200);
+          ZlepDeltaPtVsPt1[k][i][j]=new TH2D(Form("ZlepDeltaPtVsPt1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPtVsPt1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,100,-50,50);
+          ZlepDeltaPhi[k][i][j]=new TH1D(Form("ZlepDeltaPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi());
+          ZlepPhi1VsPhi2[k][i][j]=new TH2D(Form("ZlepPhi1VsPhi2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepPhi1VsPhi2_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi(),200,-2*TMath::Pi(),2*TMath::Pi());
+          ZlepDeltaPhiVsPhi1[k][i][j]=new TH2D(Form("ZlepDeltaPhiVsPhi1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhiVsPhi1_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,-2*TMath::Pi(),2*TMath::Pi(),200,-2*TMath::Pi(),2*TMath::Pi());
+          ZlepDeltaR[k][i][j]=new TH1D(Form("ZlepDeltaR_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaR_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
+          // ZlepDeltaPhiVsMass[k][i][j]=new TH2D(Form("ZlepDeltaPhiVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPhiVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,200,-2*TMath::Pi(),2*TMath::Pi());
+          // ZlepDeltaEtaVsMass[k][i][j]=new TH2D(Form("ZlepDeltaEtaVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaEtaVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,50,-2.5,2.5);
+          // ZlepDeltaPtVsMass[k][i][j]=new TH2D(Form("ZlepDeltaPtVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaPtVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,100,-50,50);
+          // ZlepDeltaRVsMass[k][i][j]=new TH2D(Form("ZlepDeltaRVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("ZlepDeltaRVsMass_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200,1000,0,10);
 
-        hpfMET_Z[k][i][j]=new TH1D(Form("hpfMET_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
-        hpfMETphi_Z[k][i][j]=new TH1D(Form("hpfMETphi_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hpfMET_WlikePos[k][i][j]=new TH1D(Form("hpfMET_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
-        hpfMETphi_WlikePos[k][i][j]=new TH1D(Form("hpfMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hZ_pt[k][i][j]=new TH1D(Form("hZ_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
-        hZ_phi[k][i][j]=new TH1D(Form("hZ_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hZ_mt[k][i][j]=new TH1D(Form("hZ_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
-        hZ_ptVsmt[k][i][j]=new TH2D(Form("hZ_ptVsmt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_ptVsmt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),150,50,200,100,0,25);
-        
-        hWlikePos_pt[k][i][j]=new TH1D(Form("hWlikePos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
-        hWlikePos_phi[k][i][j]=new TH1D(Form("hWlikePos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hWlikePos_mt[k][i][j]=new TH1D(Form("hWlikePos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hMupt_WlikePos[k][i][j]=new TH1D(Form("hMupt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMupt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hMueta_WlikePos[k][i][j]=new TH1D(Form("hMueta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMueta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
-        hMuphi_WlikePos[k][i][j]=new TH1D(Form("hMuphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hMuiso_WlikePos[k][i][j]=new TH1D(Form("hMuiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
-        hMuMETpt_WlikePos[k][i][j]=new TH1D(Form("hMuMETpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
-        hMuMETeta_WlikePos[k][i][j]=new TH1D(Form("hMuMETeta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETeta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
-        hMuMETphi_WlikePos[k][i][j]=new TH1D(Form("hMuMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hMuMETiso_WlikePos[k][i][j]=new TH1D(Form("hMuMETiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,10);
-        hJetpt_WlikePos[k][i][j]=new TH1D(Form("hJetpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,50);
-        hJeteta_WlikePos[k][i][j]=new TH1D(Form("hJeteta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJeteta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
-        hJetphi_WlikePos[k][i][j]=new TH1D(Form("hJetphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hu1_WlikePos[k][i][j]=new TH1D(Form("hu1_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu1_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),360,-30,150);
-        hu2_WlikePos[k][i][j]=new TH1D(Form("hu2_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu2_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),250,-50,50);
-        hu1vsZpt_WlikePos[k][i][j]=new TH2D(Form("hu1vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu1vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25,360,-30,150);
-        hu2vsZpt_WlikePos[k][i][j]=new TH2D(Form("hu2vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu2vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25,250,-50,50);
-      }  
-    
+          hpfMET_Z[k][i][j]=new TH1D(Form("hpfMET_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
+          hpfMETphi_Z[k][i][j]=new TH1D(Form("hpfMETphi_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_Z_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hpfMET_WlikePos[k][i][j]=new TH1D(Form("hpfMET_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
+          hpfMETphi_WlikePos[k][i][j]=new TH1D(Form("hpfMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hZ_pt[k][i][j]=new TH1D(Form("hZ_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
+          hZ_phi[k][i][j]=new TH1D(Form("hZ_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hZ_mt[k][i][j]=new TH1D(Form("hZ_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
+          hZ_ptVsmt[k][i][j]=new TH2D(Form("hZ_ptVsmt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hZ_ptVsmt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),150,50,200,100,0,25);
+          
+          hWlikePos_pt[k][i][j]=new TH1D(Form("hWlikePos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
+          hWlikePos_phi[k][i][j]=new TH1D(Form("hWlikePos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hWlikePos_mt[k][i][j]=new TH1D(Form("hWlikePos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hMupt_WlikePos[k][i][j]=new TH1D(Form("hMupt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMupt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hMueta_WlikePos[k][i][j]=new TH1D(Form("hMueta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMueta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
+          hMuphi_WlikePos[k][i][j]=new TH1D(Form("hMuphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hMuiso_WlikePos[k][i][j]=new TH1D(Form("hMuiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,0,10);
+          hMuMETpt_WlikePos[k][i][j]=new TH1D(Form("hMuMETpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,200);
+          hMuMETeta_WlikePos[k][i][j]=new TH1D(Form("hMuMETeta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETeta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
+          hMuMETphi_WlikePos[k][i][j]=new TH1D(Form("hMuMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hMuMETiso_WlikePos[k][i][j]=new TH1D(Form("hMuMETiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuMETiso_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,10);
+          hJetpt_WlikePos[k][i][j]=new TH1D(Form("hJetpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,50);
+          hJeteta_WlikePos[k][i][j]=new TH1D(Form("hJeteta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJeteta_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
+          hJetphi_WlikePos[k][i][j]=new TH1D(Form("hJetphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetphi_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hu1_WlikePos[k][i][j]=new TH1D(Form("hu1_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu1_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),360,-30,150);
+          hu2_WlikePos[k][i][j]=new TH1D(Form("hu2_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu2_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),250,-50,50);
+          hu1vsZpt_WlikePos[k][i][j]=new TH2D(Form("hu1vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu1vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25,360,-30,150);
+          hu2vsZpt_WlikePos[k][i][j]=new TH2D(Form("hu2vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hu2vsZpt_WlikePos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25,250,-50,50);
+        }  
+      }
     }
   }
 
 
   if (fChain == 0) return;
-
+  
   Long64_t first_entry = 0;
   Long64_t nentries = fChain->GetEntriesFast();
   if(IS_MC_CLOSURE_TEST==1 && isMCorDATA==1) first_entry=nentries/2; // in case of closure test, DATA runs from N/2 to N
@@ -276,11 +278,12 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       MuNeg_tight_muon_SF = hEffSF_MuId_eta_2011[runopt]->Eval(MuNeg_eta)*hEffSF_Iso_eta_2011[runopt]->Eval(MuNeg_eta)*hEffSF_HLT_eta_2011->Eval(MuPos_eta);
     }
     // cout << "MuPos_tight_muon_SF= " << MuPos_tight_muon_SF << endl;
-    if(IS_MC_CLOSURE_TEST || isMCorDATA==0) hPileUp_Fall11->Fill(npu);
+    if((IS_MC_CLOSURE_TEST || isMCorDATA==0) && controlplots) hPileUp_Fall11->Fill(npu);
 
     for(int i=0; i<WMass::etaMuonNSteps; i++){
       for(int j=0; j<2*WMass::WMassNSteps+1; j++){
         
+        if(!sampleName.Contains("DYJetsSig") && WMass::WMassNSteps!=j) continue;
         double iWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV)/1e3;
         // SELECT EVENT WITH Z/W SCALED CUTS
         // ORIGINAL CUTS:
@@ -379,67 +382,67 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                       
                       // control plots for different etas but only for central W mass
                       // if(TMath::Abs(wmass1 - WMass::WMassCentral_MeV) > 1)  continue;
-                      
-                      // control distributions 
-                      hnvtx[0][i][j]->Fill(nvtx,evt_weight);
-                      Zmass[0][i][j]->Fill(Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
-                      Zmass_zoomed[0][i][j]->Fill(Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
-                      // ZmassVsMuPosEta[0][i][j]->Fill(MuPos_eta,Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
-                      ZmassVsMuPosEta[0][i][j]->Fill(muPosCorr.Eta(),Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
-                      
-                      // PosMuonPtCorrVsMuPosEta[0][i][j]->Fill(MuPos_eta,Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
-                      
-                      ZlepDeltaEta[0][i][j]->Fill(muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepEta1VsEta2[0][i][j]->Fill(muPosCorr.Eta(),muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaEtaVsEta1[0][i][j]->Fill(muPosCorr.Eta(),muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      // ZlepDeltaEtaVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaPt[0][i][j]->Fill(muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepPt1VsPt2[0][i][j]->Fill(muPosCorr.Pt(),muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaPtVsPt1[0][i][j]->Fill(muPosCorr.Pt(),muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      // ZlepDeltaPtVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaPhi[0][i][j]->Fill(muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepPhi1VsPhi2[0][i][j]->Fill(muPosCorr.Phi(),muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaPhiVsPhi1[0][i][j]->Fill(muPosCorr.Phi(),muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      // ZlepDeltaPhiVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      ZlepDeltaR[0][i][j]->Fill(TMath::Hypot(muPosCorr.Phi()-muNegCorr.Phi(),muPosCorr.Eta()-muNegCorr.Eta()),evt_weight*MuPos_tight_muon_SF);
-                      // ZlepDeltaRVsMass[0][i][j]->Fill(Zcorr.M(),TMath::Hypot(muNegCorr.Phi()-Jet_leading_phi,muNegCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaEtaMuPosJet[0][i][j]->Fill(muPosCorr.Eta()-Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaPhiMuPosJet[0][i][j]->Fill(muPosCorr.Phi()-Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaRMuPosJet[0][i][j]->Fill(TMath::Hypot(muPosCorr.Phi()-Jet_leading_phi,muPosCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaEtaMuNegJet[0][i][j]->Fill(muNegCorr.Eta()-Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaPhiMuNegJet[0][i][j]->Fill(muNegCorr.Phi()-Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
-                      ZDeltaRMuNegJet[0][i][j]->Fill(TMath::Hypot(muNegCorr.Phi()-Jet_leading_phi,muNegCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
-                      hpfMET_Z[0][i][j]->Fill(pfmet,evt_weight*MuPos_tight_muon_SF);
-                      hpfMETphi_Z[0][i][j]->Fill(pfmet_phi,evt_weight*MuPos_tight_muon_SF);
-                      hZ_pt[0][i][j]->Fill(Zcorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      hZ_phi[0][i][j]->Fill(Zcorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      hZ_mt[0][i][j]->Fill(Zcorr.Mt(),evt_weight*MuPos_tight_muon_SF);
-                      hZ_ptVsmt[0][i][j]->Fill(Zcorr.Mt(),Zcorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      hWlikePos_pt[0][i][j]->Fill(WlikePos_pt,evt_weight*MuPos_tight_muon_SF);
-                      hWlikePos_phi[0][i][j]->Fill(WlikePos_phi,evt_weight*MuPos_tight_muon_SF);
-                      hWlikePos_mt[0][i][j]->Fill(WlikePos_mt,evt_weight*MuPos_tight_muon_SF);
-                      hpfMET_WlikePos[0][i][j]->Fill(pfmetWlikePos,evt_weight*MuPos_tight_muon_SF);
-                      hpfMETphi_WlikePos[0][i][j]->Fill(pfmetWlikePos_phi,evt_weight*MuPos_tight_muon_SF);
-                      hMupt_WlikePos[0][i][j]->Fill( muPosCorr.Pt()<200 ? muPosCorr.Pt() : 199.5,evt_weight*MuPos_tight_muon_SF);
-                      hMueta_WlikePos[0][i][j]->Fill(muPosCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      hMuphi_WlikePos[0][i][j]->Fill(muPosCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      hMuiso_WlikePos[0][i][j]->Fill(MuPosRelIso,evt_weight*MuPos_tight_muon_SF);
-                      hMuMETpt_WlikePos[0][i][j]->Fill(muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      hMuMETeta_WlikePos[0][i][j]->Fill(muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      hMuMETphi_WlikePos[0][i][j]->Fill(muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      hMuMETiso_WlikePos[0][i][j]->Fill(MuNegRelIso,evt_weight*MuPos_tight_muon_SF);
-                      hJetpt_WlikePos[0][i][j]->Fill(Jet_leading_pt,evt_weight*MuPos_tight_muon_SF);
-                      hJeteta_WlikePos[0][i][j]->Fill(Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
-                      hJetphi_WlikePos[0][i][j]->Fill(Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
-                      hu1_WlikePos[0][i][j]->Fill(u1,evt_weight*MuPos_tight_muon_SF);
-                      hu2_WlikePos[0][i][j]->Fill(u2,evt_weight*MuPos_tight_muon_SF);
-                      hu1vsZpt_WlikePos[0][i][j]->Fill(Zcorr.Pt(),u1,evt_weight*MuPos_tight_muon_SF);
-                      hu2vsZpt_WlikePos[0][i][j]->Fill(Zcorr.Pt(),u2,evt_weight*MuPos_tight_muon_SF);
-
+                      if(controlplots){
+                        // control distributions 
+                        hnvtx[0][i][j]->Fill(nvtx,evt_weight);
+                        Zmass[0][i][j]->Fill(Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
+                        Zmass_zoomed[0][i][j]->Fill(Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
+                        // ZmassVsMuPosEta[0][i][j]->Fill(MuPos_eta,Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
+                        ZmassVsMuPosEta[0][i][j]->Fill(muPosCorr.Eta(),Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
+                        
+                        // PosMuonPtCorrVsMuPosEta[0][i][j]->Fill(MuPos_eta,Zcorr.M(),evt_weight*MuPos_tight_muon_SF);
+                        
+                        ZlepDeltaEta[0][i][j]->Fill(muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepEta1VsEta2[0][i][j]->Fill(muPosCorr.Eta(),muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaEtaVsEta1[0][i][j]->Fill(muPosCorr.Eta(),muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        // ZlepDeltaEtaVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Eta()-muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaPt[0][i][j]->Fill(muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepPt1VsPt2[0][i][j]->Fill(muPosCorr.Pt(),muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaPtVsPt1[0][i][j]->Fill(muPosCorr.Pt(),muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        // ZlepDeltaPtVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Pt()-muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaPhi[0][i][j]->Fill(muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepPhi1VsPhi2[0][i][j]->Fill(muPosCorr.Phi(),muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaPhiVsPhi1[0][i][j]->Fill(muPosCorr.Phi(),muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        // ZlepDeltaPhiVsMass[0][i][j]->Fill(Zcorr.M(),muPosCorr.Phi()-muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        ZlepDeltaR[0][i][j]->Fill(TMath::Hypot(muPosCorr.Phi()-muNegCorr.Phi(),muPosCorr.Eta()-muNegCorr.Eta()),evt_weight*MuPos_tight_muon_SF);
+                        // ZlepDeltaRVsMass[0][i][j]->Fill(Zcorr.M(),TMath::Hypot(muNegCorr.Phi()-Jet_leading_phi,muNegCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaEtaMuPosJet[0][i][j]->Fill(muPosCorr.Eta()-Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaPhiMuPosJet[0][i][j]->Fill(muPosCorr.Phi()-Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaRMuPosJet[0][i][j]->Fill(TMath::Hypot(muPosCorr.Phi()-Jet_leading_phi,muPosCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaEtaMuNegJet[0][i][j]->Fill(muNegCorr.Eta()-Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaPhiMuNegJet[0][i][j]->Fill(muNegCorr.Phi()-Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
+                        ZDeltaRMuNegJet[0][i][j]->Fill(TMath::Hypot(muNegCorr.Phi()-Jet_leading_phi,muNegCorr.Eta()-Jet_leading_eta),evt_weight*MuPos_tight_muon_SF);
+                        hpfMET_Z[0][i][j]->Fill(pfmet,evt_weight*MuPos_tight_muon_SF);
+                        hpfMETphi_Z[0][i][j]->Fill(pfmet_phi,evt_weight*MuPos_tight_muon_SF);
+                        hZ_pt[0][i][j]->Fill(Zcorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        hZ_phi[0][i][j]->Fill(Zcorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        hZ_mt[0][i][j]->Fill(Zcorr.Mt(),evt_weight*MuPos_tight_muon_SF);
+                        hZ_ptVsmt[0][i][j]->Fill(Zcorr.Mt(),Zcorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        hWlikePos_pt[0][i][j]->Fill(WlikePos_pt,evt_weight*MuPos_tight_muon_SF);
+                        hWlikePos_phi[0][i][j]->Fill(WlikePos_phi,evt_weight*MuPos_tight_muon_SF);
+                        hWlikePos_mt[0][i][j]->Fill(WlikePos_mt,evt_weight*MuPos_tight_muon_SF);
+                        hpfMET_WlikePos[0][i][j]->Fill(pfmetWlikePos,evt_weight*MuPos_tight_muon_SF);
+                        hpfMETphi_WlikePos[0][i][j]->Fill(pfmetWlikePos_phi,evt_weight*MuPos_tight_muon_SF);
+                        hMupt_WlikePos[0][i][j]->Fill( muPosCorr.Pt()<200 ? muPosCorr.Pt() : 199.5,evt_weight*MuPos_tight_muon_SF);
+                        hMueta_WlikePos[0][i][j]->Fill(muPosCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        hMuphi_WlikePos[0][i][j]->Fill(muPosCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        hMuiso_WlikePos[0][i][j]->Fill(MuPosRelIso,evt_weight*MuPos_tight_muon_SF);
+                        hMuMETpt_WlikePos[0][i][j]->Fill(muNegCorr.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        hMuMETeta_WlikePos[0][i][j]->Fill(muNegCorr.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        hMuMETphi_WlikePos[0][i][j]->Fill(muNegCorr.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        hMuMETiso_WlikePos[0][i][j]->Fill(MuNegRelIso,evt_weight*MuPos_tight_muon_SF);
+                        hJetpt_WlikePos[0][i][j]->Fill(Jet_leading_pt,evt_weight*MuPos_tight_muon_SF);
+                        hJeteta_WlikePos[0][i][j]->Fill(Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
+                        hJetphi_WlikePos[0][i][j]->Fill(Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
+                        hu1_WlikePos[0][i][j]->Fill(u1,evt_weight*MuPos_tight_muon_SF);
+                        hu2_WlikePos[0][i][j]->Fill(u2,evt_weight*MuPos_tight_muon_SF);
+                        hu1vsZpt_WlikePos[0][i][j]->Fill(Zcorr.Pt(),u1,evt_weight*MuPos_tight_muon_SF);
+                        hu2vsZpt_WlikePos[0][i][j]->Fill(Zcorr.Pt(),u2,evt_weight*MuPos_tight_muon_SF);
+                      }
                     }
                   }
                 }
-              }else{
+              }else if(controlplots){
                 
                 // Iso and dxy for muons which fail either tight requirement, isolation or dxy cut
                 if(pfmetWlikePos>25 && WlikePos_pt<20){
@@ -523,12 +526,16 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         
   } // end event loop
   
+  TFile*fout = new TFile(Form("%s/Zanalysis.root",outputdir.Data()),"RECREATE");
+  
   fout->cd();
-  if(!buildTemplates) hPileUp_Fall11->Write();
+  if(!buildTemplates && controlplots) hPileUp_Fall11->Write();
   for(int i=0; i<WMass::etaMuonNSteps; i++){
     for(int j=0; j<2*WMass::WMassNSteps+1; j++){
 
-      if(!buildTemplates){
+      if(!sampleName.Contains("DYJetsSig") && WMass::WMassNSteps!=j) continue;
+      
+      if(!buildTemplates && controlplots){
         
         // hWlikePos_logiso_vs_logdxy[i]->Write();
         // hWlikePos_iso_vs_dxy[i]->Write();
@@ -603,6 +610,22 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         hWlikePos_PtScaled_RWeighted_Templates[i][j]->Write();
       }
     }
+    if(!sampleName.Contains("DYJetsSig")){
+      TString eta_str = Form("%.1f",WMass::etaMaxMuons[i]); eta_str.ReplaceAll(".","p");
+      for(int j=0; j<2*WMass::WMassNSteps+1; j++){
+        if(WMass::WMassNSteps!=j){
+          int jWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV);
+          hWlikePos_PtScaled_8_JetCut[i][j]=(TH1D*)hWlikePos_PtScaled_8_JetCut[i][WMass::WMassNSteps]->Clone(Form("hWlikePos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtScaled_8_JetCut[i][j]->SetName(Form("hWlikePos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtScaled_8_JetCut[i][j]->SetTitle(Form("hWlikePos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtScaled_8_JetCut[i][j]->Write();
+          hWlikePos_PtNonScaled_8_JetCut[i][j]=(TH1D*)hWlikePos_PtNonScaled_8_JetCut[i][WMass::WMassNSteps]->Clone(Form("hWlikePos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtNonScaled_8_JetCut[i][j]->SetName(Form("hWlikePos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtNonScaled_8_JetCut[i][j]->SetTitle(Form("hWlikePos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWlikePos_PtNonScaled_8_JetCut[i][j]->Write();
+        }
+      }
+    }    
   }
   
   fout->Write();

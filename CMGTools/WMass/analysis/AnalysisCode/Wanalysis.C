@@ -11,15 +11,14 @@
 #include <vector>
 #include <TGraphAsymmErrors.h>
 
-void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, TString sampleName)
+void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName)
 {
-
+  if (fChain == 0) return;
+  
   TRandom3 *r = new TRandom3(0);
   
   cout << "output filename= " << Form("%s/Wanalysis.root",outputdir.Data()) << endl;
-  TFile*fout = new TFile(Form("%s/Wanalysis.root",outputdir.Data()),"RECREATE");
   
-  TH1D *hPileUp_Fall11=new TH1D("hPileUp_Fall11","hPileUp_Fall11",50,0,50);
   TH1D *hWPos_PtScaled_1_Gen[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_PtScaled_2_ZGenMassCut[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_PtScaled_3_Mu1GenCut[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -31,6 +30,7 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   TH1D *hWPos_PtNonScaled_8_JetCut[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_PtScaled_QCD[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
 
+  TH1D *hPileUp_Fall11=new TH1D("hPileUp_Fall11","hPileUp_Fall11",50,0,50);
   TH1D *hnvtx[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1],*hnoTrgMuonsLeadingPt[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hpfMET_WPos[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hpfMETphi_WPos[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hWPos_pt[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_phi[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hWPos_mt[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hMupt_WPos[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -95,7 +95,11 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
 
     // and several W mass hypotheses
     for(int j=0; j<2*WMass::WMassNSteps+1; j++){
+      
+      if(!sampleName.Contains("WJetsSig") && WMass::WMassNSteps!=j) continue;
+      
       int jWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV);
+      cout << "histos i= " << i << " eta_str= "<< eta_str <<" j= " << j << " jWmass= " << jWmass << endl;
       hWPos_PtScaled_1_Gen[i][j]=new TH1D(Form("hWPos_PtScaled_1_Gen_eta%s_%d",eta_str.Data(),jWmass),Form("hWPos_PtScaled_1_Gen_eta%s_%d",eta_str.Data(),jWmass),nbins,bins_scaled);
       hWPos_PtScaled_1_Gen[i][j]->Sumw2();
       hWPos_PtScaled_2_ZGenMassCut[i][j]=new TH1D(Form("hWPos_PtScaled_2_ZGenMassCut_eta%s_%d",eta_str.Data(),jWmass),Form("hWPos_PtScaled_2_ZGenMassCut_eta%s_%d",eta_str.Data(),jWmass),nbins,bins_scaled);
@@ -121,29 +125,29 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       // hWPos_iso_vs_dxy[i][j]=new TH2D(Form("hWPos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),Form("hWPos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),1000,-0.001,0.999,1000,0,1);
       
       // relevant histograms are created for Signal and QCD enriched phase-space
-      for(int k=0; k<WMass::nSigOrQCD; k++){
-        hnvtx[k][i][j]=new TH1D(Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hnoTrgMuonsLeadingPt[k][i][j]=new TH1D(Form("hnoTrgMuonsLeadingPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnoTrgMuonsLeadingPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),300,-100,200);
-        hpfMET_WPos[k][i][j]=new TH1D(Form("hpfMET_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hpfMETphi_WPos[k][i][j]=new TH1D(Form("hpfMETphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hWPos_pt[k][i][j]=new TH1D(Form("hWPos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
-        hWPos_phi[k][i][j]=new TH1D(Form("hWPos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hWPos_mt[k][i][j]=new TH1D(Form("hWPos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hMupt_WPos[k][i][j]=new TH1D(Form("hMupt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMupt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
-        hMueta_WPos[k][i][j]=new TH1D(Form("hMueta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMueta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
-        hMuphi_WPos[k][i][j]=new TH1D(Form("hMuphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hMulogiso_WPos[k][i][j]=new TH1D(Form("hMulogiso_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMulogiso_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,-5,3);
-        hJetpt_WPos[k][i][j]=new TH1D(Form("hJetpt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetpt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,50);
-        hJeteta_WPos[k][i][j]=new TH1D(Form("hJeteta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJeteta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
-        hJetphi_WPos[k][i][j]=new TH1D(Form("hJetphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
-        hWPos_MuDRgen[k][i][j]=new TH1D(Form("hWPos_MuDRgen_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_MuDRgen_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,-6,1);
+      if(controlplots){
+        for(int k=0; k<WMass::nSigOrQCD; k++){
+          hnvtx[k][i][j]=new TH1D(Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnvtx_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hnoTrgMuonsLeadingPt[k][i][j]=new TH1D(Form("hnoTrgMuonsLeadingPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hnoTrgMuonsLeadingPt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),300,-100,200);
+          hpfMET_WPos[k][i][j]=new TH1D(Form("hpfMET_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMET_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hpfMETphi_WPos[k][i][j]=new TH1D(Form("hpfMETphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hpfMETphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hWPos_pt[k][i][j]=new TH1D(Form("hWPos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_pt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,25);
+          hWPos_phi[k][i][j]=new TH1D(Form("hWPos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_phi_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hWPos_mt[k][i][j]=new TH1D(Form("hWPos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_mt_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hMupt_WPos[k][i][j]=new TH1D(Form("hMupt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMupt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),200,0,200);
+          hMueta_WPos[k][i][j]=new TH1D(Form("hMueta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMueta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
+          hMuphi_WPos[k][i][j]=new TH1D(Form("hMuphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMuphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hMulogiso_WPos[k][i][j]=new TH1D(Form("hMulogiso_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hMulogiso_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,-5,3);
+          hJetpt_WPos[k][i][j]=new TH1D(Form("hJetpt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetpt_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,0,50);
+          hJeteta_WPos[k][i][j]=new TH1D(Form("hJeteta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJeteta_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-2.5,2.5);
+          hJetphi_WPos[k][i][j]=new TH1D(Form("hJetphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hJetphi_WPos_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),100,-TMath::Pi(),TMath::Pi());
+          hWPos_MuDRgen[k][i][j]=new TH1D(Form("hWPos_MuDRgen_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_MuDRgen_%s_eta%s_%d",WMass::nSigOrQCD_str[k].Data(),eta_str.Data(),jWmass),1000,-6,1);
+        }
       }
     
     
     }
   }
-
-  if (fChain == 0) return;
 
   Long64_t first_entry = 0;
   Long64_t nentries = fChain->GetEntriesFast();
@@ -161,6 +165,9 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     corrector = new MuScleFitCorrector(fitParametersFile);
   }
   
+  // first_entry=469;
+  // nentries=470;
+  
   // start the actual event loop
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=first_entry; jentry<nentries;jentry++) {
@@ -170,9 +177,11 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     // if (Cut(ientry) < 0) continue;
     if(jentry%250000==0) cout <<"Analyzed entry "<<jentry<<"/"<<nentries<<endl;
+    // if(jentry%1==0) cout <<"Analyzed entry "<<jentry<<"/"<<nentries<<endl;
+
     
-    double evt_weight = lumi_scaling;
-    if(useVtxSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && npu>0) evt_weight=lumi_scaling*hPileupSF->GetBinContent(hPileupSF->GetXaxis()->FindBin(npu));
+    double evt_weight_original = lumi_scaling;
+    if(useVtxSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && npu>0) evt_weight_original=lumi_scaling*hPileupSF->GetBinContent(hPileupSF->GetXaxis()->FindBin(npu));
     
     int runopt = r->Rndm()<0.457451 ? 0 : 1;
     double MuPos_tight_muon_SF = 1;
@@ -183,11 +192,27 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     // cout << "MuPos_tight_muon_SF= " << MuPos_tight_muon_SF << endl;
     // if(!(IS_MC_CLOSURE_TEST || isMCorDATA==0) && run<175832) continue; // TEMPORARY TO TEST ROCHESTER CORRECTIONS
     
-    if(IS_MC_CLOSURE_TEST || isMCorDATA==0) hPileUp_Fall11->Fill(npu);
+    if((IS_MC_CLOSURE_TEST || isMCorDATA==0) && controlplots) hPileUp_Fall11->Fill(npu);
     
     for(int i=0; i<WMass::etaMuonNSteps; i++){
       for(int j=0; j<2*WMass::WMassNSteps+1; j++){
+        
+        if(!sampleName.Contains("WJetsSig") && WMass::WMassNSteps!=j) continue;
         double iWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV)/1e3;
+        
+        // cout << "events i= " << i << " j= " << j << " iWmass= " << iWmass<< " evt_weight_original= " << evt_weight_original << endl;
+        
+        // BW REWEIGHTING
+        double shat=0,gamma=2.141 /*HARD CODED TO PDG VALUE*/,mw0=0,mw_i=0,weight_i=1;
+        if(useGenVar){
+          shat=WGen_m*WGen_m;
+          mw0=WMass::WMassCentral_MeV/1e3;
+          mw_i=iWmass;
+          // ((shat - mw0^2)^2 + gamma^2 mw0^2) / ((shat - mw_i^2)^2 + gamma^2 mw_i^2)
+          weight_i=(TMath::Power(shat - mw0*mw0,2) + TMath::Power(gamma*mw0,2)) / (TMath::Power(shat - mw_i*mw_i,2) + TMath::Power(gamma*mw_i,2));
+          // cout << "WGen_m = " << WGen_m << " mw0= " << mw0 << " mw_i= " << mw_i << " weight_i= " << weight_i << endl;
+        }
+        double evt_weight=evt_weight_original*weight_i;
           
         // GEN STUFF IF REQUESTED
         if(useGenVar){
@@ -223,6 +248,8 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
             TLorentzVector mu; //TLorentzVector of the reconstructed muon
             //Set TLorentzVector of mu
             mu.SetPtEtaPhiM(Mu_pt,Mu_eta,Mu_phi,Mu_mass);
+            // mu.Print();
+            // cout << Mu_pt << " " << Mu_eta << " " << Mu_phi << " "<< Mu_mass << endl;
             //use rochester correction if required
             if(useMomentumCorr==1){ // use Rochester Momentum scale corrections if required
               if(IS_MC_CLOSURE_TEST || isMCorDATA==0){
@@ -260,8 +287,14 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                     // if(Jet_leading_pt<30){
                       hWPos_PtScaled_8_JetCut[i][j]->Fill(MuPos_pt_jacobian,evt_weight*MuPos_tight_muon_SF);
                       // cout << (mu.Pt()<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2 )<< endl;
-                      hWPos_PtNonScaled_8_JetCut[i][j]->Fill(mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3) : (xmax-binsize2/2)*80/2 ,evt_weight*MuPos_tight_muon_SF);
-                    
+                      
+                      // VERY DUMMY REWEIGHTING
+                      // hWPos_PtNonScaled_8_JetCut[i][j]->Fill(mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3) : (xmax-binsize2/2)*80/2 ,evt_weight*MuPos_tight_muon_SF);
+                      
+                      // std::cout << "event= " << jentry << " mw0= " << mw0 << " iWmass= " << iWmass << " WGen_m= " << WGen_m << " weight_i= " << weight_i << std::endl;
+                      // cout << "filling pt= " << (mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2) <<" evt_weight= " << evt_weight << " MuPos_tight_muon_SF= " << MuPos_tight_muon_SF << endl;
+                      hWPos_PtNonScaled_8_JetCut[i][j]->Fill(mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2 ,evt_weight*MuPos_tight_muon_SF);
+
                       // cout << wmass1 << " " << WMass::WMassCentral_MeV << " " << (wmass1 - WMass::WMassCentral_MeV) << endl;
                       // cout << WMass::etaMaxMuons[i]  << " " << 2.1 << " " << ((WMass::etaMaxMuons[i] - 2.1)) << endl;
                       // if( (TMath::Abs(wmass1 - WMass::WMassCentral_MeV) > 1)
@@ -271,32 +304,33 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                         
                       // cout << "wmass1 " << wmass1 << " WMass::etaMaxMuons[i]= " << WMass::etaMaxMuons[i] << endl;
 
-                      if(useGenVar) hWPos_MuDRgen[0][i][j]->Fill(TMath::Log10(MuDRGenP),evt_weight*MuPos_tight_muon_SF);
-                      hnvtx[0][i][j]->Fill(nvtx,evt_weight); // TO FIT MET IN THE WHOLE RANGE!!!!
-                      hnoTrgMuonsLeadingPt[0][i][j]->Fill(noTrgMuonsLeadingPt,evt_weight*MuPos_tight_muon_SF); // TO FIT MET IN THE WHOLE RANGE!!!!
-                      hpfMETphi_WPos[0][i][j]->Fill(pfmet_phi,evt_weight*MuPos_tight_muon_SF);
-                      hWPos_pt[0][i][j]->Fill(W_pt,evt_weight*MuPos_tight_muon_SF);
-                      hWPos_phi[0][i][j]->Fill(W_phi,evt_weight*MuPos_tight_muon_SF);
-                      hWPos_mt[0][i][j]->Fill(W_mt,evt_weight*MuPos_tight_muon_SF);
-                      hMupt_WPos[0][i][j]->Fill(mu.Pt(),evt_weight*MuPos_tight_muon_SF);
-                      hMueta_WPos[0][i][j]->Fill(mu.Eta(),evt_weight*MuPos_tight_muon_SF);
-                      hMuphi_WPos[0][i][j]->Fill(mu.Phi(),evt_weight*MuPos_tight_muon_SF);
-                      hMulogiso_WPos[0][i][j]->Fill(TMath::Log10(MuRelIso),evt_weight*MuPos_tight_muon_SF);
-                      hJetpt_WPos[0][i][j]->Fill(Jet_leading_pt,evt_weight*MuPos_tight_muon_SF);
-                      hJeteta_WPos[0][i][j]->Fill(Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
-                      hJetphi_WPos[0][i][j]->Fill(Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
-                    
+                      if(controlplots){
+                        if(useGenVar) hWPos_MuDRgen[0][i][j]->Fill(TMath::Log10(MuDRGenP),evt_weight*MuPos_tight_muon_SF);
+                        hnvtx[0][i][j]->Fill(nvtx,evt_weight); // TO FIT MET IN THE WHOLE RANGE!!!!
+                        hnoTrgMuonsLeadingPt[0][i][j]->Fill(noTrgMuonsLeadingPt,evt_weight*MuPos_tight_muon_SF); // TO FIT MET IN THE WHOLE RANGE!!!!
+                        hpfMETphi_WPos[0][i][j]->Fill(pfmet_phi,evt_weight*MuPos_tight_muon_SF);
+                        hWPos_pt[0][i][j]->Fill(W_pt,evt_weight*MuPos_tight_muon_SF);
+                        hWPos_phi[0][i][j]->Fill(W_phi,evt_weight*MuPos_tight_muon_SF);
+                        hWPos_mt[0][i][j]->Fill(W_mt,evt_weight*MuPos_tight_muon_SF);
+                        hMupt_WPos[0][i][j]->Fill(mu.Pt(),evt_weight*MuPos_tight_muon_SF);
+                        hMueta_WPos[0][i][j]->Fill(mu.Eta(),evt_weight*MuPos_tight_muon_SF);
+                        hMuphi_WPos[0][i][j]->Fill(mu.Phi(),evt_weight*MuPos_tight_muon_SF);
+                        hMulogiso_WPos[0][i][j]->Fill(TMath::Log10(MuRelIso),evt_weight*MuPos_tight_muon_SF);
+                        hJetpt_WPos[0][i][j]->Fill(Jet_leading_pt,evt_weight*MuPos_tight_muon_SF);
+                        hJeteta_WPos[0][i][j]->Fill(Jet_leading_eta,evt_weight*MuPos_tight_muon_SF);
+                        hJetphi_WPos[0][i][j]->Fill(Jet_leading_phi,evt_weight*MuPos_tight_muon_SF);
+                      }
                     }
                   }
                 }
-                if(W_pt<20){ // do not cut on MET to let the fit have an handle
+                if(controlplots && W_pt<20){ // do not cut on MET to let the fit have an handle
                         
                   // if(TMath::Abs(wmass1 - WMass::WMassCentral_MeV) > 1) continue;
                     
                   hpfMET_WPos[0][i][j]->Fill(pfmet,evt_weight*MuPos_tight_muon_SF); // TRICK TO FIT MET IN THE WHOLE RANGE!!!!
                     
                 }
-              }else{ // muon candidate is failing either tight ID, iso or dxy: QCD enriched region
+              }else if(controlplots){ // muon candidate is failing either tight ID, iso or dxy: QCD enriched region
                 
                 if(pfmet>25 && W_pt<20){
                   // if( (TMath::Abs(wmass1 - WMass::WMassCentral_MeV) > 1)) continue;
@@ -345,30 +379,34 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     
   // }
   
+  TFile*fout = new TFile(Form("%s/Wanalysis.root",outputdir.Data()),"RECREATE");
   fout->cd();
-  hPileUp_Fall11->Write();
+  if(controlplots) hPileUp_Fall11->Write();
   for(int i=0; i<WMass::etaMuonNSteps; i++){
   
     // hWPos_logiso_vs_logdxy[i]->Write();
     // hWPos_iso_vs_dxy[i]->Write();
     
     for(int j=0; j<2*WMass::WMassNSteps+1; j++){
-      for(int k=0; k<WMass::nSigOrQCD; k++){
-        hWPos_MuDRgen[k][i][j]->Write();
-        hnvtx[k][i][j]->Write();
-        hnoTrgMuonsLeadingPt[k][i][j]->Write();
-        hpfMET_WPos[k][i][j]->Write();
-        hpfMETphi_WPos[k][i][j]->Write();
-        hWPos_pt[k][i][j]->Write();
-        hWPos_phi[k][i][j]->Write();
-        hWPos_mt[k][i][j]->Write();
-        hMupt_WPos[k][i][j]->Write();
-        hMueta_WPos[k][i][j]->Write();
-        hMuphi_WPos[k][i][j]->Write();
-        hMulogiso_WPos[k][i][j]->Write();
-        hJetpt_WPos[k][i][j]->Write();
-        hJeteta_WPos[k][i][j]->Write();
-        hJetphi_WPos[k][i][j]->Write();
+      if(!sampleName.Contains("WJetsSig") && WMass::WMassNSteps!=j) continue;
+      if(controlplots){
+        for(int k=0; k<WMass::nSigOrQCD; k++){
+          hWPos_MuDRgen[k][i][j]->Write();
+          hnvtx[k][i][j]->Write();
+          hnoTrgMuonsLeadingPt[k][i][j]->Write();
+          hpfMET_WPos[k][i][j]->Write();
+          hpfMETphi_WPos[k][i][j]->Write();
+          hWPos_pt[k][i][j]->Write();
+          hWPos_phi[k][i][j]->Write();
+          hWPos_mt[k][i][j]->Write();
+          hMupt_WPos[k][i][j]->Write();
+          hMueta_WPos[k][i][j]->Write();
+          hMuphi_WPos[k][i][j]->Write();
+          hMulogiso_WPos[k][i][j]->Write();
+          hJetpt_WPos[k][i][j]->Write();
+          hJeteta_WPos[k][i][j]->Write();
+          hJetphi_WPos[k][i][j]->Write();
+        }
       }
       hWPos_PtScaled_1_Gen[i][j]->Write();
       hWPos_PtScaled_2_ZGenMassCut[i][j]->Write();
@@ -381,6 +419,24 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       hWPos_PtNonScaled_8_JetCut[i][j]->Write();
       hWPos_PtScaled_QCD[i][j]->Write();
     }
+    
+    if(!sampleName.Contains("WJetsSig")){
+      TString eta_str = Form("%.1f",WMass::etaMaxMuons[i]); eta_str.ReplaceAll(".","p");
+      for(int j=0; j<2*WMass::WMassNSteps+1; j++){
+        if(WMass::WMassNSteps!=j){
+          int jWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV);
+          hWPos_PtScaled_8_JetCut[i][j]=(TH1D*)hWPos_PtScaled_8_JetCut[i][WMass::WMassNSteps]->Clone(Form("hWPos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtScaled_8_JetCut[i][j]->SetName(Form("hWPos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtScaled_8_JetCut[i][j]->SetTitle(Form("hWPos_PtScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtScaled_8_JetCut[i][j]->Write();
+          hWPos_PtNonScaled_8_JetCut[i][j]=(TH1D*)hWPos_PtNonScaled_8_JetCut[i][WMass::WMassNSteps]->Clone(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtNonScaled_8_JetCut[i][j]->SetName(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtNonScaled_8_JetCut[i][j]->SetTitle(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+          hWPos_PtNonScaled_8_JetCut[i][j]->Write();
+        }
+      }
+    }
+    
   }
 
   fout->Write();

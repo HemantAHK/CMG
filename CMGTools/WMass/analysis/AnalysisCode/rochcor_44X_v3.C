@@ -506,7 +506,7 @@ rochcor_44X_v3::rochcor_44X_v3(){
   sran.SetSeed(13245768);
     
   for(int i=0; i<8; ++i){
-    for(int j=0; j<8; ++j){
+    for(int j=0; j<22; ++j){
       mptsys_mc_dm[i][j]=0;
       mptsys_mc_da[i][j]=0;
       mptsys_da_dm[i][j]=0;
@@ -521,7 +521,7 @@ rochcor_44X_v3::rochcor_44X_v3(int seed){
   sran.SetSeed(seed);
 
   for(int i=0; i<8; ++i){
-      for(int j=0; j<8; ++j){
+      for(int j=0; j<22; ++j){
           mptsys_mc_dm[i][j]=sran.Gaus(0.0, 1.0);
           mptsys_mc_da[i][j]=sran.Gaus(0.0, 1.0);
           mptsys_da_dm[i][j]=sran.Gaus(0.0, 1.0);
@@ -546,12 +546,20 @@ void rochcor_44X_v3::momcor_mc( TLorentzVector& mu, float charge, float sysdev){
   int mu_phibin = phibin(muphi);
   int mu_etabin = etabin(mueta);
   
+  // mu.Print();
+  // cout << "mu_phibin= " << mu_phibin << " mu_etabin= " << mu_etabin << endl;
+  // cout << "px= " << px << " py= " << py << " pz= " << pz << " e= " << e << endl;
+  
   //float mptsys = sran.Gaus(0.0,sysdev);
   
   float dm = (mcor_bfA[mu_phibin][mu_etabin] + mptsys_mc_dm[mu_phibin][mu_etabin]*mcor_bfAer[mu_phibin][mu_etabin])/mmavgA[mu_phibin][mu_etabin];
   float da = mcor_maA[mu_phibin][mu_etabin] + mptsys_mc_da[mu_phibin][mu_etabin]*mcor_maAer[mu_phibin][mu_etabin];
+  // cout << "mcor_maA["<<mu_phibin<<"]["<<mu_etabin<<"]= " << mcor_maA[mu_phibin][mu_etabin] 
+       // << " mptsys_mc_da["<<mu_phibin<<"]["<<mu_etabin<<"]= " << mptsys_mc_da[mu_phibin][mu_etabin]
+       // << " mcor_maAer["<<mu_phibin<<"]["<<mu_etabin<<"]= " << mcor_maAer[mu_phibin][mu_etabin] << endl;
   
   float cor = 1.0/(1.0 + dm + charge*da*ptmu);
+  // cout << "dm= " << dm << " da= " << da << " cor= " << cor << endl;
   
   //for the momentum tuning - eta,phi,Q correction
   px *= cor;
@@ -566,13 +574,16 @@ void rochcor_44X_v3::momcor_mc( TLorentzVector& mu, float charge, float sysdev){
   
   float gscl = (genm_smr/recm);
   
+  // cout << "px= " << px << " py= " << py << " pz= " << pz << " e= " << e << endl;
+  // cout << "gscl= " << gscl << " sysdev= " << sysdev << " gscler= " << gscler << endl;
   px *= (gscl + sysdev*gscler);
   py *= (gscl + sysdev*gscler);
   pz *= (gscl + sysdev*gscler);
   e *= (gscl + sysdev*gscler);
+
   
   mu.SetPxPyPzE(px,py,pz,e);
-  
+
 }
 
 

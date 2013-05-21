@@ -14,6 +14,8 @@
 #include <iostream>
 #include <TSystem.h>
 
+using namespace std;
+
 class Wanalysis {
   public :
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
@@ -125,7 +127,7 @@ class Wanalysis {
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree);
-  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int useRochCorr=0, int smearRochCorr=0, int useEffSF=0, int useVtxSF=0, TString sampleName="");
+  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int useRochCorr=0, int smearRochCorr=0, int useEffSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="");
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 };

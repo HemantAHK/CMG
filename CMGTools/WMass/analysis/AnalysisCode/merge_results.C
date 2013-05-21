@@ -61,20 +61,46 @@ void merge_results(){
       str_icol = ((TObjString *)LineColumns->At(4))->GetString();
       likelihood_val = (double) (str_icol.Atof());
       cout << jWmass << " LIKELIHOOD VALUE= "<<likelihood_val << endl;
-      result_NonScaled->SetPoint(npoint,jWmass,likelihood_val);
+      result_NonScaled->SetPoint(npoint,jWmass,result_NonScaled->GetMaximum()>0?likelihood_val:-likelihood_val);
 
       npoint++;
   
     }
 
+    
+    
     result->SetMarkerStyle(20);
     result->SetMarkerSize(1);
     result->Write();
-    result->Delete();
     result_NonScaled->SetMarkerStyle(20);
     result_NonScaled->SetMarkerSize(1);
     result_NonScaled->Write();
+    
+    TCanvas*c_chi2=new TCanvas(Form("c_chi2_eta%s",eta_str.Data()),Form("c_chi2_eta%s",eta_str.Data()));
+    TF1*ffit=new TF1(Form("ffit_eta%s",eta_str.Data()),Form("[0]+TMath::Power((x-[1])/[2],2)"),70,100);
+    ffit->SetParameter(0,result_NonScaled->GetMinimum());
+    ffit->SetParameter(1,80410);
+    ffit->SetParameter(2,10); // IF FIT DOES NOT CONVERGE, CHANGE THIS PARAMETER BY LOOKING AT THE CHI2 VS MASS DISTRIBUTION (~value for which Delta_chi2 = 1)
+    // ffit->SetParameter(2,1e4); // IF FIT DOES NOT CONVERGE, CHANGE THIS PARAMETER BY LOOKING AT THE CHI2 VS MASS DISTRIBUTION (~value for which Delta_chi2 = 1)
+    ffit->SetLineColor(2);
+    ffit->SetLineWidth(1);
+    result_NonScaled->Fit(Form("ffit_eta%s",eta_str.Data()),"WEM");
+    result_NonScaled->Draw("ap");
+    TLatex *text,*text2;
+    text = new TLatex(0.25,0.7,Form("Best M_{W} = %.0f +/- %.0f MeV", ffit->GetParameter(1), ffit->GetParameter(2) ));
+    text->SetNDC();
+    text->Draw();
+    // text2 = new TLatex(0.25,0.6,Form("Best #chi^{2} ratio = %.1f", ffit->GetParameter(0) ));
+    // text2->SetNDC();
+    // text2->Draw();
+    cout << "Best M_W value = " << ffit->GetParameter(1) << " +/- " << Form("%d",TMath::Nint(ffit->GetParameter(2))) << " MeV" << endl;
+    // cout << "Best chi2 ratio value = " << ffit->GetParameter(0) << endl;
+    // cout << "Measured mass points chi2 min = " << chi2min << " max = " << chi2max << endl;
+    
+    c_chi2->Write();
+    
     result_NonScaled->Delete();
+    result->Delete();
     
   }
   

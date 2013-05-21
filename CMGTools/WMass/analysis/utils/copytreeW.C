@@ -20,7 +20,8 @@ void copytreeW() {
   };  
 
   // int sample = 0;
-  for(int sample=0; sample<7; sample++){
+  // for(int sample=0; sample<7; sample++){
+  for(int sample=0; sample<1; sample++){
   // for(int sample=6; sample<7; sample++){
 
     if(sample!=0) continue;
@@ -32,23 +33,24 @@ void copytreeW() {
     TFile *oldfile = new TFile(Form("%s",fWana_str[sample].Data()));
     TTree *oldtree = (TTree*)oldfile->Get("WTreeProducer");
 
-    if(sample>2) oldtree->SetBranchStatus("WGen_pt",0);
-    oldtree->SetBranchStatus("WGen_phi",0);
-    oldtree->SetBranchStatus("WGen_rap",0);
-    oldtree->SetBranchStatus("WGen_m",0);
-    oldtree->SetBranchStatus("WGen_mt",0);
-    oldtree->SetBranchStatus("MuGen_pt",0);
-    oldtree->SetBranchStatus("MuGen_eta",0);
-    oldtree->SetBranchStatus("MuGen_phi",0);
-    oldtree->SetBranchStatus("MuGen_mass",0);
-    oldtree->SetBranchStatus("MuGen_charge",0);
-    oldtree->SetBranchStatus("MuDRGenP",0);
-    oldtree->SetBranchStatus("NuGen_pt",0);
-    oldtree->SetBranchStatus("NuGen_eta",0);
-    oldtree->SetBranchStatus("NuGen_phi",0);
-    oldtree->SetBranchStatus("NuGen_mass",0);
-    oldtree->SetBranchStatus("NuGen_charge",0);
-    
+    if(sample>2){
+      oldtree->SetBranchStatus("WGen_pt",0);
+      oldtree->SetBranchStatus("WGen_phi",0);
+      oldtree->SetBranchStatus("WGen_rap",0);
+      oldtree->SetBranchStatus("WGen_m",0);
+      oldtree->SetBranchStatus("WGen_mt",0);
+      oldtree->SetBranchStatus("MuGen_pt",0);
+      oldtree->SetBranchStatus("MuGen_eta",0);
+      oldtree->SetBranchStatus("MuGen_phi",0);
+      oldtree->SetBranchStatus("MuGen_mass",0);
+      oldtree->SetBranchStatus("MuGen_charge",0);
+      oldtree->SetBranchStatus("MuDRGenP",0);
+      oldtree->SetBranchStatus("NuGen_pt",0);
+      oldtree->SetBranchStatus("NuGen_eta",0);
+      oldtree->SetBranchStatus("NuGen_phi",0);
+      oldtree->SetBranchStatus("NuGen_mass",0);
+      oldtree->SetBranchStatus("NuGen_charge",0);
+    }
     // //Create a new file + a clone of old tree in new file
     // TFile *newfile = new TFile(Form("%s",fWana_RecoSkimmed_str[sample].Data()),"recreate");
     // TTree *newtree = oldtree->CopyTree("W_pt>0");

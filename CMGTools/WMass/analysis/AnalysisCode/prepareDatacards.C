@@ -9,7 +9,7 @@ TString     samples_str[Nsamples]  = { "WJetsSig", "WJetsFake", "DYJetsSig", "DY
 // double xmin=0.8, xmax=1.2;
 double xmin=0.65, xmax=2;
 
-void prepareDatacards(TString folder, TString sample){
+void prepareDatacards(TString folder, TString syst_folder, TString sample){
 
   cout << "folder= " << folder << endl;
   cout << "samples= " << sample << endl;
@@ -227,9 +227,13 @@ void prepareDatacards(TString folder, TString sample){
       DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_NonScaled.txt",folder.Data(),eta_str.Data(),jWmass));
       
       DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
-      DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
-      // DummyDatacard << "shapes   data_obs   *   /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_4_4_4/src/CMGTools/WMass/analysis/JobOutputs/results_test44X_correctPoles_RochCorr_EffSFCorr_PileupSFCorr/DataCards/datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
-      DummyDatacard << "shapes   W_WJetsSig_NonScaled_ALT   *   datacards_DATA.root $CHANNEL/"<<WMass::WMassCentral_MeV-(WMass::WMassNSteps-(WMass::WMassNSteps+1))*WMass::WMassStep_MeV<<"/W_WJetsSig_NonScaled" << endl;
+      if(syst_folder.Length()<2){
+        DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<"/W_MCDATALIKE_NonScaled" << endl;
+      }else{
+        // DummyDatacard << "shapes   data_obs   *   /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_4_4_4/src/CMGTools/WMass/analysis/JobOutputs/test_controlplots_RochCorr_EffSFCorr_PileupSFCorr/DataCards/datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<"/W_MCDATALIKE_NonScaled" << endl;
+        DummyDatacard << "shapes   data_obs   *   "<<Form("../../%s/DataCards/datacards_DATA.root",syst_folder.Data()) << " $CHANNEL/"<<(WMass::WMassCentral_MeV)<<"/W_MCDATALIKE_NonScaled" << endl;
+      }
+      DummyDatacard << "shapes   W_WJetsSig_NonScaled_ALT   *   datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV-WMass::WMassNSteps*WMass::WMassStep_MeV)<<"/W_WJetsSig_NonScaled" << endl;
       DummyDatacard << "----------------------------------------" << endl;
       DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
       DummyDatacard << "observation              -1 " << endl;
