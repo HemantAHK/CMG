@@ -16,10 +16,10 @@ import urllib, urlparse, string, time, os, shutil
 # foldername = "results_test44X_correctPoles";
 # foldername = "test_BW_reweighting_normWsig";
 # foldername = "test_controlplots_smear1s";
-foldername = "test_controlplots";
+foldername = "test_mt";
 
 usePileupSF = 1; # 0=no, 1=yes
-useEffSF = 0; # 0=no, 1=yes
+useEffSF = 1; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
 smearRochCorrByNsigma = 0;
 ## CHOOSE WETHER IS MC CLOSURE OR NOT (half statistics used as DATA, half as MC)
@@ -36,8 +36,8 @@ WMassNSteps = "30"; # 60
 etaMuonNSteps = "1"; # 5
 etaMaxMuons = "0.6"; # 0.6, 0.8, 1.2, 1.6, 2.1
 
-parallelize = 0;
-resumbit_sample = ""
+parallelize = 1;
+resumbit_sample = "ZZJets"
 
 runWanalysis = 0;
 runZanalysis = 0;
@@ -55,14 +55,14 @@ run_BuildEvByEvTemplates= 0;
 
 ## PERFORM W MASS FIT
 runPrepareDataCards = 0;
-DataCards_systFromFolder="test_controlplots_RochCorr_EffSFCorr_PileupSFCorr" # evaluate systematics wrt folder (or leave it empty)
+DataCards_systFromFolder="" # evaluate systematics wrt folder (or leave it empty)
 
 runDataCardsParametrization = 0;
 
 ## NEW FIT
 print "if it doesn't work, try with this first: cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -";
-runClosureTestLikeLihoodRatio = 1;
-mergeResults = 0;
+runClosureTestLikeLihoodRatio = 0;
+mergeResults = 1;
 
 ## OLD FIT
 runClosureTest = 0;
@@ -99,7 +99,10 @@ if(IS_MC_CLOSURE_TEST==1):
     useEffSF=0;
     usePileupSF=0;
 
-if(useMomentumCorr==1): foldername+="_RochCorr";
+if(useMomentumCorr==1): 
+  foldername+="_RochCorr";
+  if(smearRochCorrByNsigma>0): 
+    foldername+=str(smearRochCorrByNsigma)+"s_smear";
 else: 
     if(useMomentumCorr==2): foldername+="_MuscleFitCorr";
 
