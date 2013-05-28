@@ -11,13 +11,36 @@
 #include <vector>
 #include <TGraphAsymmErrors.h>
 
-void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName)
+void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
 {
+
+    cout << "generated_PDF_set= "<<generated_PDF_set
+         << " generated_PDF_member= " << generated_PDF_member
+         << " contains_PDF_reweight= " << contains_PDF_reweight
+         << endl;
+
   if (fChain == 0) return;
   
   TRandom3 *r = new TRandom3(0);
   
+  if(!outputdir.Contains("../")) outputdir = "../"+outputdir;
   cout << "output filename= " << Form("%s/Wanalysis.root",outputdir.Data()) << endl;
+  
+  cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
+  // LHAPDF::initPDFSet();
+  if(WMass::PDF_sets==11200)
+    LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
+  else if(WMass::PDF_sets==232000)
+    LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
+  else if(WMass::PDF_sets==21200)
+    LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
+  else if(WMass::PDF_sets<0)
+    LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
+  
+  cout << "inizializing LHAPDF::initPDFSet(1)" << endl;
+  // LHAPDF::initPDFSet(1,"CT10nnlo.LHgrid");
+  LHAPDF::initPDFSet(1,generated_PDF_set,generated_PDF_member); // CMSSW DEFAULT
+  cout << "finished inizializing LHAPDF" << endl;
   
   TH1D *hWPos_VarScaled_1_Gen[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_VarScaled_2_ZGenMassCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -26,10 +49,18 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   TH1D *hWPos_VarScaled_5_RecoCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_VarScaled_6_METCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_VarScaled_7_RecoilCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
-  TH1D *hWPos_VarScaled_8_JetCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
-  TH1D *hWPos_VarNonScaled_8_JetCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *hWPos_VarScaled_8_JetCut[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *hWPos_VarNonScaled_8_JetCut[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWPos_VarScaled_QCD[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
 
+  TH1D *hPDF_weights[WMass::PDF_members];
+  for(int h=0; h<WMass::PDF_members; h++)
+    hPDF_weights[h]=new TH1D(Form("hPDF_weights_%d_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h),Form("hPDF_weights_%d_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h),1000,0,2);
+    
+  TH1D *hPDF_x1=new TH1D("hPDF_x1","hPDF_x1",1000,-4,0);
+  TH1D *hPDF_x1unweighted=new TH1D("hPDF_x1unweighted","hPDF_x1unweighted",1000,-4,0);
+  TH1D *hPDF_x2=new TH1D("hPDF_x2","hPDF_x2",1000,-4,0);
+  TH1D *hPDF_x2unweighted=new TH1D("hPDF_x2unweighted","hPDF_x2unweighted",1000,-4,0);
   TH1D *hPileUp_Fall11=new TH1D("hPileUp_Fall11","hPileUp_Fall11",50,0,50);
   TH1D *hnvtx[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1],*hnoTrgMuonsLeadingPt[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hpfMET_WPos[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hpfMETphi_WPos[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *hWPos_pt[WMass::nSigOrQCD][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -86,29 +117,29 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       bins_Notscaled[k][i]=x*80/(k==1 ? 1 : 2); // mT has double range wrt pt, met
       if(x>1.2-binsize) binsize=binsize2;
       x+=binsize;
-      cout << "bins_scaled["<<k<<"]["<<i<<"]= "<< bins_scaled[k][i] << endl;
-      cout << "bins_Notscaled["<<k<<"]["<<i<<"]= "<< bins_Notscaled[k][i] << endl;
+      // cout << "bins_scaled["<<k<<"]["<<i<<"]= "<< bins_scaled[k][i] << endl;
+      // cout << "bins_Notscaled["<<k<<"]["<<i<<"]= "<< bins_Notscaled[k][i] << endl;
     }
     bins_scaled[k][nbins]=xmax;
     bins_Notscaled[k][nbins]=xmax*80/(k==1 ? 1 : 2);
-    cout << "bins_scaled["<<k<<"]["<<nbins<<"]= " <<bins_scaled[k][nbins] << endl;
-    cout << "bins_Notscaled["<<k<<"]["<<nbins<<"]= " <<bins_Notscaled[k][nbins] << endl;
-    cout << endl;
+    // cout << "bins_scaled["<<k<<"]["<<nbins<<"]= " <<bins_scaled[k][nbins] << endl;
+    // cout << "bins_Notscaled["<<k<<"]["<<nbins<<"]= " <<bins_Notscaled[k][nbins] << endl;
+    // cout << endl;
   }
   
-  cout << endl;
-  for(int k=0;k<3;k++){
-    for(int i=0;i<nbins+1;i++){
-      cout << "bins_scaled["<<k<<"]["<<i<<"]= "<< bins_scaled[k][i] << " ";
-    }
-    cout << endl;
-    cout << endl;
-    for(int i=0;i<nbins+1;i++){
-      cout << "bins_Notscaled["<<k<<"]["<<i<<"]= "<< bins_Notscaled[k][i] << " ";
-    }
-    cout << endl;
-    cout << endl;
-  }
+  // cout << endl;
+  // for(int k=0;k<3;k++){
+    // for(int i=0;i<nbins+1;i++){
+      // cout << "bins_scaled["<<k<<"]["<<i<<"]= "<< bins_scaled[k][i] << " ";
+    // }
+    // cout << endl;
+    // cout << endl;
+    // for(int i=0;i<nbins+1;i++){
+      // cout << "bins_Notscaled["<<k<<"]["<<i<<"]= "<< bins_Notscaled[k][i] << " ";
+    // }
+    // cout << endl;
+    // cout << endl;
+  // }
   // return;
   
   // analysis can be automatically repeated for several |eta| ranges
@@ -137,10 +168,12 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         hWPos_VarScaled_6_METCut[k][i][j]->Sumw2();
         hWPos_VarScaled_7_RecoilCut[k][i][j]=new TH1D(Form("hWPos_%sScaled_7_RecoilCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_%sScaled_7_RecoilCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
         hWPos_VarScaled_7_RecoilCut[k][i][j]->Sumw2();
-        hWPos_VarScaled_8_JetCut[k][i][j]=new TH1D(Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
-        hWPos_VarScaled_8_JetCut[k][i][j]->Sumw2();
-        hWPos_VarNonScaled_8_JetCut[k][i][j]=new TH1D(Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_Notscaled[k]);
-        hWPos_VarNonScaled_8_JetCut[k][i][j]->Sumw2();
+        for(int h=0; h<WMass::PDF_members; h++){
+          hWPos_VarScaled_8_JetCut[h][k][i][j]=new TH1D(Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),nbins,bins_scaled[k]);
+          hWPos_VarScaled_8_JetCut[h][k][i][j]->Sumw2();
+          hWPos_VarNonScaled_8_JetCut[h][k][i][j]=new TH1D(Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),nbins,bins_Notscaled[k]);
+          hWPos_VarNonScaled_8_JetCut[h][k][i][j]->Sumw2();
+        }
         hWPos_VarScaled_QCD[k][i][j]=new TH1D(Form("hWPos_%sScaled_QCD_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWPos_%sScaled_QCD_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
         hWPos_VarScaled_QCD[k][i][j]->Sumw2();
       }
@@ -194,14 +227,13 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   // start the actual event loop
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=first_entry; jentry<nentries;jentry++) {
-  // for (Long64_t jentry=0; jentry<5e5;jentry++) { // for testing purposes
+  // for (Long64_t jentry=0; jentry<1e5;jentry++) { // for testing purposes
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     // if (Cut(ientry) < 0) continue;
     if(jentry%250000==0) cout <<"Analyzed entry "<<jentry<<"/"<<nentries<<endl;
     // if(jentry%1==0) cout <<"Analyzed entry "<<jentry<<"/"<<nentries<<endl;
-
     
     double evt_weight_original = lumi_scaling;
     if(useVtxSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && npu>0) evt_weight_original=lumi_scaling*hPileupSF->GetBinContent(hPileupSF->GetXaxis()->FindBin(npu));
@@ -322,8 +354,6 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                     
                     if(true){ // no jet pt cut at the moment
                     // if(Jet_leading_pt<30){
-                      for(int k=0;k<3;k++)
-                        hWPos_VarScaled_8_JetCut[k][i][j]->Fill(MuPos_var_jacobian[k],evt_weight*MuPos_tight_muon_SF);
                       // cout << (mu.Pt()<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2 )<< endl;
                       
                       // VERY DUMMY REWEIGHTING
@@ -331,9 +361,35 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                       
                       // std::cout << "event= " << jentry << " mw0= " << mw0 << " iWmass= " << iWmass << " WGen_m= " << WGen_m << " weight_i= " << weight_i << std::endl;
                       // cout << "filling pt= " << (mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2) <<" evt_weight= " << evt_weight << " MuPos_tight_muon_SF= " << MuPos_tight_muon_SF << endl;
-                      for(int k=0;k<3;k++)
-                        hWPos_VarNonScaled_8_JetCut[k][i][j]->Fill(MuPos_var_NotScaled[k]*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/(k==1 ? 1 : 2) ? MuPos_var_NotScaled[k] : (xmax-binsize2/2)*80/(k==1 ? 1 : 2) ,evt_weight*MuPos_tight_muon_SF);
-                        // hWPos_VarNonScaled_8_JetCut[i][j]->Fill(mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2 ,evt_weight*MuPos_tight_muon_SF);
+                      double lha_weight = 1;
+                      // double lha_weight = LHAPDF::xfx(0,x1,Q,fl1)*LHAPDF::xfx(0,x2,Q,fl2) / (LHAPDF::xfx(1,x1,Q,fl1)*LHAPDF::xfx(1,x2,Q,fl2));
+                      double weight_old = (LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId)*LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId));
+                      // cout << "scalePDF= " << scalePDF << " parton1_x= " << parton1_x << " parton1_pdgId= " << parton1_pdgId 
+                           // << "parton2_x= " << parton2_x << " parton2_pdgId= " << parton2_pdgId << endl;
+                      // cout << " LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId)= LHAPDF::xfx(0,"<<parton1_x<<","<<scalePDF<<","<<parton1_pdgId<<")= " << LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId)= LHAPDF::xfx(0,"<<parton2_x<<","<<scalePDF<<","<<parton2_pdgId<<")= " << LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId)= LHAPDF::xfx(1,"<<parton1_x<<","<<scalePDF<<","<<parton1_pdgId<<")= " << LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId)= LHAPDF::xfx(1,"<<parton2_x<<","<<scalePDF<<","<<parton2_pdgId<<")= " << LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId) << endl;
+                      // cout << " lha_weight= " << lha_weight << endl;
+                      hPDF_x1->Fill(TMath::Log10(parton1_x));
+                      hPDF_x1unweighted->Fill(TMath::Log10(parton1_x),1/weight_old);
+                      hPDF_x2->Fill(TMath::Log10(parton2_x));
+                      hPDF_x2unweighted->Fill(TMath::Log10(parton2_x),1/weight_old);
+                      
+                      for(int h=0; h<WMass::PDF_members; h++){
+                        if(!sampleName.Contains("DATA") && WMass::PDF_sets>0 && WMass::PDF_sets!=generated_PDF_set && WMass::PDF_members!=generated_PDF_member){
+                          LHAPDF::usePDFMember(0,h);
+                          double weight_new = (LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId)*LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId));
+                          lha_weight = weight_new/weight_old;
+                          hPDF_weights[h]->Fill(lha_weight);
+                        }
+                        for(int k=0;k<3;k++){
+                          hWPos_VarScaled_8_JetCut[h][k][i][j]->Fill(MuPos_var_jacobian[k],evt_weight*MuPos_tight_muon_SF*lha_weight);
+                          hWPos_VarNonScaled_8_JetCut[h][k][i][j]->Fill(MuPos_var_NotScaled[k]*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/(k==1 ? 1 : 2) ? MuPos_var_NotScaled[k] : (xmax-binsize2/2)*80/(k==1 ? 1 : 2) ,evt_weight*MuPos_tight_muon_SF*lha_weight);
+                        }
+                      }
+                      
+                      // hWPos_VarNonScaled_8_JetCut[i][j]->Fill(mu.Pt()*iWmass/(WMass::WMassCentral_MeV/1e3)<xmax*80/2 ? mu.Pt() : (xmax-binsize2/2)*80/2 ,evt_weight*MuPos_tight_muon_SF);
 
                       // cout << wmass1 << " " << WMass::WMassCentral_MeV << " " << (wmass1 - WMass::WMassCentral_MeV) << endl;
                       // cout << WMass::etaMaxMuons[i]  << " " << 2.1 << " " << ((WMass::etaMaxMuons[i] - 2.1)) << endl;
@@ -422,6 +478,13 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   
   TFile*fout = new TFile(Form("%s/Wanalysis.root",outputdir.Data()),"RECREATE");
   fout->cd();
+  for(int h=0; h<WMass::PDF_members; h++)
+    hPDF_weights[h]->Write();
+    
+  hPDF_x1->Write();
+  hPDF_x1unweighted->Write();
+  hPDF_x2->Write();
+  hPDF_x2unweighted->Write();
   if(controlplots) hPileUp_Fall11->Write();
   for(int i=0; i<WMass::etaMuonNSteps; i++){
   
@@ -457,8 +520,10 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         hWPos_VarScaled_5_RecoCut[k][i][j]->Write();
         hWPos_VarScaled_6_METCut[k][i][j]->Write();
         hWPos_VarScaled_7_RecoilCut[k][i][j]->Write();
-        hWPos_VarScaled_8_JetCut[k][i][j]->Write();
-        hWPos_VarNonScaled_8_JetCut[k][i][j]->Write();
+        for(int h=0; h<WMass::PDF_members; h++){
+          hWPos_VarScaled_8_JetCut[h][k][i][j]->Write();
+          hWPos_VarNonScaled_8_JetCut[h][k][i][j]->Write();
+        }
         if(controlplots)
           hWPos_VarScaled_QCD[k][i][j]->Write();
       }
@@ -470,14 +535,16 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         if(WMass::WMassNSteps!=j){
           int jWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV);
           for(int k=0;k<3;k++){
-            hWPos_VarScaled_8_JetCut[k][i][j]=(TH1D*)hWPos_VarScaled_8_JetCut[k][i][WMass::WMassNSteps]->Clone(Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarScaled_8_JetCut[k][i][j]->SetName(Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarScaled_8_JetCut[k][i][j]->SetTitle(Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarScaled_8_JetCut[k][i][j]->Write();
-            hWPos_VarNonScaled_8_JetCut[k][i][j]=(TH1D*)hWPos_VarNonScaled_8_JetCut[k][i][WMass::WMassNSteps]->Clone(Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarNonScaled_8_JetCut[k][i][j]->SetName(Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarNonScaled_8_JetCut[k][i][j]->SetTitle(Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWPos_VarNonScaled_8_JetCut[k][i][j]->Write();
+            for(int h=0; h<WMass::PDF_members; h++){
+              hWPos_VarScaled_8_JetCut[h][k][i][j]=(TH1D*)hWPos_VarScaled_8_JetCut[h][k][i][WMass::WMassNSteps]->Clone(Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarScaled_8_JetCut[h][k][i][j]->SetName(Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarScaled_8_JetCut[h][k][i][j]->SetTitle(Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarScaled_8_JetCut[h][k][i][j]->Write();
+              hWPos_VarNonScaled_8_JetCut[h][k][i][j]=(TH1D*)hWPos_VarNonScaled_8_JetCut[h][k][i][WMass::WMassNSteps]->Clone(Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarNonScaled_8_JetCut[h][k][i][j]->SetName(Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarNonScaled_8_JetCut[h][k][i][j]->SetTitle(Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWPos_VarNonScaled_8_JetCut[h][k][i][j]->Write();
+            }
           }
         }
       }

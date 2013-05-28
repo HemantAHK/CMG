@@ -13,6 +13,7 @@
 #include <TFile.h>
 #include <iostream>
 #include <TSystem.h>
+#include "LHAPDF/LHAPDF.h"
 
 using namespace std;
 
@@ -24,6 +25,11 @@ class Wanalysis {
   int             useGenVar;
   
   // Declaration of leaf types
+  Double_t        scalePDF;
+  Double_t        parton1_pdgId;
+  Double_t        parton1_x;
+  Double_t        parton2_pdgId;
+  Double_t        parton2_x;
   Int_t           run;
   Int_t           lumi;
   Int_t           evt;
@@ -73,6 +79,11 @@ class Wanalysis {
   Double_t        Jet_leading_phi;
 
   // List of branches
+  TBranch        *b_scalePDF;   //!
+  TBranch        *b_parton1_pdgId;   //!
+  TBranch        *b_parton1_x;   //!
+  TBranch        *b_parton2_pdgId;   //!
+  TBranch        *b_parton2_x;   //!
   TBranch        *b_run;   //!
   TBranch        *b_lumi;   //!
   TBranch        *b_evt;   //!
@@ -127,7 +138,7 @@ class Wanalysis {
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree);
-  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int useRochCorr=0, int smearRochCorr=0, int useEffSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="");
+  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int useRochCorr=0, int smearRochCorr=0, int useEffSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="", int generated_PDF_set=-1, int generated_PDF_member=-1, int contains_PDF_reweight=-1);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 };
@@ -143,7 +154,8 @@ Wanalysis::Wanalysis(TString f_str, double lumi_scaling_input, int useGen, TTree
     // TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("temp/WTreeProducer_tree.root");
     // if (!f) {
     cout << gSystem->WorkingDirectory() << endl;
-    TFile *f = new TFile(Form("%s",f_str.Data()));
+    // TFile *f = new TFile(Form("%s",f_str.Data()));
+    TFile *f = TFile::Open(Form("%s",f_str.Data()));
     // }
     tree = (TTree*)gDirectory->Get("WTreeProducer");
 
@@ -196,6 +208,11 @@ void Wanalysis::Init(TTree *tree)
   fCurrent = -1;
   fChain->SetMakeClass(1);
 
+  fChain->SetBranchAddress("scalePDF", &scalePDF, &b_scalePDF);
+  fChain->SetBranchAddress("parton1_pdgId", &parton1_pdgId, &b_parton1_pdgId);
+  fChain->SetBranchAddress("parton1_x", &parton1_x, &b_parton1_x);
+  fChain->SetBranchAddress("parton2_pdgId", &parton2_pdgId, &b_parton2_pdgId);
+  fChain->SetBranchAddress("parton2_x", &parton2_x, &b_parton2_x);
   fChain->SetBranchAddress("run", &run, &b_run);
   fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
   fChain->SetBranchAddress("evt", &evt, &b_evt);
@@ -228,10 +245,10 @@ void Wanalysis::Init(TTree *tree)
   fChain->SetBranchAddress("Jet_leading_eta", &Jet_leading_eta, &b_Jet_leading_eta);
   fChain->SetBranchAddress("Jet_leading_phi", &Jet_leading_phi, &b_Jet_leading_phi);
   if(useGenVar){
+    fChain->SetBranchAddress("WGen_m", &WGen_m, &b_WGen_m);
     fChain->SetBranchAddress("WGen_pt", &WGen_pt, &b_WGen_pt);
     fChain->SetBranchAddress("WGen_phi", &WGen_phi, &b_WGen_phi);
     fChain->SetBranchAddress("WGen_rap", &WGen_rap, &b_WGen_rap);
-    fChain->SetBranchAddress("WGen_m", &WGen_m, &b_WGen_m);
     fChain->SetBranchAddress("WGen_mt", &WGen_mt, &b_WGen_mt);
     fChain->SetBranchAddress("MuGen_pt", &MuGen_pt, &b_MuGen_pt);
     fChain->SetBranchAddress("MuGen_eta", &MuGen_eta, &b_MuGen_eta);

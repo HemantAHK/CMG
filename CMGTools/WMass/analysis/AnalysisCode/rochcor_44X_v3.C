@@ -1,4 +1,4 @@
-#include <rochcor_44X_v3.h>
+#include "rochcor_44X_v3.h"
 #include <TLorentzVector.h>
 
 
@@ -702,7 +702,7 @@ Int_t rochcor_44X_v3::phibin(float phi){
   int nphibin = -1;
   
   for(int i=0; i<8; i++){
-    if(-pi+(2.0*pi/8.0)*i <= phi && -pi+(2.0*pi/8.0)*(i+1) > phi){
+    if(-TMath::Pi()+(2.0*TMath::Pi()/8.0)*i <= phi && -TMath::Pi()+(2.0*TMath::Pi()/8.0)*(i+1) > phi){
       nphibin = i;
       break;
     }

@@ -12,13 +12,37 @@
 #include <TLorentzVector.h>
 #include <TGraphAsymmErrors.h>
 
-void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName)
+void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
 {
+
+  if (fChain == 0) return;
+
+  cout << "generated_PDF_set= "<<generated_PDF_set
+       << " generated_PDF_member= " << generated_PDF_member
+       << " contains_PDF_reweight= " << contains_PDF_reweight
+       << endl;
 
   TRandom3 *r = new TRandom3(0);
 
+  if(!outputdir.Contains("../")) outputdir = "../"+outputdir;
   cout << "output filename= " << Form("%s/Zanalysis.root",outputdir.Data()) << endl;
   
+  cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
+  // LHAPDF::initPDFSet();
+  if(WMass::PDF_sets==11200)
+    LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
+  else if(WMass::PDF_sets==232000)
+    LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
+  else if(WMass::PDF_sets==21200)
+    LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
+  else if(WMass::PDF_sets<0)
+    LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
+  
+  cout << "inizializing LHAPDF::initPDFSet(1)" << endl;
+  // LHAPDF::initPDFSet(1,"CT10nnlo.LHgrid");
+  LHAPDF::initPDFSet(1,generated_PDF_set,generated_PDF_member); // CMSSW DEFAULT
+  cout << "finished inizializing LHAPDF" << endl;
+
   // TFile*feffSF = new TFile(Form("../Zanalysis.root",outputdir.Data()),"RECREATE");
   
   TH1D *hWlikePos_VarScaled_1_Gen[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -28,13 +52,21 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   TH1D *hWlikePos_VarScaled_5_RecoCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWlikePos_VarScaled_6_METCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWlikePos_VarScaled_7_RecoilCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
-  TH1D *hWlikePos_VarScaled_8_JetCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
-  TH1D *hWlikePos_VarNonScaled_8_JetCut[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *hWlikePos_VarScaled_8_JetCut[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *hWlikePos_VarNonScaled_8_JetCut[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   TH1D *hWlikePos_VarScaled_QCD[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
 
+  TH1D *hPDF_weights[WMass::PDF_members];
+  for(int h=0; h<WMass::PDF_members; h++)
+    hPDF_weights[h]=new TH1D(Form("hPDF_weights_%d_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h),Form("hPDF_weights_%d_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h),1000,0,2);
+
+  TH1D *hPDF_x1=new TH1D("hPDF_x1","hPDF_x1",1000,-4,0);
+  TH1D *hPDF_x1unweighted=new TH1D("hPDF_x1unweighted","hPDF_x1unweighted",1000,-4,0);
+  TH1D *hPDF_x2=new TH1D("hPDF_x2","hPDF_x2",1000,-4,0);
+  TH1D *hPDF_x2unweighted=new TH1D("hPDF_x2unweighted","hPDF_x2unweighted",1000,-4,0);
   TH1D *hPileUp_Fall11=new TH1D("hPileUp_Fall11","hPileUp_Fall11",50,0,50);
-  TH1D *hWlikePos_VarScaled_RWeighted_Templates[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
-  TH1D*hWlikePos_R_WdivZ[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
+  TH1D *hWlikePos_VarScaled_RWeighted_Templates[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
+  TH1D*hWlikePos_R_WdivZ[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
   TFile*finTemplates, *finEffSF, *finPileupSF;
   TGraphAsymmErrors*hEffSF_MuId_eta_2011[2],*hEffSF_Iso_eta_2011[2],*hEffSF_HLT_eta_2011/* ,*hEffSF_Iso_vtx_2011A,*hEffSF_Iso_vtx_2011B*/;
   TH1D*hPileupSF;
@@ -171,19 +203,21 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         hWlikePos_VarScaled_6_METCut[k][i][j]->Sumw2();
         hWlikePos_VarScaled_7_RecoilCut[k][i][j]=new TH1D(Form("hWlikePos_%sScaled_7_RecoilCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_7_RecoilCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
         hWlikePos_VarScaled_7_RecoilCut[k][i][j]->Sumw2();
-        hWlikePos_VarScaled_8_JetCut[k][i][j]=new TH1D(Form("hWlikePos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
-        hWlikePos_VarScaled_8_JetCut[k][i][j]->Sumw2();
-        hWlikePos_VarNonScaled_8_JetCut[k][i][j]=new TH1D(Form("hWlikePos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_Notscaled[k]);
-        hWlikePos_VarNonScaled_8_JetCut[k][i][j]->Sumw2();
+        for(int h=0; h<WMass::PDF_members; h++){
+          hWlikePos_VarScaled_8_JetCut[h][k][i][j]=new TH1D(Form("hWlikePos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),nbins,bins_scaled[k]);
+          hWlikePos_VarScaled_8_JetCut[h][k][i][j]->Sumw2();
+          hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]=new TH1D(Form("hWlikePos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),Form("hWlikePos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass),nbins,bins_Notscaled[k]);
+          hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->Sumw2();
+          if(buildTemplates){
+            hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]=new TH1D(Form("hWlikePos_%sScaled_RWeighted_Templates_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_RWeighted_Templates_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
+            hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]->Sumw2();
+            cout << Form("hR_WdivZ_WlikePos_%s_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass) << endl;
+            hWlikePos_R_WdivZ[h][k][i][j]=(TH1D*)finTemplates->Get(Form("hR_WdivZ_WlikePos_%s_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+            hWlikePos_R_WdivZ[h][k][i][j]->Print();
+          }
+        }
         hWlikePos_VarScaled_QCD[k][i][j]=new TH1D(Form("hWlikePos_%sScaled_QCD_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_QCD_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
         hWlikePos_VarScaled_QCD[k][i][j]->Sumw2();
-        if(buildTemplates){
-          hWlikePos_VarScaled_RWeighted_Templates[k][i][j]=new TH1D(Form("hWlikePos_%sScaled_RWeighted_Templates_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),Form("hWlikePos_%sScaled_RWeighted_Templates_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass),nbins,bins_scaled[k]);
-          hWlikePos_VarScaled_RWeighted_Templates[k][i][j]->Sumw2();
-          cout << Form("hR_WdivZ_WlikePos_%s_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass) << endl;
-          hWlikePos_R_WdivZ[k][i][j]=(TH1D*)finTemplates->Get(Form("hR_WdivZ_WlikePos_%s_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-          hWlikePos_R_WdivZ[k][i][j]->Print();
-        }
       }
       // hWlikePos_logiso_vs_logdxy[i][j]=new TH2D(Form("hWlikePos_logiso_vs_logdxy_eta%s_%d",eta_str.Data(),jWmass),Form("hWlikePos_logiso_vs_logdxy_eta%s_%d",eta_str.Data(),jWmass),1000,-5,1,1000,-5,1);
       // hWlikePos_iso_vs_dxy[i][j]=new TH2D(Form("hWlikePos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),Form("hWlikePos_iso_vs_dxy_eta%s_%d",eta_str.Data(),jWmass),1000,-0.001,0.999,1000,0,1);
@@ -254,8 +288,6 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     }
   }
 
-
-  if (fChain == 0) return;
   
   Long64_t first_entry = 0;
   Long64_t nentries = fChain->GetEntriesFast();
@@ -276,7 +308,7 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
 
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry=first_entry; jentry<nentries;jentry++) {
-    // for (Long64_t jentry=0; jentry<5e5;jentry++) {
+    // for (Long64_t jentry=0; jentry<100;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
@@ -410,18 +442,42 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
                     
                     if(true){ // for the momet remove jet pt cut
                     // if(Jet_leading_pt<30){
-                      for(int k=0;k<3;k++){
-                        hWlikePos_VarScaled_8_JetCut[k][i][j]->Fill(MuPos_var_jacobian[k],evt_weight*MuPos_tight_muon_SF);
-                        // cout << ((muPosCorr.Pt()*iWmass/WMass::ZMass)<xmax*80/2 ? muPosCorr.Pt()*iWmass/WMass::ZMass : (xmax-binsize2/2)*80/2) << endl;
-                        hWlikePos_VarNonScaled_8_JetCut[k][i][j]->Fill( (MuPos_var_NotScaled[k]*iWmass/WMass::ZMass)<xmax*80/(k==1 ? 1 : 2) ? MuPos_var_NotScaled[k]*iWmass/WMass::ZMass : (xmax-binsize2/2)*80/(k==1 ? 1 : 2) ,evt_weight*MuPos_tight_muon_SF);
-                      }
-                      
-                      // templates for "scaled observable method" as of Martina's thesis can be also built by multiplying histos, the result is the same (CHECKED!)
-                      if(buildTemplates){
+                    
+                      double lha_weight = 1;
+                      // double lha_weight = LHAPDF::xfx(0,x1,Q,fl1)*LHAPDF::xfx(0,x2,Q,fl2) / (LHAPDF::xfx(1,x1,Q,fl1)*LHAPDF::xfx(1,x2,Q,fl2));
+                      double weight_old = (LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId)*LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId));
+                      // cout << "scalePDF= " << scalePDF << " parton1_x= " << parton1_x << " parton1_pdgId= " << parton1_pdgId 
+                           // << "parton2_x= " << parton2_x << " parton2_pdgId= " << parton2_pdgId << endl;
+                      // cout << " LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId)= LHAPDF::xfx(0,"<<parton1_x<<","<<scalePDF<<","<<parton1_pdgId<<")= " << LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId)= LHAPDF::xfx(0,"<<parton2_x<<","<<scalePDF<<","<<parton2_pdgId<<")= " << LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId)= LHAPDF::xfx(1,"<<parton1_x<<","<<scalePDF<<","<<parton1_pdgId<<")= " << LHAPDF::xfx(1,parton1_x,scalePDF,parton1_pdgId) << endl;
+                      // cout << " LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId)= LHAPDF::xfx(1,"<<parton2_x<<","<<scalePDF<<","<<parton2_pdgId<<")= " << LHAPDF::xfx(1,parton2_x,scalePDF,parton2_pdgId) << endl;
+                      // cout << " lha_weight= " << lha_weight << endl;
+                      hPDF_x1->Fill(TMath::Log10(parton1_x));
+                      hPDF_x1unweighted->Fill(TMath::Log10(parton1_x),1/weight_old);
+                      hPDF_x2->Fill(TMath::Log10(parton2_x));
+                      hPDF_x2unweighted->Fill(TMath::Log10(parton2_x),1/weight_old);
+
+                      for(int h=0; h<WMass::PDF_members; h++){
+                        if(!sampleName.Contains("DATA") && WMass::PDF_sets>0 && WMass::PDF_sets!=generated_PDF_set && WMass::PDF_members!=generated_PDF_member){
+                          LHAPDF::usePDFMember(0,h);
+                          double weight_new = (LHAPDF::xfx(0,parton1_x,scalePDF,parton1_pdgId)*LHAPDF::xfx(0,parton2_x,scalePDF,parton2_pdgId));
+                          lha_weight = weight_new/weight_old;
+                          hPDF_weights[h]->Fill(lha_weight);
+                        }
                         for(int k=0;k<3;k++){
-                          double R_WdivZ_weight=hWlikePos_R_WdivZ[k][i][j]->GetBinContent(hWlikePos_R_WdivZ[k][i][j]->GetXaxis()->FindBin(MuPos_var_jacobian[k]));
-                          // cout << "etamax= " << WMass::etaMaxMuons[i] << " mass= " << iWmass << " MuPos_var_jacobian[k]= " << MuPos_var_jacobian[k] << " R_WdivZ_weight= " << R_WdivZ_weight << endl;
-                          hWlikePos_VarScaled_RWeighted_Templates[k][i][j]->Fill(MuPos_var_jacobian[k],R_WdivZ_weight*evt_weight*MuPos_tight_muon_SF);
+                          hWlikePos_VarScaled_8_JetCut[h][k][i][j]->Fill(MuPos_var_jacobian[k],evt_weight*MuPos_tight_muon_SF);
+                          // cout << ((muPosCorr.Pt()*iWmass/WMass::ZMass)<xmax*80/2 ? muPosCorr.Pt()*iWmass/WMass::ZMass : (xmax-binsize2/2)*80/2) << endl;
+                          hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->Fill( (MuPos_var_NotScaled[k]*iWmass/WMass::ZMass)<xmax*80/(k==1 ? 1 : 2) ? MuPos_var_NotScaled[k]*iWmass/WMass::ZMass : (xmax-binsize2/2)*80/(k==1 ? 1 : 2) ,evt_weight*MuPos_tight_muon_SF);
+                        }
+                      
+                        // templates for "scaled observable method" as of Martina's thesis can be also built by multiplying histos, the result is the same (CHECKED!)
+                        if(buildTemplates){
+                          for(int k=0;k<3;k++){
+                            double R_WdivZ_weight=hWlikePos_R_WdivZ[h][k][i][j]->GetBinContent(hWlikePos_R_WdivZ[h][k][i][j]->GetXaxis()->FindBin(MuPos_var_jacobian[k]));
+                            // cout << "etamax= " << WMass::etaMaxMuons[i] << " mass= " << iWmass << " MuPos_var_jacobian[k]= " << MuPos_var_jacobian[k] << " R_WdivZ_weight= " << R_WdivZ_weight << endl;
+                            hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]->Fill(MuPos_var_jacobian[k],R_WdivZ_weight*evt_weight*MuPos_tight_muon_SF);
+                          }
                         }
                       }
                       
@@ -575,7 +631,16 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   TFile*fout = new TFile(Form("%s/Zanalysis.root",outputdir.Data()),"RECREATE");
   
   fout->cd();
+  for(int h=0; h<WMass::PDF_members; h++)
+    hPDF_weights[h]->Write();
+  
+  hPDF_x1->Write();
+  hPDF_x1unweighted->Write();
+  hPDF_x2->Write();
+  hPDF_x2unweighted->Write();
+
   if(!buildTemplates && controlplots) hPileUp_Fall11->Write();
+  
   for(int i=0; i<WMass::etaMuonNSteps; i++){
     for(int j=0; j<2*WMass::WMassNSteps+1; j++){
 
@@ -643,20 +708,25 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       }
       if(!buildTemplates){
         for(int k=0;k<3;k++){
-          hWlikePos_VarScaled_1_Gen[k][i][j]->Write();
-          hWlikePos_VarScaled_2_ZGenMassCut[k][i][j]->Write();
-          hWlikePos_VarScaled_3_Mu1GenCut[k][i][j]->Write();
-          hWlikePos_VarScaled_4_Mu2GenCut[k][i][j]->Write();
-          hWlikePos_VarScaled_5_RecoCut[k][i][j]->Write();
-          hWlikePos_VarScaled_6_METCut[k][i][j]->Write();
-          hWlikePos_VarScaled_7_RecoilCut[k][i][j]->Write();
-          hWlikePos_VarScaled_8_JetCut[k][i][j]->Write();
-          hWlikePos_VarNonScaled_8_JetCut[k][i][j]->Write();
-          hWlikePos_VarScaled_QCD[k][i][j]->Write();
+
+            hWlikePos_VarScaled_1_Gen[k][i][j]->Write();
+            hWlikePos_VarScaled_2_ZGenMassCut[k][i][j]->Write();
+            hWlikePos_VarScaled_3_Mu1GenCut[k][i][j]->Write();
+            hWlikePos_VarScaled_4_Mu2GenCut[k][i][j]->Write();
+            hWlikePos_VarScaled_5_RecoCut[k][i][j]->Write();
+            hWlikePos_VarScaled_6_METCut[k][i][j]->Write();
+            hWlikePos_VarScaled_7_RecoilCut[k][i][j]->Write();
+          for(int h=0; h<WMass::PDF_members; h++){
+            hWlikePos_VarScaled_8_JetCut[h][k][i][j]->Write();
+            hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->Write();
+          }
+            if(controlplots)
+              hWlikePos_VarScaled_QCD[k][i][j]->Write();
         }
       }else{
         for(int k=0;k<3;k++)
-          hWlikePos_VarScaled_RWeighted_Templates[k][i][j]->Write();
+          for(int h=0; h<WMass::PDF_members; h++)
+            hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]->Write();
       }
     }
     if(!sampleName.Contains("DYJetsSig")){
@@ -665,14 +735,16 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
         if(WMass::WMassNSteps!=j){
           int jWmass = (WMass::WMassCentral_MeV-(WMass::WMassNSteps-j)*WMass::WMassStep_MeV);
           for(int k=0;k<3;k++){
-            hWlikePos_VarScaled_8_JetCut[k][i][j]=(TH1D*)hWlikePos_VarScaled_8_JetCut[k][i][WMass::WMassNSteps]->Clone(Form("hWlikePos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarScaled_8_JetCut[k][i][j]->SetName(Form("hWlikePos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarScaled_8_JetCut[k][i][j]->SetTitle(Form("hWlikePos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarScaled_8_JetCut[k][i][j]->Write();
-            hWlikePos_VarNonScaled_8_JetCut[k][i][j]=(TH1D*)hWlikePos_VarNonScaled_8_JetCut[k][i][WMass::WMassNSteps]->Clone(Form("hWlikePos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarNonScaled_8_JetCut[k][i][j]->SetName(Form("hWlikePos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarNonScaled_8_JetCut[k][i][j]->SetTitle(Form("hWlikePos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-            hWlikePos_VarNonScaled_8_JetCut[k][i][j]->Write();
+            for(int h=0; h<WMass::PDF_members; h++){
+              hWlikePos_VarScaled_8_JetCut[h][k][i][j]=(TH1D*)hWlikePos_VarScaled_8_JetCut[h][k][i][WMass::WMassNSteps]->Clone(Form("hWlikePos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarScaled_8_JetCut[h][k][i][j]->SetName(Form("hWlikePos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarScaled_8_JetCut[h][k][i][j]->SetTitle(Form("hWlikePos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarScaled_8_JetCut[h][k][i][j]->Write();
+              hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]=(TH1D*)hWlikePos_VarNonScaled_8_JetCut[h][k][i][WMass::WMassNSteps]->Clone(Form("hWlikePos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->SetName(Form("hWlikePos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->SetTitle(Form("hWlikePos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+              hWlikePos_VarNonScaled_8_JetCut[h][k][i][j]->Write();
+            }
           }
         }
       }

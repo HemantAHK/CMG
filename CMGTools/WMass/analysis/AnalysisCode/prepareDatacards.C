@@ -9,7 +9,7 @@ TString     samples_str[Nsamples]  = { "WJetsSig", "WJetsFake", "DYJetsSig", "DY
 // double xmin=0.8, xmax=1.2;
 double xmin=0.65, xmax=2;
 
-void prepareDatacards(TString folder, TString syst_folder, TString sample){
+void prepareDatacards(TString folder, TString syst_folder, TString sample, int generated_PDF_set=1, int generated_PDF_member=0){
 
   cout << "folder= " << folder << endl;
   cout << "samples= " << sample << endl;
@@ -17,8 +17,8 @@ void prepareDatacards(TString folder, TString syst_folder, TString sample){
   // TOKENIZE SAMPLES
   // std::vector<TString> samples_str;
   TFile* finTemplatesZ[Nsamples], *finTemplatesW[Nsamples];
-  TH1D *TemplatesZ[Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *TemplatesZ_NonScaled[Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
-  TH1D *TemplatesW[WMass::NFitVar][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *TemplatesW_NonScaled[WMass::NFitVar][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *TemplatesZ[WMass::PDF_members][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *TemplatesZ_NonScaled[WMass::PDF_members][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
+  TH1D *TemplatesW[WMass::PDF_members][WMass::NFitVar][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1], *TemplatesW_NonScaled[WMass::PDF_members][WMass::NFitVar][Nsamples][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
 
   // TObjArray* samples_obj = sample.Tokenize("-");
   // int Nsamples = samples_obj->GetEntries();
@@ -34,18 +34,26 @@ void prepareDatacards(TString folder, TString syst_folder, TString sample){
       TString eta_str = Form("%.1f",WMass::etaMaxMuons[ieta]); eta_str.ReplaceAll(".","p");
       for(int jmass=0; jmass<2*WMass::WMassNSteps+1; jmass++){
         int jWmass = WMass::WMassCentral_MeV-(WMass::WMassNSteps-jmass)*WMass::WMassStep_MeV;
+        
+        for(int h=0; h<WMass::PDF_members; h++){
 
-        TemplatesZ[isample][ieta][jmass] = (TH1D*) finTemplatesZ[isample]->Get(Form("hWlikePos_PtScaled_RWeighted_SimpleTemplates_eta%s_%d",eta_str.Data(),jWmass));
-        TemplatesZ_NonScaled[isample][ieta][jmass] = (TH1D*) finTemplatesZ[isample]->Get(Form("hWlikePos_PtNonScaled_RWeighted_SimpleTemplates_eta%s_%d",eta_str.Data(),jWmass));
-        for(int k=0;k<3;k++){
-          TemplatesW[k][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_%sScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-          // TemplatesW_NonScaled[isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
-          
-          // N.B. IS ALWAYS THE SAME TEMPLATE!!! MASS INDEX IS FIXED TO MC GENERATED W MASS, i.e. WMass::WMassCentral_MeV)
-          // TemplatesW_NonScaled[isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),WMass::WMassCentral_MeV));
-          TemplatesW_NonScaled[k][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_%sNonScaled_8_JetCut_eta%s_%d",WMass::FitVar_str[k].Data(),eta_str.Data(),jWmass));
-          // TemplatesZ[isample][ieta][jmass]->Print();
-          // TemplatesW[isample][ieta][jmass]->Print();
+          TemplatesZ[h][isample][ieta][jmass] = (TH1D*) finTemplatesZ[isample]->Get(Form("hWlikePos_PtScaled_RWeighted_SimpleTemplates_pdf%d-%d_eta%s_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+          TemplatesZ_NonScaled[h][isample][ieta][jmass] = (TH1D*) finTemplatesZ[isample]->Get(Form("hWlikePos_PtNonScaled_RWeighted_SimpleTemplates_pdf%d-%d_eta%s_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+          cout << Form("hWlikePos_PtNonScaled_RWeighted_SimpleTemplates_pdf%d-%d_eta%s_%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass) << endl;
+          // TemplatesZ_NonScaled[h][isample][ieta][jmass]->Print();
+          for(int k=0;k<3;k++){
+            TemplatesW[h][k][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_%sScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+            // TemplatesW_NonScaled[h][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),jWmass));
+            
+            // N.B. IS ALWAYS THE SAME TEMPLATE!!! MASS INDEX IS FIXED TO MC GENERATED W MASS, i.e. WMass::WMassCentral_MeV)
+            // TemplatesW_NonScaled[h][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_PtNonScaled_8_JetCut_eta%s_%d",eta_str.Data(),WMass::WMassCentral_MeV));
+            TemplatesW_NonScaled[h][k][isample][ieta][jmass] = (TH1D*) finTemplatesW[isample]->Get(Form("hWPos_%sNonScaled_8_JetCut_pdf%d-%d_eta%s_%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass));
+            // TemplatesZ[h][isample][ieta][jmass]->Print();
+            // TemplatesW[h][isample][ieta][jmass]->Print();
+            
+            // TemplatesW_NonScaled[h][k][isample][ieta][jmass]->Print();
+            // cout << TemplatesW_NonScaled[h][k][isample][ieta][jmass]->Integral() << " "<< TemplatesW_NonScaled[h][k][isample][ieta][jmass]->GetMean() << " "<< TemplatesW_NonScaled[h][k][isample][ieta][jmass]->GetRMS() << endl;
+          }
         }
         
       }
@@ -57,204 +65,224 @@ void prepareDatacards(TString folder, TString syst_folder, TString sample){
   // PROCESS THE HISTOS AND STORE THEM IN A SUITABLE FILE, STORE NORMALIZATIONS IN A SEPARATE TEXT FILE
   TFile *foutDATA = new TFile(Form("%s/DataCards/datacards_DATA.root",folder.Data()),"RECREATE");
   ofstream outTXTfile;
-  outTXTfile.open(Form("%s/DataCards/datacard_Wmass_MuPos_normalizations.txt",folder.Data(),eta_str.Data(),jWmass));
+  outTXTfile.open(Form("%s/DataCards/datacard_Wmass_MuPos_normalizations.txt",folder.Data()));
   
   // LOOP OVER MAX-ETA BINS
+    
   for(int ieta=0; ieta<WMass::etaMuonNSteps; ieta++){
     TString eta_str = Form("%.1f",WMass::etaMaxMuons[ieta]); eta_str.ReplaceAll(".","p");
     outTXTfile << "-----------------------" << endl;
     outTXTfile << "-----------------------" << endl;
+    // outTXTfile << "MuPos with |eta| < " << WMass::etaMaxMuons[ieta] << " PDF " << (WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets)<<"-"<<h<< endl;
     outTXTfile << "MuPos with |eta| < " << WMass::etaMaxMuons[ieta] << endl;
     outTXTfile << "-----------------------" << endl;
     outTXTfile << "-----------------------" << endl;
     outTXTfile << endl;
+    // TDirectory *channel_dir = foutDATA->mkdir(Form("MuPos_pdf%d-%d_eta%s",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data()));
     TDirectory *channel_dir = foutDATA->mkdir(Form("MuPos_eta%s",eta_str.Data()));
-    foutDATA->cd(Form("MuPos_eta%s/",eta_str.Data()));
-    
+    // foutDATA->cd(Form("MuPos_pdf%d-%d_eta%s/",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data()));
+    foutDATA->cd(Form("MuPos_eta%s",eta_str.Data()));
+
     //LOOP OVER w MASS BINS
     for(int jmass=0; jmass<2*WMass::WMassNSteps+1; jmass++){
       int jWmass = WMass::WMassCentral_MeV-(WMass::WMassNSteps-jmass)*WMass::WMassStep_MeV;
+
       
       // double fitrange_Scaling = double(jWmass)/double(WMass::WMassCentral_MeV);
       double fitrange_Scaling = 1;
       
-      cout << "eta cut " << WMass::etaMaxMuons[ieta] << " jWmass= " << jWmass << endl;
+      cout << "eta cut " << WMass::etaMaxMuons[ieta]<< " jWmass= " << jWmass; fflush(stdout);
       TDirectory *mass_dir = channel_dir->mkdir(Form("%d",jWmass));
       mass_dir->cd();
-      // gDirectory->pwd();
-      // TH1D*data_obs=new TH1D("data_obs","data_obs",TemplatesW[DATA][ieta][jmass]->GetXaxis()->FindBin(xmax)-TemplatesW[DATA][ieta][jmass]->GetXaxis()->FindBin(xmin),xmin,xmax);
-      outTXTfile << "-----------------------" << endl;
-      outTXTfile << "Mass hypothesis  " << jWmass << endl;
-      outTXTfile << "-----------------------" << endl;
-      outTXTfile << endl;
-
-      TString Z_histoname[2*Nsamples], W_histoname[2*Nsamples];
-      TString Z_histoname_NonScaled[2*Nsamples], W_histoname_NonScaled[2*Nsamples];
-      double Z_integrals[2*Nsamples], W_integrals[2*Nsamples];
       
-      //LOOP OVER THE SAMPLES
-      for(int isample=0; isample<Nsamples;isample++){
-        for(int k=0;k<3;k++){
-      
-          // DEFINE NEW HISTO NAMES
-          Z_histoname[isample] = Form("Z_%s",samples_str[isample].Data());
-          W_histoname[isample] = samples_str[isample] == "DATA" ? Form("data_obs_%s",WMass::FitVar_str[k].Data()) : Form("W_%s_%s",samples_str[isample].Data(),WMass::FitVar_str[k].Data());
-          // DECLARE NEW HISTOS
-          TH1D*Ztempl=new TH1D(Z_histoname[isample],Z_histoname[isample],TemplatesZ[isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling)-TemplatesZ[isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*fitrange_Scaling);
-          TH1D*Wtempl=new TH1D(W_histoname[isample],W_histoname[isample],TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling)-TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*fitrange_Scaling);
-          // SAME AS BEFORE FOR NON-SCALED VARIABLES
-          Z_histoname_NonScaled[isample] = Form("Z_%s_NonScaled",samples_str[isample].Data());
-          W_histoname_NonScaled[isample] = samples_str[isample] == "DATA" ? "data_obs_NonScaled" : Form("W_%s_%sNonScaled",samples_str[isample].Data(),WMass::FitVar_str[k].Data());
-          TH1D*Ztempl_NonScaled=new TH1D(Z_histoname_NonScaled[isample],Z_histoname_NonScaled[isample],TemplatesZ[isample][ieta][jmass]->GetXaxis()->FindBin(xmax*80/2*fitrange_Scaling)-TemplatesZ[isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*80/2*fitrange_Scaling);
-          TH1D*Wtempl_NonScaled=new TH1D(W_histoname_NonScaled[isample],W_histoname_NonScaled[isample],TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*80/2*fitrange_Scaling)-TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*80/2*fitrange_Scaling);
-          // TH1D*Ztempl=(TH1D*)TemplatesZ[isample][ieta][jmass]->Clone(Z_histoname[isample]);
-          // TH1D*Wtempl=(TH1D*)TemplatesW[isample][ieta][jmass]->Clone(W_histoname[isample]);
-
-          int ibin=1;      
-          double z_templ_sign = 1 /* -1 */;
-          // if( Z_histoname[isample].Contains("DYJetsSig") || Z_histoname[isample].Contains("DATA") ) z_templ_sign = 1;
-          for(int ibinhisto=TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling); ibinhisto<TemplatesW[k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling); ibinhisto++){
-            Ztempl->SetBinContent(ibin,z_templ_sign*TemplatesZ[isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
-            Wtempl->SetBinContent(ibin,TemplatesW[k][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
-            Ztempl_NonScaled->SetBinContent(ibin,z_templ_sign*TemplatesZ_NonScaled[isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
-            Wtempl_NonScaled->SetBinContent(ibin,TemplatesW_NonScaled[k][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
-            ibin++;
-          }
-          if(!samples_str[isample].Contains("WJetsSig")){
-            Ztempl->Write();
-            Ztempl_NonScaled->Write();
-          }
-          if(!samples_str[isample].Contains("DYJetsSig")){
-            Wtempl->Write();
-            Wtempl_NonScaled->Write();
-          }
-          
-          outTXTfile << Ztempl->GetName();
-          int nspaces1 = 15 - Z_histoname[isample].Length();
-          for(int ispace=0;ispace<nspaces1;ispace++) outTXTfile << " ";
-          Z_integrals[isample] = Ztempl->Integral();
-          outTXTfile << Z_integrals[isample];
-
-          ostringstream s; s << Ztempl->Integral();
-          TString number_str = s.str();
-          int nspaces2 = 15 - number_str.Length();
-
-          for(int ispace=0;ispace<nspaces2;ispace++) outTXTfile << " ";
-          outTXTfile << Wtempl->GetName();
-          for(int ispace=0;ispace<nspaces1;ispace++) outTXTfile << " ";
-          W_integrals[isample] = Wtempl->Integral();
-          outTXTfile << W_integrals[isample] << endl;
-
-          Wtempl->Delete();
-          Ztempl->Delete();
-          Wtempl_NonScaled->Delete();
-          Ztempl_NonScaled->Delete();
-        }
-      }
-      outTXTfile << endl;
-      
-      // // PREPARE DUMMY DATACARD
-      // ofstream DummyDatacard;
-      // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d.txt",folder.Data(),eta_str.Data(),jWmass));
-      
-      // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
-      // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE" << endl;
-      // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE" << endl;
-      // // DummyDatacard << "shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
-      // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
-      // DummyDatacard << "observation              -1 " << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
-      // DummyDatacard << "process        Z_DYJetsSig        W_EWKTT" << endl;   
-      // DummyDatacard << "process           0                 1     " << endl;
-      // // DummyDatacard << "rate           "<<Form("%f",Z_integrals[DYJetsSig])<<"           "<<Form("%f",W_integrals[EWKTT]) << endl;
-      // DummyDatacard << "rate             -1                -1 " << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard.close();
-
-      // // PREPARE DUMMY DATACARD NON SCALED
-      // ofstream DummyDatacard;
-      // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_NonScaled.txt",folder.Data(),eta_str.Data(),jWmass));
-      
-      // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
-      // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
-      // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE_NonScaled" << endl;
-      // // DummyDatacard << shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
-      // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
-      // DummyDatacard << "observation              -1 " << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
-      // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWKTT_NonScaled" << endl;   
-      // DummyDatacard << "process           0                 1     " << endl;
-      // // DummyDatacard << "rate           "<<Form("%f",Z_integrals[DYJetsSig])<<"           "<<Form("%f",W_integrals[EWKTT]) << endl;
-      // DummyDatacard << "rate             -1                -1 " << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard.close();
-
-      // // PREPARE DUMMY DATACARD NON SCALED WITH BACKGROUND
-      // ofstream DummyDatacard;
-      // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_NonScaled.txt",folder.Data(),eta_str.Data(),jWmass));
-      
-      // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
-      // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
-      // DummyDatacard << "shapes   W_EWK_NonScaled_ALT   *   datacards_DATA.root $CHANNEL/"<<WMass::WMassCentral_MeV-(WMass::WMassNSteps-(WMass::WMassNSteps+1))*WMass::WMassStep_MeV<<"/W_EWK_NonScaled" << endl;
-      // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE_NonScaled" << endl;
-      // // DummyDatacard << shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
-      // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
-      // DummyDatacard << "observation              -1 " << endl;
-      // DummyDatacard << "----------------------------------------" << endl;
-      // // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
-      // // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWKTT_NonScaled" << endl;   
-      // // DummyDatacard << "process           0                 1     " << endl;
-      // // DummyDatacard << "rate             -1                -1 " << endl;
-      // // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<< endl;
-      // // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWK_NonScaled        W_TTJets_NonScaled" << endl;   
-      // // DummyDatacard << "process               0                           1                      2     " << endl;
-      // // DummyDatacard << "rate                 -1                          -1                     -1 " << endl;
-      // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"             MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<< endl;
-      // DummyDatacard << "process        Z_MCDATALIKE_NonScaled       Z_EWKTT_NonScaled        W_EWK_NonScaled        W_TTJets_NonScaled        W_EWK_NonScaled_ALT" << endl;   
-      // DummyDatacard << "process               2                           1                      -1                       3                       0     " << endl;
-      // DummyDatacard << "rate                 -1                     "<< -TemplatesZ_NonScaled[EWKTT][ieta][jmass]->Integral()<<"              -1                     -1                     " << TemplatesW_NonScaled[EWK][ieta][WMass::WMassNSteps+1]->Integral() << endl;
-      // cout << "rate                 -1                     "<< -TemplatesZ_NonScaled[EWKTT][ieta][jmass]->Integral()<<"              -1                     -1                     " << TemplatesW_NonScaled[EWK][ieta][WMass::WMassNSteps+1]->Integral() << endl;
-      // DummyDatacard << "--------------------------------------------------------------------------------" << endl;
-      // DummyDatacard << "lumi    lnN    1.044    1.044   1.044    1.044   1.044" << endl;
-      // DummyDatacard.close();
-    
-      // PREPARE DUMMY DATACARD NON SCALED WITH BACKGROUND WITHOUT Z DATADRIVEN
-      for(int k=0;k<3;k++){
-
-        ofstream DummyDatacard;
-        DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_%sNonScaled.txt",folder.Data(),eta_str.Data(),jWmass,WMass::FitVar_str[k].Data()));
+        for(int h=0; h<WMass::PDF_members; h++){
         
-        DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
-        // cout << "syst_folder.Data()= -" << syst_folder.Data() << "- syst_folder.Length()= " << syst_folder.Length() << endl;
-        if(syst_folder.Length()<15){
-          DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<Form("/W_MCDATALIKE_%sNonScaled",WMass::FitVar_str[k].Data()) << endl;
-        }else{
-          // DummyDatacard << "shapes   data_obs   *   /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_4_4_4/src/CMGTools/WMass/analysis/JobOutputs/test_controlplots_RochCorr_EffSFCorr_PileupSFCorr/DataCards/datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<"/W_MCDATALIKE_NonScaled" << endl;
-          DummyDatacard << "shapes   data_obs   *   "<<Form("../../%s/DataCards/datacards_DATA.root",syst_folder.Data()) << " $CHANNEL/"<<(WMass::WMassCentral_MeV)<<Form("/W_MCDATALIKE_%sNonScaled",WMass::FitVar_str[k].Data()) << endl;
+        cout << " PDF " << (WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets)<<"-"<<h; fflush(stdout);
+        // gDirectory->pwd();
+        // TH1D*data_obs=new TH1D("data_obs","data_obs",TemplatesW[h][DATA][ieta][jmass]->GetXaxis()->FindBin(xmax)-TemplatesW[h][DATA][ieta][jmass]->GetXaxis()->FindBin(xmin),xmin,xmax);
+        outTXTfile << "-----------------------" << endl;
+        outTXTfile << "Mass hypothesis  " << jWmass << " PDF " << Form("%d-%d",WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h) << endl;
+        outTXTfile << "-----------------------" << endl;
+        outTXTfile << endl;
+
+        TString Z_histoname[2*Nsamples], W_histoname[2*Nsamples];
+        TString Z_histoname_NonScaled[2*Nsamples], W_histoname_NonScaled[2*Nsamples];
+        double Z_integrals[2*Nsamples], W_integrals[2*Nsamples];
+        
+        //LOOP OVER THE SAMPLES
+        for(int isample=0; isample<Nsamples;isample++){
+          for(int k=0;k<3;k++){
+        
+            // DEFINE NEW HISTO NAMES
+            Z_histoname[isample] = Form("Z_%s_%s_pdf%d-%d",samples_str[isample].Data(),WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h);
+            W_histoname[isample] = samples_str[isample] == "DATA" ? Form("data_obs_%s",WMass::FitVar_str[k].Data()) : Form("W_%s_%s_pdf%d-%d",samples_str[isample].Data(),WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h);
+            // DECLARE NEW HISTOS
+            TH1D*Ztempl=new TH1D(Z_histoname[isample],Z_histoname[isample],TemplatesZ[h][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling)-TemplatesZ[h][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*fitrange_Scaling);
+            TH1D*Wtempl=new TH1D(W_histoname[isample],W_histoname[isample],TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling)-TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*fitrange_Scaling);
+            // SAME AS BEFORE FOR NON-SCALED VARIABLES
+            Z_histoname_NonScaled[isample] = Form("Z_%s_%s_NonScaled_pdf%d-%d",samples_str[isample].Data(),WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h);
+            W_histoname_NonScaled[isample] = samples_str[isample] == "DATA" ? "data_obs_NonScaled" : Form("W_%s_%sNonScaled_pdf%d-%d",samples_str[isample].Data(),WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h);
+            TH1D*Ztempl_NonScaled=new TH1D(Z_histoname_NonScaled[isample],Z_histoname_NonScaled[isample],TemplatesZ[h][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*80/2*fitrange_Scaling)-TemplatesZ[h][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*80/2*fitrange_Scaling);
+            TH1D*Wtempl_NonScaled=new TH1D(W_histoname_NonScaled[isample],W_histoname_NonScaled[isample],TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*80/2*fitrange_Scaling)-TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling),xmin*fitrange_Scaling,xmax*80/2*fitrange_Scaling);
+            // TH1D*Ztempl=(TH1D*)TemplatesZ[h][isample][ieta][jmass]->Clone(Z_histoname[isample]);
+            // TH1D*Wtempl=(TH1D*)TemplatesW[h][isample][ieta][jmass]->Clone(W_histoname[isample]);
+
+            int ibin=1;      
+            double z_templ_sign = 1 /* -1 */;
+            // if( Z_histoname[isample].Contains("DYJetsSig") || Z_histoname[isample].Contains("DATA") ) z_templ_sign = 1;
+            for(int ibinhisto=TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmin*fitrange_Scaling); ibinhisto<TemplatesW[h][k][isample][ieta][jmass]->GetXaxis()->FindBin(xmax*fitrange_Scaling); ibinhisto++){
+              Ztempl->SetBinContent(ibin,z_templ_sign*TemplatesZ[h][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
+              Wtempl->SetBinContent(ibin,TemplatesW[h][k][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
+              Ztempl_NonScaled->SetBinContent(ibin,z_templ_sign*TemplatesZ_NonScaled[h][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
+              Wtempl_NonScaled->SetBinContent(ibin,TemplatesW_NonScaled[h][k][isample][ieta][jmass]->Integral(ibinhisto,ibinhisto));
+              ibin++;
+            }
+            if(!samples_str[isample].Contains("WJetsSig")){
+              Ztempl->Write();
+              Ztempl_NonScaled->Write();
+            }
+            if(!samples_str[isample].Contains("DYJetsSig")){
+              Wtempl->Write();
+              Wtempl_NonScaled->Write();
+            }
+            
+            outTXTfile << Ztempl->GetName();
+            int nspaces1 = 15 - Z_histoname[isample].Length();
+            for(int ispace=0;ispace<nspaces1;ispace++) outTXTfile << " ";
+            Z_integrals[isample] = Ztempl->Integral();
+            outTXTfile << Z_integrals[isample];
+
+            ostringstream s; s << Ztempl->Integral();
+            TString number_str = s.str();
+            int nspaces2 = 15 - number_str.Length();
+
+            for(int ispace=0;ispace<nspaces2;ispace++) outTXTfile << " ";
+            outTXTfile << Wtempl->GetName();
+            for(int ispace=0;ispace<nspaces1;ispace++) outTXTfile << " ";
+            W_integrals[isample] = Wtempl->Integral();
+            outTXTfile << W_integrals[isample] << endl;
+
+            // Wtempl_NonScaled->Print();
+            // cout << "integral= " << Wtempl_NonScaled->Integral() << " mean= " << Wtempl_NonScaled->GetMean() << " rms= " << Wtempl_NonScaled->GetRMS() << endl;
+
+            
+            Wtempl->Delete();
+            Ztempl->Delete();
+            Wtempl_NonScaled->Delete();
+            Ztempl_NonScaled->Delete();
+          }
         }
-        DummyDatacard << Form("shapes   W_WJetsSig_%sNonScaled_ALT   *   datacards_DATA.root $CHANNEL/",WMass::FitVar_str[k].Data())<<(WMass::WMassCentral_MeV-WMass::WMassNSteps*WMass::WMassStep_MeV)<<Form("/W_WJetsSig_%sNonScaled",WMass::FitVar_str[k].Data()) << endl;
-        DummyDatacard << "----------------------------------------" << endl;
-        DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
-        DummyDatacard << "observation              -1 " << endl;
-        DummyDatacard << "----------------------------------------" << endl;
-        DummyDatacard << "bin            MuPos_eta"<<eta_str<<"          MuPos_eta"<<eta_str<<"         MuPos_eta"<<eta_str<< endl;
-        DummyDatacard << Form("process        W_WJetsSig_%sNonScaled        W_WJetsSig_%sNonScaled_ALT        W_EWKTT_%sNonScaled        ",WMass::FitVar_str[k].Data(),WMass::FitVar_str[k].Data(),WMass::FitVar_str[k].Data()) << endl;   
-        DummyDatacard << "process               -1                             0                            1   " << endl;
-        DummyDatacard << "rate                 -1                             -1                            -1  " << endl;
-        // cout          << "rate                 -1                             -1                          -1    " << endl;
-        DummyDatacard << "--------------------------------------------------------------------------------" << endl;
-        DummyDatacard << "lumi    lnN    1.044    1.044   1.044 " << endl;
-        DummyDatacard.close();
+        outTXTfile << endl;
+        
+        // // PREPARE DUMMY DATACARD
+
+        // PREPARE DUMMY DATACARD NON SCALED WITH BACKGROUND WITHOUT Z DATADRIVEN
+        for(int k=0;k<3;k++){
+
+          ofstream DummyDatacard;
+          DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_pdf%d-%d_eta%s_%d_%sNonScaled.txt",folder.Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,eta_str.Data(),jWmass,WMass::FitVar_str[k].Data()));
+          
+          DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
+          // cout << "syst_folder.Data()= -" << syst_folder.Data() << "- syst_folder.Length()= " << syst_folder.Length() << endl;
+          if(syst_folder.Length()<15){
+            DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<Form("/W_MCDATALIKE_%sNonScaled_pdf%d-%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,0) << endl;
+          }else{
+            // DummyDatacard << "shapes   data_obs   *   /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_4_4_4/src/CMGTools/WMass/analysis/JobOutputs/test_controlplots_RochCorr_EffSFCorr_PileupSFCorr/DataCards/datacards_DATA.root $CHANNEL/"<<(WMass::WMassCentral_MeV)<<"/W_MCDATALIKE_NonScaled" << endl;
+            DummyDatacard << "shapes   data_obs   *   "<<Form("../../%s/DataCards/datacards_DATA.root",syst_folder.Data()) << " $CHANNEL/"<<(WMass::WMassCentral_MeV)<<Form("/W_MCDATALIKE_%sNonScaled_pdf%d-%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,0) << endl;
+          }
+          DummyDatacard << Form("shapes   W_WJetsSig_%sNonScaled_ALT   *   datacards_DATA.root $CHANNEL/",WMass::FitVar_str[k].Data())<<(WMass::WMassCentral_MeV-WMass::WMassNSteps*WMass::WMassStep_MeV)<<Form("/W_WJetsSig_%sNonScaled_pdf%d-%d",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h) << endl;
+          DummyDatacard << "----------------------------------------" << endl;
+          // DummyDatacard << "bin                 MuPos_pdf"<<(WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets)<<"-"<<h<<"_eta"<<eta_str<< endl;
+          DummyDatacard << "bin                 MuPos_eta"<<eta_str<< endl;
+          DummyDatacard << "observation              -1 " << endl;
+          DummyDatacard << "----------------------------------------" << endl;
+          DummyDatacard << "bin            MuPos_eta"<<eta_str<<"          MuPos_eta"<<eta_str<<"         MuPos_eta"<<eta_str<< endl;
+          DummyDatacard << Form("process        W_WJetsSig_%sNonScaled_pdf%d-%d        W_WJetsSig_%sNonScaled_ALT        W_EWKTT_%sNonScaled_pdf%d-%d        ",WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h,WMass::FitVar_str[k].Data(),WMass::FitVar_str[k].Data(),WMass::PDF_sets<0?generated_PDF_set:WMass::PDF_sets,h) << endl;   
+          DummyDatacard << "process               -1                             0                            1   " << endl;
+          DummyDatacard << "rate                 -1                             -1                            -1  " << endl;
+          // cout          << "rate                 -1                             -1                          -1    " << endl;
+          DummyDatacard << "--------------------------------------------------------------------------------" << endl;
+          DummyDatacard << "lumi    lnN    1.044    1.044   1.044 " << endl;
+          DummyDatacard.close();
+        }
+
+
+        // ofstream DummyDatacard;
+        // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d.txt",folder.Data(),eta_str.Data(),jWmass));
+        
+        // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
+        // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE" << endl;
+        // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE" << endl;
+        // // DummyDatacard << "shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
+        // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
+        // DummyDatacard << "observation              -1 " << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
+        // DummyDatacard << "process        Z_DYJetsSig        W_EWKTT" << endl;   
+        // DummyDatacard << "process           0                 1     " << endl;
+        // // DummyDatacard << "rate           "<<Form("%f",Z_integrals[DYJetsSig])<<"           "<<Form("%f",W_integrals[EWKTT]) << endl;
+        // DummyDatacard << "rate             -1                -1 " << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard.close();
+
+        // // PREPARE DUMMY DATACARD NON SCALED
+        // ofstream DummyDatacard;
+        // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_NonScaled.txt",folder.Data(),eta_str.Data(),jWmass));
+        
+        // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
+        // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
+        // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE_NonScaled" << endl;
+        // // DummyDatacard << shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
+        // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
+        // DummyDatacard << "observation              -1 " << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
+        // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWKTT_NonScaled" << endl;   
+        // DummyDatacard << "process           0                 1     " << endl;
+        // // DummyDatacard << "rate           "<<Form("%f",Z_integrals[DYJetsSig])<<"           "<<Form("%f",W_integrals[EWKTT]) << endl;
+        // DummyDatacard << "rate             -1                -1 " << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard.close();
+
+        // // PREPARE DUMMY DATACARD NON SCALED WITH BACKGROUND
+        // ofstream DummyDatacard;
+        // DummyDatacard.open(Form("%s/DataCards/dummy_datacard_Wmass_MuPos_eta%s_%d_NonScaled.txt",folder.Data(),eta_str.Data(),jWmass));
+        
+        // DummyDatacard << "shapes   *          *   datacards_DATA.root $CHANNEL/$MASS/$PROCESS $CHANNEL/$MASS/$PROCESS_$SYSTEMATIC" << endl;
+        // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/$MASS/W_MCDATALIKE_NonScaled" << endl;
+        // DummyDatacard << "shapes   W_EWK_NonScaled_ALT   *   datacards_DATA.root $CHANNEL/"<<WMass::WMassCentral_MeV-(WMass::WMassNSteps-(WMass::WMassNSteps+1))*WMass::WMassStep_MeV<<"/W_EWK_NonScaled" << endl;
+        // // DummyDatacard << "shapes   data_obs   *   datacards_DATA.root $CHANNEL/80299/W_MCDATALIKE_NonScaled" << endl;
+        // // DummyDatacard << shapes data_PDG   *   datacards_DATA.root $CHANNEL/80385/W_MCDATALIKE  $CHANNEL/80385/data_$SYSTEMATIC" << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // DummyDatacard << "bin                 MuPos_eta"<<eta_str<<"" << endl;
+        // // DummyDatacard << "observation         " << Form("%f",W_integrals[MCDATALIKE]) << endl;
+        // DummyDatacard << "observation              -1 " << endl;
+        // DummyDatacard << "----------------------------------------" << endl;
+        // // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"" << endl;
+        // // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWKTT_NonScaled" << endl;   
+        // // DummyDatacard << "process           0                 1     " << endl;
+        // // DummyDatacard << "rate             -1                -1 " << endl;
+        // // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<<"       MuPos_eta"<<eta_str<< endl;
+        // // DummyDatacard << "process        Z_DYJetsSig_NonScaled        W_EWK_NonScaled        W_TTJets_NonScaled" << endl;   
+        // // DummyDatacard << "process               0                           1                      2     " << endl;
+        // // DummyDatacard << "rate                 -1                          -1                     -1 " << endl;
+        // DummyDatacard << "bin            MuPos_eta"<<eta_str<<"             MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<<"            MuPos_eta"<<eta_str<< endl;
+        // DummyDatacard << "process        Z_MCDATALIKE_NonScaled       Z_EWKTT_NonScaled        W_EWK_NonScaled        W_TTJets_NonScaled        W_EWK_NonScaled_ALT" << endl;   
+        // DummyDatacard << "process               2                           1                      -1                       3                       0     " << endl;
+        // DummyDatacard << "rate                 -1                     "<< -TemplatesZ_NonScaled[EWKTT][ieta][jmass]->Integral()<<"              -1                     -1                     " << TemplatesW_NonScaled[EWK][ieta][WMass::WMassNSteps+1]->Integral() << endl;
+        // cout << "rate                 -1                     "<< -TemplatesZ_NonScaled[EWKTT][ieta][jmass]->Integral()<<"              -1                     -1                     " << TemplatesW_NonScaled[EWK][ieta][WMass::WMassNSteps+1]->Integral() << endl;
+        // DummyDatacard << "--------------------------------------------------------------------------------" << endl;
+        // DummyDatacard << "lumi    lnN    1.044    1.044   1.044    1.044   1.044" << endl;
+        // DummyDatacard.close();
+      
       }
+      cout << endl;
     }
+    cout << endl;
     outTXTfile << endl;
     outTXTfile << endl;
   }

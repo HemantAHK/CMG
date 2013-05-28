@@ -13,6 +13,7 @@
 #include <TFile.h>
 #include <iostream>
 #include <TSystem.h>
+#include "LHAPDF/LHAPDF.h"
 
 using namespace std;
 
@@ -24,6 +25,11 @@ class Zanalysis {
   int             useGenVar;
 
   // Declaration of leaf types
+  Double_t        scalePDF;
+  Double_t        parton1_pdgId;
+  Double_t        parton1_x;
+  Double_t        parton2_pdgId;
+  Double_t        parton2_x;
   Int_t           run;
   Int_t           lumi;
   Int_t           evt;
@@ -98,6 +104,11 @@ class Zanalysis {
   Double_t        Jet_leading_phi;
 
   // List of branches
+  TBranch        *b_scalePDF;   //!
+  TBranch        *b_parton1_pdgId;   //!
+  TBranch        *b_parton1_x;   //!
+  TBranch        *b_parton2_pdgId;   //!
+  TBranch        *b_parton2_x;   //!
   TBranch        *b_run;   //!
   TBranch        *b_lumi;   //!
   TBranch        *b_evt;   //!
@@ -177,7 +188,7 @@ class Zanalysis {
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TTree *tree);
-  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int buildTemplates=0, int useMomentumCorr=0, int smearRochCorrByNsigma=0, int useEffSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="");
+  virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int buildTemplates=0, int useMomentumCorr=0, int smearRochCorrByNsigma=0, int useEffSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="", int generated_PDF_set=-1, int generated_PDF_member=-1, int contains_PDF_reweight=-1);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 };
@@ -193,7 +204,8 @@ Zanalysis::Zanalysis(TString f_str, double lumi_scaling_input, int useGen, TTree
     // TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("temp/ZTreeProducer_tree.root");
     // if (!f) {
     cout << gSystem->WorkingDirectory() << endl;
-    TFile *f = new TFile(Form("%s",f_str.Data()));
+    // TFile *f = new TFile(Form("%s",f_str.Data()));
+    TFile *f = TFile::Open(Form("%s",f_str.Data()));
     // }
     tree = (TTree*)gDirectory->Get("ZTreeProducer");
 
@@ -246,6 +258,11 @@ void Zanalysis::Init(TTree *tree)
   fCurrent = -1;
   fChain->SetMakeClass(1);
 
+  fChain->SetBranchAddress("scalePDF", &scalePDF, &b_scalePDF);
+  fChain->SetBranchAddress("parton1_pdgId", &parton1_pdgId, &b_parton1_pdgId);
+  fChain->SetBranchAddress("parton1_x", &parton1_x, &b_parton1_x);
+  fChain->SetBranchAddress("parton2_pdgId", &parton2_pdgId, &b_parton2_pdgId);
+  fChain->SetBranchAddress("parton2_x", &parton2_x, &b_parton2_x);
   fChain->SetBranchAddress("run", &run, &b_run);
   fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
   fChain->SetBranchAddress("evt", &evt, &b_evt);
@@ -302,10 +319,10 @@ void Zanalysis::Init(TTree *tree)
   fChain->SetBranchAddress("Jet_leading_eta", &Jet_leading_eta, &b_Jet_leading_eta);
   fChain->SetBranchAddress("Jet_leading_phi", &Jet_leading_phi, &b_Jet_leading_phi);
   if(useGenVar){
+    fChain->SetBranchAddress("ZGen_mass", &ZGen_mass, &b_ZGen_mass);
     fChain->SetBranchAddress("ZGen_pt", &ZGen_pt, &b_ZGen_pt);
     fChain->SetBranchAddress("ZGen_rap", &ZGen_rap, &b_ZGen_rap);
     fChain->SetBranchAddress("ZGen_phi", &ZGen_phi, &b_ZGen_phi);
-    fChain->SetBranchAddress("ZGen_mass", &ZGen_mass, &b_ZGen_mass);
     fChain->SetBranchAddress("ZGen_mt", &ZGen_mt, &b_ZGen_mt);
     fChain->SetBranchAddress("MuPosGen_pt", &MuPosGen_pt, &b_MuPosGen_pt);
     fChain->SetBranchAddress("MuPosGen_eta", &MuPosGen_eta, &b_MuPosGen_eta);
