@@ -33,12 +33,12 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
        << endl;
 
   ofstream outTXTfile;
-  outTXTfile.open(Form("%s/Zanalysis_EVlog.log",outputdir.Data()));
 
   TRandom3 *r = new TRandom3(0);
 
   if(!outputdir.Contains("../")) outputdir = "../"+outputdir;
   cout << "output filename= " << Form("%s/Zanalysis.root",outputdir.Data()) << endl;
+  outTXTfile.open(Form("%s/Zanalysis_EVlog.log",outputdir.Data()));
   
   #ifdef LHAPDF_ON
     cout << "inizializing LHAPDF::initPDFSet(0)" << endl;

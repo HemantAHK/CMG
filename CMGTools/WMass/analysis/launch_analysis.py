@@ -16,12 +16,14 @@ useLHAPDF = False # DEFAULT IS FALSE, to install it follow https://twiki.cern.ch
 # foldername = "results_test44X_RescaleToWJetsLumi";
 # foldername = "results_test44X_MCDATAcomparison";
 # foldername = "results_test44X_correctPoles";
+# foldername = "results_test44X_RecoilCut";
+# foldername = "results_test44X_correctPoles";
 # foldername = "test_BW_reweighting_normWsig";
 # foldername = "test_controlplots_smear1s";
 # foldername = "test_lhapdfNNPDF23";
-# foldername = "test_rochStd";
+foldername = "test_rochStd";
 # foldername = "test_rochGlbUp";
-foldername = "test_rochGlbDown";
+# foldername = "test_rochGlbDown";
 
 # ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
 ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
@@ -32,7 +34,7 @@ useEffSF = 1; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
 # RochCorrByNsigma = 1;
 LocalSmearingRochCorrNToys = 0;
-GlobalSmearingRochCorrNsigma = -1;
+GlobalSmearingRochCorrNsigma = 0;
 # LHAPDF_reweighting_sets="232000" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
 # LHAPDF_reweighting_members="100" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
 LHAPDF_reweighting_sets="10042" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
@@ -69,14 +71,14 @@ run_BuildSimpleTemplates= 0;
 run_BuildEvByEvTemplates= 0; # NOT REALLY USED
 
 ## PERFORM W MASS FIT
-runPrepareDataCards = 1;
-DataCards_systFromFolder="test_rochStd_RochCorr_EffSFCorr_PileupSFCorr" # evaluate systematics wrt folder (or leave it empty)
+runPrepareDataCards = 0;
+DataCards_systFromFolder="" # evaluate systematics wrt folder (or leave it empty)
 
 runDataCardsParametrization = 0; # NOT REALLY USED
 
 ## NEW FIT
 print "if it doesn't work, try with this first: cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -";
-runClosureTestLikeLihoodRatioAnsMergeResults = 1;
+runClosureTestLikeLihoodRatioAnsMergeResults = 0;
 mergeResults = 0;
 
 ## OLD FIT
@@ -325,11 +327,11 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
             if(counter<2):
             # os.system("touch *.*");
                 if(useLHAPDF):
+                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")                    
+                else:
                     print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
                     os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
-                else:
-                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
-                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
 
             print zstring
             if not parallelize:
