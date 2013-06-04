@@ -7,6 +7,8 @@ from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.RootTools.physicsobjects.PhysicsObjects import Muon, Jet, GenParticle
 from CMGTools.RootTools.utils.TriggerMatching import triggerMatched
 from CMGTools.RootTools.utils.DeltaR import bestMatch, deltaR, deltaR2
+# from CMGTools.Utilities.mvaMET.mvaMet import MVAMet, PFMET
+# from WMass.analyzers.GetMVAMET import GetMVAMET
 
 class WAnalyzer( Analyzer ):
 
@@ -27,6 +29,30 @@ class WAnalyzer( Analyzer ):
         count.register('W pfmet>25')
         count.register('W pt<20')
         count.register('W Jet_leading_pt<30')
+        
+        # self.mvamet = MVAMet() # SHOULD BE MVAMet(0.1)
+
+        # void    Initialize(const edm::ParameterSet &iConfig, 
+        # TString iU1Weights      ="$CMSSW_BASE/src/pharris/data/gbrmet_52.root",
+        # TString iPhiWeights     ="$CMSSW_BASE/src/pharris/data/gbrmetphi_52.root",
+        # TString iCovU1Weights   ="$CMSSW_BASE/src/pharris/data/gbrcovu1_52.root",
+        # TString iCovU2Weights   ="$CMSSW_BASE/src/pharris/data/gbrcovu2_52.root",
+        # MVAMet::MVAType  iType=kBaseline);
+
+        # basePath = os.environ['CMSSW_BASE']+"/src/CMGTools/Utilities/data/mvaMET/";
+        # print  ("Inputs are",
+                          # basePath+'gbrmet_42.root',
+                          # basePath+'gbrmetphi_42.root',
+                          # basePath+'gbru1cov_42.root',
+                          # basePath+'gbru2cov_42.root',
+                # )
+        # self.mvamet.Initialize(0,
+                          # basePath+'gbrmet_42.root',
+                          # basePath+'gbrmetphi_42.root',
+                          # basePath+'gbrmetu1cov_42.root',
+                          # basePath+'gbrmetu2cov_42.root',
+                          # 0 # useless
+                          # )
 
     def buildLeptons(self, cmgMuons, event):
         '''Creates python Leptons from the muons read from the disk.
@@ -95,7 +121,9 @@ class WAnalyzer( Analyzer ):
                                 ) ]
           # if the genp event is selected, associate gen muon and neutrino
           event.genMu = []
+          event.genMuStatus1 = []
           event.genNu = []
+          
           if len(event.genW)==1:
             if [ math.fabs(event.genW[0].daughter(0).pdgId())==13 ]:
               event.genMu.append(event.genW[0].daughter(0))
@@ -104,6 +132,9 @@ class WAnalyzer( Analyzer ):
               event.genMu.append(event.genW[0].daughter(1))
               event.genNu.append(event.genW[0].daughter(0))
             
+            if(len(event.genMu) >0):
+              event.genMuStatus1.append(self.returnMuonDaughterStatus1(event.genMu[0]))
+              
             event.genW_mt = self.mT(event.genW[0].daughter(0).p4() , event.genW[0].daughter(1).p4())
             event.muGenDeltaRgenP=1e6
           
@@ -178,6 +209,61 @@ class WAnalyzer( Analyzer ):
         event.selMuonIsTightAndIso = self.testLeg( event.selMuons[0] ) 
         event.selMuonIsTight = self.testLegID( event.selMuons[0] ) 
           
+        # START RETRIEVING MVAMET
+        
+        # INPUT DEFINITIONS AS OF HTT
+                # mvaMETTauMu = cms.EDProducer(
+                  # "MVAMETProducerTauMu",
+                  # pfmetSrc = cms.InputTag('pfMetForRegression'),
+                  # tkmetSrc = cms.InputTag('tkMet'),
+                  # nopumetSrc = cms.InputTag('nopuMet'),
+                  # pucmetSrc = cms.InputTag('pcMet'),
+                  # pumetSrc = cms.InputTag('puMet'),
+                  # recBosonSrc = cms.InputTag('cmgTauMuSel'),
+                  # jetSrc = cms.InputTag('cmgPFJetSel'),
+                  # leadJetSrc = cms.InputTag('cmgPFBaseJetLead'),
+                  # vertexSrc = cms.InputTag('goodPVFilter'),
+                  # nJetsPtGt1Src = cms.InputTag('nJetsPtGt1'),
+                  # rhoSrc = cms.InputTag('kt6PFJets','rho'),
+                  # enable = cms.bool(True),
+                  # verbose = cms.untracked.bool( False ),
+                  # weights_gbrmet = cms.string(weights_gbrmet),
+                  # weights_gbrmetphi = cms.string(weights_gbrmetphi),
+                  # weights_gbrmetu1cov = cms.string(weights_gbrmetu1cov),
+                  # weights_gbrmetu2cov = cms.string(weights_gbrmetu2cov),
+                  
+                  # #COLIN: make delta R a parameter
+                  # )
+
+        # self.prepareObjectsForMVAMET(event)
+        
+        # self.mvamet.getMet(
+                           # event.cleanpfmetForRegression, #iPFMet,
+                           # event.cleantkmet, #iTKMet,
+                           # event.cleannopumet, #iNoPUMet,
+                           # event.pumet, #iPUMet,
+                           # event.cleanpucmet, #iPUCMet,
+                           # event.iLeadJet, #event.iLeadJet,
+                           # event.i2ndJet,  #event.i2ndJet,
+                           # event.NJetsGt30, #iNJetsGt30,
+                           # event.nJetsPtGt1Clean, #iNJetsGt1,
+                           # len(event.goodVertices), #iNGoodVtx,
+                           # event.iJets_p4, #iJets,
+                           # event.iJets_mva, #iJets,
+                           # event.iJets_neutFrac, #iJets,
+                           # False, #iPrintDebug,
+                           # event.visObjectP4s_array #visObjectP4s
+                          # )
+                          
+        # event.mvamet = self.mvamet.GetMet_first();
+        # event.GetMVAMet_second = self.mvamet.GetMet_second();
+        
+        # print 'AFTER MVAmet_test'
+        # print 'event.pfmet.pt() ', event.pfmet.pt()
+        # print 'event.selMuons[0].pt() ',event.selMuons[0].pt(),' event.mvamet.Pt() ',event.mvamet.Pt()
+        # print ''
+        # print 'event.GetMVAMet_second ',event.GetMVAMet_second,' event.GetMVAMet_second.significance() ',event.GetMVAMet_second.significance().Print()
+        
         # define a W from lepton and MET
         event.W4V = event.selMuons[0].p4() + event.pfmet.p4()
         event.W4V_mt = self.mT(event.selMuons[0].p4() , event.pfmet.p4())        
@@ -223,6 +309,19 @@ class WAnalyzer( Analyzer ):
 
     def declareHandles(self):        
         super(WAnalyzer, self).declareHandles()
+        self.handles['cmgTriggerObjectSel'] =  AutoHandle('cmgTriggerObjectSel','std::vector<cmg::TriggerObject>')
+        self.handles['muons'] = AutoHandle('cmgMuonSel','std::vector<cmg::Muon>')
+        self.handles['jets'] = AutoHandle('cmgPFJetSel','std::vector<cmg::PFJet>')
+        self.handles['jetLead'] = AutoHandle('cmgPFBaseJetLead','vector<cmg::BaseJet>')
+        self.handles['pfmet'] = AutoHandle('cmgPFMET','std::vector<cmg::BaseMET>' )
+        self.handles['pfMetForRegression'] = AutoHandle('pfMetForRegression','std::vector<reco::PFMET>' )
+        self.handles['tkmet'] = AutoHandle('tkMet','std::vector<reco::PFMET>' )
+        self.handles['nopumet'] = AutoHandle('nopuMet','std::vector<reco::PFMET>' )
+        self.handles['pumet'] = AutoHandle('puMet','std::vector<reco::PFMET>' )
+        self.handles['pucmet'] = AutoHandle('pcMet','std::vector<reco::PFMET>' )
+        self.mchandles['genpart'] =  AutoHandle('genParticlesPruned','std::vector<reco::GenParticle>')
+        self.handles['vertices'] =  AutoHandle('offlinePrimaryVertices','std::vector<reco::Vertex>')
+        self.handles['nJetsPtGt1'] =  AutoHandle('nJetsPtGt1','int')
         self.handles['cmgTriggerObjectSel'] =  AutoHandle(
             'cmgTriggerObjectSel',
             'std::vector<cmg::TriggerObject>'
@@ -300,6 +399,97 @@ class WAnalyzer( Analyzer ):
                               dR2Max=0.01,
                               pdgIds=None )
 
+                              
+    # def prepareObjectsForMVAMET(self,event):
+    
+        # event.NJetsGt30 = 0 # Number of jets above 30 Gev in cmgPFJetSel after cleaning
+        # event.nJetsPtGt1Clean = event.nJetsPtGt1H # Number of jets above 1 Gev in cmgPFJetSel after cleaning
+    
+        # for jet in event.allJets:
+            # if jet.pt>=1:
+                # if deltaR(jet.eta(),jet.phi(),event.selMuons[0].eta(),event.selMuons[0].phi())<0.5 : 
+                    # event.nJetsPtGt1Clean = event.nJetsPtGt1Clean - 1
+                # else:
+                    # if jet.pt>=30:
+                        # event.NJetsGt30 = event.NJetsGt30 + 1
+        # if(event.nJetsPtGt1Clean < 0): event.nJetsPtGt1Clean = 0
+        
+        # # Clean various METs (but PUMET)
+        
+        # dummyVertex = ROOTmath.XYZPointD()
+        
+        # cleanpfmetp4 = event.pfMetForRegression.p4() + event.selMuons[0].p4()
+        # cleanpfmetsumet = event.pfMetForRegression.sumEt() - event.selMuons[0].pt()
+        # event.cleanpfmetForRegression = PFMET(event.pfMetForRegression.getSpecific(),cleanpfmetsumet,cleanpfmetp4,dummyVertex)
+        
+        # cleanpucmetp4 = event.pucmet.p4() + event.selMuons[0].p4()
+        # cleanpucmetsumet = event.pucmet.sumEt() - event.selMuons[0].pt()
+        # event.cleanpucmet = PFMET(event.pucmet.getSpecific(),cleanpucmetsumet,cleanpucmetp4,dummyVertex)
+        
+        # cleantkmetp4 = event.tkmet.p4() + event.selMuons[0].p4()
+        # cleantkmetsumet = event.tkmet.sumEt() - event.selMuons[0].pt()
+        # event.cleantkmet = PFMET(event.tkmet.getSpecific(),cleantkmetsumet,cleantkmetp4,dummyVertex)
+        
+        # cleannopumetp4 = event.nopumet.p4() + event.selMuons[0].p4()
+        # cleannopumetsumet = event.nopumet.sumEt() - event.selMuons[0].pt()
+        # event.cleannopumet = PFMET(event.nopumet.getSpecific(),cleannopumetsumet,cleannopumetp4,dummyVertex)
+        
+        # event.iLeadJet = 0 # Leading jet (if any) from cmgPFBaseJetLead after cleaning
+        # event.i2ndJet = 0 # Second leading jet (if any) from cmgPFBaseJetLead collection after cleaning
+        
+        # event.jetLeadClean = [jet for jet in event.jetLead if \
+                                          # deltaR(jet.eta(),jet.phi(),event.selMuons[0].eta(),event.selMuons[0].phi())<0.5 ]
+                        
+        # if(len(event.jetLeadClean)>0): event.iLeadJet = event.jetLeadClean[0].p4()
+        # if(len(event.jetLeadClean)>1): event.i2ndJet = event.jetLeadClean[1].p4()
+
+        # event.visObjectP4s_array = [event.selMuons[0].p4()] # Visual part of the signal (single muon for the W, dimuon for the Z)
+        
+        # # iJets struct from cmgPFJetSel without cleaning (will be probably done afterwards)
+        # event.iJets_p4 = []
+        # event.iJets_mva = []
+        # event.iJets_neutFrac = []
+        # for jet in event.allJets:
+            # if jet.looseJetId():
+                # event.iJets_p4.append(jet.p4())
+                # event.iJets_mva.append(jet.puMva('philv1'))
+                # neutFrac=1
+                # # DOES THIS HOLD ALSO IN 44X ???
+                # if(math.fabs(jet.eta())<2.5): 
+                    # neutFrac = jet.component(reco.PFCandidate.gamma).fraction() + jet.component(reco.PFCandidate.h0).fraction() + jet.component(reco.PFCandidate.egamma_HF).fraction()
+                # event.iJets_neutFrac.append( neutFrac )
+                
+        # print ' event.pfmet.pt() ',event.pfmet.pt()
+        # print ' event.pfMetForRegression.pt() ',event.pfMetForRegression.pt(),' event.tkmet.pt() ',event.tkmet.pt(),\
+              # ' event.nopumet.pt() ',event.nopumet.pt(),' event.pumet.pt() ',event.pumet.pt(),\
+              # ' event.pucmet.pt() ',event.pucmet.pt()
+
+        # print ' event.cleanpfmetForRegression.pt() ',event.cleanpfmetForRegression.pt(),' event.cleantkmet.pt() ',event.cleantkmet.pt(),\
+              # ' event.cleannopumet.pt() ',event.cleannopumet.pt(),' event.pumet.pt() ',event.pumet.pt(),\
+              # ' event.cleanpucmet.pt() ',event.cleanpucmet.pt()
+
+
+    def returnMuonDaughter(self,genp_muon):
+        if genp_muon.numberOfDaughters()>0:
+           for k in range(0,genp_muon.numberOfDaughters()):
+             if genp_muon.daughter(k).pdgId()==13:
+               return genp_muon.daughter(k)
+             elif genp_muon.daughter(k).pdgId()==-13:
+               return genp_muon.daughter(k)
+             # else:
+               # print 'no muon daughter?'  
+        else:
+          # print 'Satus > 1 muon had no daughter'
+          return genp_muon
+      
+    def returnMuonDaughterStatus1(self,genp_muon_daughter):
+        if genp_muon_daughter.status()==1:
+          return genp_muon_daughter
+        else:
+          #print 'Calling again'
+          return self.returnMuonDaughterStatus1(self.returnMuonDaughter(genp_muon_daughter))
+
+              
 
 class WBoson(object):
 

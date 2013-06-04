@@ -158,7 +158,7 @@ class ZAnalyzer( Analyzer ):
         event.ZselJets = [ jet for jet in event.ZallJets if not \
                                 (bestMatch( jet , event.ZallMuons ))[1] <0.5
                           ]
-
+        
         # reco events must have good reco vertex and trigger fired...                          
         if not (event.passedVertexAnalyzer and event.passedTriggerAnalyzer):
           return True

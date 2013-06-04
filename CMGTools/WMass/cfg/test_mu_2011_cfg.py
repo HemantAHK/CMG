@@ -10,13 +10,13 @@ jsonAna = cfg.Analyzer(
 
 triggerAna = cfg.Analyzer(
     'TriggerAnalyzer',
-    # keepFailingEvents = True
+    keepFailingEvents = True
     )
 
 vertexAna = cfg.Analyzer(
     'VertexAnalyzer',
     fixedWeight = 1.,
-    # keepFailingEvents = True
+    keepFailingEvents = True
     )
 
 WAna = cfg.Analyzer(
@@ -57,10 +57,10 @@ sequence = cfg.Sequence( [
     jsonAna,
     triggerAna,
     vertexAna,
-    # WAna,
-    # WtreeProducer,
-    ZAna,
-    ZtreeProducer
+    WAna,
+    WtreeProducer,
+    # ZAna,
+    # ZtreeProducer
    ] )
 
 
@@ -97,8 +97,8 @@ TTJets.triggers = ["HLT_IsoMu24_v1","HLT_IsoMu24_v2","HLT_IsoMu24_v3","HLT_IsoMu
                    ]
 
 # selectedComponents = [DYJets, WJets]
-# selectedComponents = [WJets]
-selectedComponents = [DYJets]
+selectedComponents = [WJets]
+# selectedComponents = [DYJets]
 # selectedComponents = [TTJets]
 
 

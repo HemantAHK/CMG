@@ -114,6 +114,7 @@ class ZTreeProducer( TreeAnalyzerNumpy ):
       var( tr, 'lumi', int)
       var( tr, 'evt', int)
       var( tr, 'nvtx', int)
+      var( tr, 'njets', int)
       var( tr, 'npu', int)
       var( tr, 'evtHasGoodVtx', int)
       var( tr, 'evtHasTrg', int)
@@ -214,6 +215,7 @@ class ZTreeProducer( TreeAnalyzerNumpy ):
           fill( tr, 'lumi',event.lumi)
           fill( tr, 'evt', event.eventId)
           fill( tr, 'nvtx', len(self.handles['vertices'].product()))
+          fill( tr, 'njets', len(event.ZselJets))
           if (self.cfg_comp.isMC) :
             event.pileUpInfo = map( PileUpSummaryInfo,
                                     self.mchandles['pusi'].product() )

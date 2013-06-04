@@ -94,6 +94,7 @@ class WTreeProducer( TreeAnalyzerNumpy ):
       var( tr, 'lumi', int)
       var( tr, 'evt', int)
       var( tr, 'nvtx', int)
+      var( tr, 'njets', int)
       var( tr, 'npu', int)
       var( tr, 'evtHasGoodVtx', int)
       var( tr, 'evtHasTrg', int)
@@ -120,6 +121,7 @@ class WTreeProducer( TreeAnalyzerNumpy ):
       var(tr, 'MuIsTight', int)
       var(tr, 'MuRelIso')
       bookParticle(tr, 'MuGen')
+      bookParticle(tr, 'MuGenStatus1')
       var(tr, 'MuDRGenP')
       
       bookParticle(tr, 'NuGen')
@@ -140,6 +142,7 @@ class WTreeProducer( TreeAnalyzerNumpy ):
           fill(tr, 'WGen_m', event.genW[0].p4().M())
           fill(tr, 'WGen_mt', event.genW_mt)
           fillParticle(tr, 'MuGen',event.genMu[0])
+          fillParticle(tr, 'MuGenStatus1', event.genMuStatus1[0])      
           fill(tr, 'MuDRGenP',event.muGenDeltaRgenP)
           fillParticle(tr, 'NuGen', event.genNu[0])
 
@@ -163,6 +166,7 @@ class WTreeProducer( TreeAnalyzerNumpy ):
           fill( tr, 'lumi',event.lumi)
           fill( tr, 'evt', event.eventId)
           fill( tr, 'nvtx', len(self.handles['vertices'].product()))          
+          fill( tr, 'njets', len(event.selJets))
           if (self.cfg_comp.isMC) :
             event.pileUpInfo = map( PileUpSummaryInfo,
                                     self.mchandles['pusi'].product() )
