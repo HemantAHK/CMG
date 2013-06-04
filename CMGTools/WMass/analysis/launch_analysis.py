@@ -8,6 +8,8 @@ import urllib, urlparse, string, time, os, shutil, sys
 ## ==============================================================
 ## STEERING PARAMETERS
 ## ==============================================================
+
+useLHAPDF = False # DEFAULT IS FALSE, to install it follow https://twiki.cern.ch/twiki/bin/view/CMS/CmgWMass#LHAPDF
   
 # foldername = "results_test44X_100massPoints3etabins";
 # foldername = "results_test44X_100massPoints";
@@ -16,7 +18,10 @@ import urllib, urlparse, string, time, os, shutil, sys
 # foldername = "results_test44X_correctPoles";
 # foldername = "test_BW_reweighting_normWsig";
 # foldername = "test_controlplots_smear1s";
-foldername = "test_lhapdfNNPDF23";
+# foldername = "test_lhapdfNNPDF23";
+# foldername = "test_rochStd";
+# foldername = "test_rochGlbUp";
+foldername = "test_rochGlbDown";
 
 # ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
 ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
@@ -25,9 +30,13 @@ lhapdf_folder="/afs/cern.ch/work/p/perrozzi/private/WMassMC/lhapdf/"
 usePileupSF = 1; # 0=no, 1=yes
 useEffSF = 1; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
-smearRochCorrByNsigma = 0;
-LHAPDF_reweighting_sets="232000" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
-LHAPDF_reweighting_members="100" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
+# RochCorrByNsigma = 1;
+LocalSmearingRochCorrNToys = 0;
+GlobalSmearingRochCorrNsigma = -1;
+# LHAPDF_reweighting_sets="232000" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
+# LHAPDF_reweighting_members="100" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
+LHAPDF_reweighting_sets="10042" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
+LHAPDF_reweighting_members="1" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
 ## CHOOSE WETHER IS MC CLOSURE OR NOT (half statistics used as DATA, half as MC)
 IS_MC_CLOSURE_TEST= 0; 
 
@@ -45,13 +54,13 @@ etaMaxMuons = "0.6"; # 0.6, 0.8, 1.2, 1.6, 2.1
 parallelize = 1;
 resumbit_sample = "" # DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD
 
-runWanalysis = 1;
-runZanalysis = 1;
+runWanalysis = 0;
+runZanalysis = 0;
 controlplots = 0;
 
 mergeSigEWKbkg = 0;
 
-ExtractNumbers = 0;
+ExtractNumbers = 0; # NOT REALLY USED
 
 ## PRODUCE R(X)=W/Z DISTRIBUTION TO REWEIGHT Z in DATA
 runR_WdivZ= 0;
@@ -60,14 +69,14 @@ run_BuildSimpleTemplates= 0;
 run_BuildEvByEvTemplates= 0; # NOT REALLY USED
 
 ## PERFORM W MASS FIT
-runPrepareDataCards = 0;
-DataCards_systFromFolder="" # evaluate systematics wrt folder (or leave it empty)
+runPrepareDataCards = 1;
+DataCards_systFromFolder="test_rochStd_RochCorr_EffSFCorr_PileupSFCorr" # evaluate systematics wrt folder (or leave it empty)
 
 runDataCardsParametrization = 0; # NOT REALLY USED
 
 ## NEW FIT
 print "if it doesn't work, try with this first: cd /afs/cern.ch/work/p/perrozzi/private/CMGTools/CMGTools/CMSSW_5_3_3_patch3/src; SCRAM_ARCH slc5_amd64_gcc462;cmsenv; cd -";
-runClosureTestLikeLihoodRatioAnsMergeResults = 0;
+runClosureTestLikeLihoodRatioAnsMergeResults = 1;
 mergeResults = 0;
 
 ## OLD FIT
@@ -107,8 +116,10 @@ if(IS_MC_CLOSURE_TEST==1):
 
 if(useMomentumCorr==1): 
   foldername+="_RochCorr";
-  if(smearRochCorrByNsigma>0): 
-    foldername+=str(smearRochCorrByNsigma)+"s_smear";
+  if(LocalSmearingRochCorrNToys<1): 
+    LocalSmearingRochCorrNToys=1
+  if(GlobalSmearingRochCorrNsigma>0): 
+    foldername+=str(GlobalSmearingRochCorrNsigma)+"s_smear";
 else: 
     if(useMomentumCorr==2): foldername+="_MuscleFitCorr";
 
@@ -165,17 +176,18 @@ shutil.copyfile("launch_analysis.py", file_dest)
 
 if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
     
-    if(os.environ.get('LHAPATH') == lhapdf_folder+"share/lhapdf/PDFsets"):
+    if(useLHAPDF and os.environ.get('LHAPATH') == lhapdf_folder+"share/lhapdf/PDFsets"):
         print "ENVIRONMENT VARIABLES OK"
     else:
         print "REMEMBER TO SET ENVIRONMENT VARIABLES (MUST RUN ON LXPLUS):"
         print "/afs/cern.ch/project/eos/installation/0.2.30/bin/eos.select -b fuse mount ~/eos"
         print "source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh"
         print "source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh"
-        print ("export PATH="+lhapdf_folder+"bin/:$PATH")
-        print ("export LD_LIBRARY_PATH="+lhapdf_folder+"lib/:$LD_LIBRARY_PATH")
-        print ("export LHAPATH="+lhapdf_folder+"share/lhapdf/PDFsets")
-        sys.exit()
+        if(useLHAPDF):
+          print ("export PATH="+lhapdf_folder+"bin/:$PATH")
+          print ("export LD_LIBRARY_PATH="+lhapdf_folder+"lib/:$LD_LIBRARY_PATH")
+          print ("export LHAPATH="+lhapdf_folder+"share/lhapdf/PDFsets")
+          sys.exit()
   
     counter=0
     for i in range(0, nsamples):
@@ -267,7 +279,7 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
         else: # otherwise build it from this cfg
             print "creating JobOutputs/"+foldername+"/"+outputdir+"/common.h from includes/common.h.bkp"
             shutil.copyfile("includes/common.h.bkp", "includes/common.h");
-            os.system("sh "+os.getcwd()+"/manipulate_parameters.sh "+ZMass+" "+WMassCentral_MeV+" "+WMassStep_MeV+" "+WMassNSteps+" "+etaMuonNSteps+" \""+etaMaxMuons+"\" "+str(NPDF_sets)+" "+str(PAR_PDF_SETS)+" "+str(PAR_PDF_MEMBERS))
+            os.system("sh "+os.getcwd()+"/manipulate_parameters.sh "+ZMass+" "+WMassCentral_MeV+" "+WMassStep_MeV+" "+WMassNSteps+" "+etaMuonNSteps+" \""+etaMaxMuons+"\" "+str(NPDF_sets)+" "+str(PAR_PDF_SETS)+" "+str(PAR_PDF_MEMBERS)+" "+str(LocalSmearingRochCorrNToys))
             shutil.copyfile("includes/common.h","JobOutputs/"+foldername+"/"+outputdir+"/common.h");
         
         os.chdir("AnalysisCode/");
@@ -284,10 +296,14 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
         
         if(runWanalysis):
             
-            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             if(counter<2):
-                print("c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
-                os.system("rm runWanalysis.o; c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
+                if(useLHAPDF):
+                    print("c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
+                    os.system("rm runWanalysis.o; c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
+                else:
+                    print("c++ -o runWanalysis.o `root-config --glibs --libs --cflags` -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
+                    os.system("rm runWanalysis.o; c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
             
             # print("root -l -b -q \'runWanalysis2.cpp("+wstring+")\'");
             
@@ -304,12 +320,16 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
 
         if(runZanalysis):
 
-            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             
             if(counter<2):
             # os.system("touch *.*");
-                print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
-                os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                if(useLHAPDF):
+                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                else:
+                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
 
             print zstring
             if not parallelize:
@@ -323,7 +343,7 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
                 # os.system("root -l -b -q \'runZanalysis.C("+zstring+")\' > ../"+filename_outputdir+"/Zlog.log 2>&1 &");
 
         if(run_BuildEvByEvTemplates):
-            zTemplstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(smearRochCorrByNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(run_BuildEvByEvTemplates)
+            zTemplstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(run_BuildEvByEvTemplates)
             # print zTemplstring
             # exit()
             if not parallelize:
@@ -341,9 +361,9 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
                 # cout << Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1) << endl;
                 # gROOT->ProcessLine(Form("Zanalysis zTEMPLATESOnDATA(\"%s\",%.f)",fZana_str[IS_MC_CLOSURE_TEST? DYJetsSig : DATA].Data(),IS_MC_CLOSURE_TEST? intLumi_MC_fb/(Nevts[DYJetsSig]/CS_pb[DYJetsSig]/1e3) : 1));
                 # # gROOT->ProcessLine(Form("zTEMPLATESOnDATA.Loop(%d,1,%s,1)",IS_MC_CLOSURE_TEST,filename_outputdir.Data()));
-                # cout << "processing line " << Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample[DATA].Data()) << endl;
-                # gROOT->ProcessLine(Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample[DATA].Data()));
-                                                        # # # ".Loop(%d,%d,\"../%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA[i],filename_outputdir.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,sample[i].Data()));
+                # cout << "processing line " << Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,GlobalSmearingRochCorrNsigma,useEffSF,usePileupSF,sample[DATA].Data()) << endl;
+                # gROOT->ProcessLine(Form("zTEMPLATESOnDATA.Loop(%d,1,\"../JobOutputs/%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,foldername.Data(),useMomentumCorr,GlobalSmearingRochCorrNsigma,useEffSF,usePileupSF,sample[DATA].Data()));
+                                                        # # # ".Loop(%d,%d,\"../%s\",1,%d,%d,%d,%d,\"%s\")",IS_MC_CLOSURE_TEST,isMCorDATA[i],filename_outputdir.Data(),useMomentumCorr,GlobalSmearingRochCorrNsigma,useEffSF,usePileupSF,sample[i].Data()));
                 # # # gROOT->ProcessLine(Form(".! mv Zanalysis.root ../JobOutputs/%s/ZanalysisOnDATA.root",outputdir.Data()));
                 # gROOT->ProcessLine(Form(".! mv ../JobOutputs/%s/Zanalysis.root ../JobOutputs/%s/Templates_from_ZanalysisOnDATA.root",foldername.Data(),foldername.Data()));
                 # gROOT->ProcessLine(Form(".! cp Zanalysis.\* ../JobOutputs/%s/",foldername.Data()));
@@ -415,7 +435,7 @@ if(runPrepareDataCards):
       # if(i<nsamples-1) samples_datacards+="-";
     # }
     print "running .x prepareDatacards.C(\"../JobOutputs/"+foldername+"\",\"\")"
-    os.system("root -l -b -q \'prepareDatacards.C(\"../JobOutputs/"+foldername+"\",\"../JobOutputs/"+DataCards_systFromFolder+"\",\"\")\'")
+    os.system("root -l -b -q \'prepareDatacards.C+(\"../JobOutputs/"+foldername+"\",\"../JobOutputs/"+DataCards_systFromFolder+"\",\"\")\'")
     # gROOT->ProcessLine(Form(".! mv \*.png ../JobOutputs/%s/MC_WandZcomparisonPlots",foldername.Data()));
     # gROOT->ProcessLine(Form(".! cp PlotWvsZdistributionsDATA.C ../JobOutputs/%s/MC_WandZcomparisonPlots",foldername.Data()));
     # gSystem->ChangeDirectory("../");  
@@ -450,7 +470,7 @@ if(runClosureTestLikeLihoodRatioAnsMergeResults or mergeResults):
     # shutil.copyfile("includes/common.h","JobOutputs/"+foldername+"/DataCards/common.h")
     os.chdir("JobOutputs/"+foldername+"/DataCards");
     print os.getcwd()
-    os.system("root -l -b -q \'merge_results.C()\'")
+    os.system("root -l -b -q \'merge_results.C+()\'")
     os.chdir("../");
     
     
