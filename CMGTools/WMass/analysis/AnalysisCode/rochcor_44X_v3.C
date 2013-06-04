@@ -504,6 +504,8 @@ rochcor_44X_v3::rochcor_44X_v3(){
   
   eran.SetSeed(123456);
   sran.SetSeed(13245768);
+  
+  using_toys = false;
     
   for(int i=0; i<8; ++i){
     for(int j=0; j<22; ++j){
@@ -519,15 +521,18 @@ rochcor_44X_v3::rochcor_44X_v3(){
 rochcor_44X_v3::rochcor_44X_v3(int seed){
   eran.SetSeed(123456);
   sran.SetSeed(seed);
+  
+  using_toys = true;
 
-  for(int i=0; i<8; ++i){
-      for(int j=0; j<22; ++j){
-          mptsys_mc_dm[i][j]=sran.Gaus(0.0, 1.0);
-          mptsys_mc_da[i][j]=sran.Gaus(0.0, 1.0);
-          mptsys_da_dm[i][j]=sran.Gaus(0.0, 1.0);
-          mptsys_da_da[i][j]=sran.Gaus(0.0, 1.0);
-      }
-  }
+
+  // for(int i=0; i<8; ++i){
+      // for(int j=0; j<22; ++j){
+          // mptsys_mc_dm[i][j]=sran.Gaus(0.0, 1.0);
+          // mptsys_mc_da[i][j]=sran.Gaus(0.0, 1.0);
+          // mptsys_da_dm[i][j]=sran.Gaus(0.0, 1.0);
+          // mptsys_da_da[i][j]=sran.Gaus(0.0, 1.0);
+      // }
+  // }
 }
 
 void rochcor_44X_v3::momcor_mc( TLorentzVector& mu, float charge, float sysdev){
@@ -546,6 +551,16 @@ void rochcor_44X_v3::momcor_mc( TLorentzVector& mu, float charge, float sysdev){
   int mu_phibin = phibin(muphi);
   int mu_etabin = etabin(mueta);
   
+  if(using_toys){
+    // for(int i=0; i<8; ++i){
+      // for(int j=0; j<22; ++j){
+        // mptsys_mc_dm[i][j]=sran.Gaus(0.0, 1.0);
+        // mptsys_mc_da[i][j]=sran.Gaus(0.0, 1.0);
+      // }
+    // }
+    mptsys_mc_dm[mu_phibin][mu_etabin]=sran.Gaus(0.0, 1.0);
+    mptsys_mc_da[mu_phibin][mu_etabin]=sran.Gaus(0.0, 1.0);
+  }
   // mu.Print();
   // cout << "mu_phibin= " << mu_phibin << " mu_etabin= " << mu_etabin << endl;
   // cout << "px= " << px << " py= " << py << " pz= " << pz << " e= " << e << endl;
@@ -588,7 +603,7 @@ void rochcor_44X_v3::momcor_mc( TLorentzVector& mu, float charge, float sysdev){
 
 
 void rochcor_44X_v3::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt){
-    
+  
   float ptmu = mu.Pt();
 
   float muphi = mu.Phi();
@@ -602,6 +617,18 @@ void rochcor_44X_v3::momcor_data( TLorentzVector& mu, float charge, float sysdev
   int mu_phibin = phibin(muphi);
   int mu_etabin = etabin(mueta);
   
+  if(using_toys){
+    // for(int i=0; i<8; ++i){
+      // for(int j=0; j<22; ++j){
+        // mptsys_da_dm[i][j]=sran.Gaus(0.0, 1.0);
+        // mptsys_da_da[i][j]=sran.Gaus(0.0, 1.0);
+      // }
+    // }
+    mptsys_da_dm[mu_phibin][mu_etabin]=sran.Gaus(0.0, 1.0);
+    mptsys_da_da[mu_phibin][mu_etabin]=sran.Gaus(0.0, 1.0);
+
+  }
+
   //float mptsys1 = sran.Gaus(0.0,sysdev);
   
   float dm = 0.0;

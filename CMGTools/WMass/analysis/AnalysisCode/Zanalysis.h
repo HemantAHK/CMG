@@ -13,7 +13,6 @@
 #include <TFile.h>
 #include <iostream>
 #include <TSystem.h>
-#include "LHAPDF/LHAPDF.h"
 
 using namespace std;
 

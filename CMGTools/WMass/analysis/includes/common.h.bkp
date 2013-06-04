@@ -19,6 +19,7 @@ namespace WMass{
   TString FitVar_str[NFitVar] = {"Pt","Mt","MET"};
   static const int PDF_sets = PAR_PDF_SETS;
   static const int PDF_members = PAR_PDF_MEMBERS;
+  static const int NtoysMomCorr = PAR_TOYS_MOMCORR;
 
   bool isGood_WGenPos_1_Gen(double WGen_m,
                             int MuGen_charge

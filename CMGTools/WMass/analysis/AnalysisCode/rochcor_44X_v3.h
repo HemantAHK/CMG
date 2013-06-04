@@ -30,6 +30,7 @@ class rochcor_44X_v3 {
   
   TRandom3 eran;
   TRandom3 sran;
+  bool using_toys;
   
   
   //  static float netabin[9] = {-2.4,-2.1,-1.4,-0.7,0.0,0.7,1.4,2.1,2.4};
