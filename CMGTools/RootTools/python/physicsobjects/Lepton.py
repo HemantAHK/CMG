@@ -7,15 +7,11 @@ class Lepton( PhysicsObject):
         return abs(self.dB3D() / self.edB3D())
 
     def absIsoFromEA(self,rho,eta,effectiveArea1 = None,effectiveArea2 = None):
-        '''
-        Calculate Isolation using the effective area approach. If fsrPhotons is set
-        the list of photons is subtracted from the isolation cone. It works with one or
-        two effective Areas in case one needs to do photon and neutral hadron separately
-        '''
+        '''MIKE< missing doc'''
         photonIso = self.photonIso()
-        if hasattr(self,'fsrPhotons'):
-            for gamma in self.fsrPhotons:
-                photonIso=photonIso-gamma.pt()                
+        if hasattr(self,'fsrPhoton'):
+            photon=self.fsrPhoton
+            photonIso=photonIso-photon.pt()                
         ea1 = rho
         ea2 = rho
         if effectiveArea1 is not None:
@@ -41,9 +37,9 @@ class Lepton( PhysicsObject):
             raise ValueError('If you want to use dbeta corrections, you must make sure that the pu charged hadron iso is available. This should never happen') 
         neutralIso = self.neutralHadronIso()+self.photonIso()
         #Recover FSR
-        if hasattr(self,'fsrPhotons'):
-            for gamma in self.fsrPhotons:
-                neutralIso=neutralIso-gamma.pt()
+        if hasattr(self,'fsrPhoton'):
+            photon=self.fsrPhoton
+            neutralIso=neutralIso-photon.pt()
         corNeutralIso = neutralIso - dBetaFactor * self.puChargedHadronIso();
         charged = self.chargedHadronIso();
         if  allCharged:
