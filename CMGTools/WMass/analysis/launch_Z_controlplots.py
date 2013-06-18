@@ -34,7 +34,7 @@ etaMaxMuons = "0.6"; # "0.6, 0.8, 1.2, 1.6, 2.1"
 # etaMaxMuons = "2.1"; # "0.6, 0.8, 1.2, 1.6, 2.1"
 
 parallelize = 1; # loop over the samples launching the program in batch
-resumbit_sample = "WZJets" # "DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD"
+resumbit_sample = "" # "DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD"
 
 runWanalysis = 0; # perform the analysis on W control plots
 Zanalysis_controlplots = 1; # perform the analysis on Z control plots
