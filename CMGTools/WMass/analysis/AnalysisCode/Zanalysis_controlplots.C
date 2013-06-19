@@ -11,6 +11,7 @@
 // #include "rochcor_42X.h"
 #include "rochcor_44X_v3.h"
 #include "MuScleFitCorrector.h"
+#include "RecoilCorrector.h"
 #include <TH2.h>
 #include <TH1.h>
 #include <TStyle.h>
@@ -19,6 +20,7 @@
 #include <TLorentzVector.h>
 #include <TGraphAsymmErrors.h>
 #include <ctime>
+#include <string>
 #include <time.h>
 
 void Zanalysis_controlplots::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
@@ -305,9 +307,21 @@ void Zanalysis_controlplots::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TStrin
     corrector = new MuScleFitCorrector(fitParametersFile);
   }
 
+  // RecoilCorrector*  correctorRecoil_=new RecoilCorrector( "../RecoilCode/RecoilCorrector_v6/recoilfit/recoilfit_wjets53X_20pv_njet.root");
+  std::string fileCorrectTo = "../RecoilCode/RecoilCorrector_v6/recoilfit/recoilfit_wjets53X_20pv_njet.root";
+  cout << "std::string fileCorrectTo= " << fileCorrectTo << endl;
+  RecoilCorrector:RecoilCorrector*  correctorRecoil_;
+  correctorRecoil_ = new RecoilCorrector::RecoilCorrector(fileCorrectTo.c_str(),123456);
+  // correctorRecoil_ = new RecoilCorrector();
+
+  /*
+  correctorRecoil_->addDataFile( "/afs/cern.ch/user/d/dalfonso/scratch0/CMSSW_4_4_5_Wmass/src/CMGTools/WMass/analysis/RecoilCode/RecoilCorrector_v6/recoilfit/recoilfit_datamm53X_20pv_njet.root" );
+  correctorRecoil_->addMCFile( "/afs/cern.ch/user/d/dalfonso/scratch0/CMSSW_4_4_5_Wmass/src/CMGTools/WMass/analysis/RecoilCode/RecoilCorrector_v6/recoilfit/recoilfit_zmm53X_20pv_njet.root" );
+  */
+
   Long64_t nbytes = 0, nb = 0;
-  for (Long64_t jentry=first_entry; jentry<nentries;jentry++) {
-    // for (Long64_t jentry=0; jentry<100;jentry++) {
+   for (Long64_t jentry=first_entry; jentry<nentries;jentry++) {
+    // for (Long64_t jentry=0; jentry<100000;jentry++) {
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0) break;
     nb = fChain->GetEntry(jentry);   nbytes += nb;
