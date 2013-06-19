@@ -13,8 +13,8 @@ useLHAPDF = False # DEFAULT IS False, before to switch to True follow https://tw
   
 foldername = "test_cout";
 
-# ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
-ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
+ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
+# ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
 lhapdf_folder="/afs/cern.ch/work/p/perrozzi/private/WMassMC/lhapdf/"
 
 usePileupSF = 1; # 0=no, 1=yes
