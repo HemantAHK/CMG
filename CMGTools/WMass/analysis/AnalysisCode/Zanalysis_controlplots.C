@@ -704,9 +704,9 @@ void Zanalysis_controlplots::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TStrin
           // ZlepDeltaPhiVsMass[k][i][j]->Write();
           // ZlepDeltaRVsMass[k][i][j]->Write();
         }
-        for(int k=0;k<3;k++)
-          for(int h=0; h<WMass::PDF_members; h++)
-            hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]->Write();
+        // for(int k=0;k<3;k++)
+          // for(int h=0; h<WMass::PDF_members; h++)
+            // hWlikePos_VarScaled_RWeighted_Templates[h][k][i][j]->Write();
     }
     if(!sampleName.Contains("DYJetsSig")){
       TString eta_str = Form("%.1f",WMass::etaMaxMuons[i]); eta_str.ReplaceAll(".","p");
