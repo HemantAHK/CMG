@@ -278,12 +278,12 @@ if(runWanalysis or Zanalysis_controlplots ):
             # os.system("touch *.*");
                 if(useLHAPDF):
                     os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\#define\ LHAPDF_ON/' Zanalysis_controlplots.C")
-                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
-                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")                    
+                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
+                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")                    
                 else:
                     os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\/\/\#define\ LHAPDF_ON/' Zanalysis_controlplots.C")
-                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
-                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
+                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
+                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
 
             print zstring
             if not parallelize:
