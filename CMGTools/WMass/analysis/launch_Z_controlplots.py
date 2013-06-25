@@ -19,6 +19,7 @@ lhapdf_folder="/afs/cern.ch/work/p/perrozzi/private/WMassMC/lhapdf/"
 
 usePileupSF = 1; # 0=no, 1=yes
 useEffSF = 1; # 0=no, 1=yes
+usePtSF = 1; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
 LocalSmearingRochCorrNToys = 0;
 GlobalSmearingRochCorrNsigma = 0;
@@ -33,8 +34,8 @@ etaMuonNSteps = "1"; # "5"
 etaMaxMuons = "0.6"; # "0.6, 0.8, 1.2, 1.6, 2.1"
 # etaMaxMuons = "2.1"; # "0.6, 0.8, 1.2, 1.6, 2.1"
 
-parallelize = 0; # loop over the samples launching the program in batch
-resumbit_sample = "DYJetsSig" # "DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD"
+parallelize = 1; # loop over the samples launching the program in batch
+resumbit_sample = "" # "DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD"
 
 runWanalysis = 0; # perform the analysis on W control plots
 Zanalysis_controlplots = 1; # perform the analysis on Z control plots
@@ -86,6 +87,7 @@ else:
     if(useMomentumCorr==2): foldername+="_MuscleFitCorr";
 
 if(useEffSF==1): foldername+="_EffSFCorr";
+if(usePtSF==1): foldername+="_PtSFCorr";
 if(usePileupSF==1): foldername+="_PileupSFCorr";
 nsamples=10;
 DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD = range(10)
@@ -154,7 +156,7 @@ if(runWanalysis or Zanalysis_controlplots ):
         
         if (resumbit_sample!=""):
             # parallelize = 0
-            if not resumbit_sample in sample[i]: 
+            if not sample[i] in resumbit_sample: 
                 print "skipping ",sample[i]," which is not",resumbit_sample;
                 continue;
           
@@ -244,7 +246,7 @@ if(runWanalysis or Zanalysis_controlplots ):
         
         if(runWanalysis):
             
-            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePtSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             if(counter<2):
                 if(useLHAPDF):
                     os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\#define\ LHAPDF_ON/' Wanalysis.C")
@@ -270,18 +272,18 @@ if(runWanalysis or Zanalysis_controlplots ):
 
         if(Zanalysis_controlplots):
 
-            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePtSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             
             if(counter<2):
             # os.system("touch *.*");
                 if(useLHAPDF):
                     os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\#define\ LHAPDF_ON/' Zanalysis_controlplots.C")
-                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
-                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")                    
+                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
+                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")                    
                 else:
                     os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\/\/\#define\ LHAPDF_ON/' Zanalysis_controlplots.C")
-                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
-                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h RecoilCorrector.cc")
+                    print("c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
+                    os.system("rm Zanalysis_controlplots.o; c++ -o Zanalysis_controlplots.o `root-config --glibs --libs --cflags`  -lm Zanalysis_controlplots.C rochcor_44X_v3.C runZanalysis_controlplots.C ../includes/common.h ")
 
             print zstring
             if not parallelize:
