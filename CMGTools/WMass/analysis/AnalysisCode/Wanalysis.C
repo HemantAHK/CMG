@@ -1,5 +1,5 @@
 // UNCOMMENT TO USE PDF REWEIGHTING
-// #define LHAPDF_ON
+//#define LHAPDF_ON
 
 #ifdef LHAPDF_ON
   #include "LHAPDF/LHAPDF.h"
@@ -12,6 +12,7 @@
 #include "rochcor_44X_v3.h"
 #include "MuScleFitCorrector.h"
 #include <TH2.h>
+#include <TH1.h>
 #include <TStyle.h>
 #include <TMath.h>
 #include <TCanvas.h>
@@ -20,7 +21,7 @@
 #include <ctime>
 #include <time.h>
 
-void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
+void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int usePtSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
 {
 
     cout << "generated_PDF_set= "<<generated_PDF_set
@@ -40,23 +41,28 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   outTXTfile.open(Form("%s/Wanalysis_EVlog.log",outputdir.Data()));
   
   #ifdef LHAPDF_ON
-    cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
-    // LHAPDF::initPDFSet();
-    if(WMass::PDF_sets==11200)
-      LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
-    else if(WMass::PDF_sets==232000)
-      LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
-    else if(WMass::PDF_sets==21200)
-      LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
-    // else if(WMass::PDF_sets<0)
-      // LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
-    
     // LHAPDF::initPDFSet(1,"CT10nnlo.LHgrid");
     if(!sampleName.Contains("DATA")){
       cout << "inizializing LHAPDF::initPDFSet(1)" << endl;
       LHAPDF::initPDFSet(1,generated_PDF_set,generated_PDF_member); // CMSSW DEFAULT
       cout << "finished inizializing LHAPDF" << endl;
+
+      cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
+      // LHAPDF::initPDFSet();
+      if(WMass::PDF_sets==11200)
+        // LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
+        LHAPDF::initPDFSet(0,11200,0);
+      else if(WMass::PDF_sets==232000)
+        // LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
+        LHAPDF::initPDFSet(0,232000,0);
+      else if(WMass::PDF_sets==21200)
+        // LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
+        LHAPDF::initPDFSet(0,21200,0);
+      else if(WMass::PDF_sets==21241)
+        LHAPDF::initPDFSet(0,21241,0);  // else if(WMass::PDF_sets<0)
+        // LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
     }
+    
   #endif 
   
   TH1D *hWPos_VarScaled_1_Gen[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -87,9 +93,9 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   // TH2D *hWPos_logiso_vs_logdxy[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   // TH2D *hWPos_iso_vs_dxy[WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
   
-  TFile*finEffSF, *finPileupSF;
+  TFile*finEffSF, *finPileupSF,*finPtSF;
   TGraphAsymmErrors*hEffSF_MuId_eta_2011[2],*hEffSF_Iso_eta_2011[2],*hEffSF_HLT_eta_2011/* ,*hEffSF_Iso_vtx_2011A,*hEffSF_Iso_vtx_2011B*/;
-  TH1D*hPileupSF;
+  TH1D*hPileupSF,*hWPtSFPos,*hWPtSFNeg;
 
   // retrieve efficiencies SF
   if(useEffSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0)){
@@ -116,6 +122,18 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       return;
     }else{
       hPileupSF=(TH1D*)finPileupSF->Get("hpileup_reweighting_Fall11");
+    }
+  }
+  // retrieve pileup SF
+  if(usePtSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0)){
+    // cout << "APPLYING W PT RESCALING" << endl;
+    finPtSF = new TFile(Form("../utils/Wpt_reweighting.root")); // used only to build templates
+    if(!finPtSF){
+      cout << "file " << Form("../utils/Wpt_reweighting.root") << " is missing, impossible to retrieve W pt reweighting factors" << endl;
+      // return;
+    }else{
+      hWPtSFPos=(TH1D*)finPtSF->Get("hWPos_pt_Sig_eta0p6");
+      hWPtSFNeg=(TH1D*)finPtSF->Get("hWNeg_pt_Sig_eta0p6");
     }
   }
   
@@ -266,6 +284,11 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     
     double evt_weight_original = lumi_scaling;
     if(useVtxSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && npu>0) evt_weight_original=lumi_scaling*hPileupSF->GetBinContent(hPileupSF->GetXaxis()->FindBin(npu));
+    if(usePtSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && sampleName.Contains("WJetsSig")){
+      // cout << "TRYING TO APPLY W PT RESCALING" << endl;
+      // if(MuGen_charge>0||Mu_charge>0) evt_weight_original*=hWPtSFPos->GetBinContent(hWPtSFPos->GetXaxis()->FindBin(W_pt>0?W_pt:WGen_pt));
+      // else if(MuGen_charge<0||Mu_charge<0) evt_weight_original*=hWPtSFNeg->GetBinContent(hWPtSFNeg->GetXaxis()->FindBin(W_pt>0?W_pt:WGen_pt));
+    }
     
     int runopt = r->Rndm()<0.457451 ? 0 : 1;
     double MuPos_tight_muon_SF = 1;
@@ -339,7 +362,7 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
               //Set TLorentzVector of mu
               mu.SetPtEtaPhiM(Mu_pt,Mu_eta,Mu_phi,Mu_mass);
               // mu.Print();
-              // cout << "toy= " << m << " " << Mu_pt << " " << Mu_eta << " " << Mu_phi << " "<< Mu_mass << endl;
+              // cout << "before roch= " << m << " " << Mu_pt << " " << Mu_eta << " " << Mu_phi << " "<< Mu_mass << endl;
               //use rochester correction if required
               if(useMomentumCorr==1){ // use Rochester Momentum scale corrections if required
                 if(IS_MC_CLOSURE_TEST || isMCorDATA==0){
@@ -353,7 +376,7 @@ void Wanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
               }else if(useMomentumCorr==2){ // use MuscleFit Momentum scale corrections if required
                 corrector->applyPtCorrection(mu,Mu_charge);
               }
-              // cout << "toy= " << m << " " << mu.Pt() << " " << mu.Eta() << " " << mu.Phi() << " "<< Mu_mass << endl;
+              // cout << "after roch= " << m << " " << mu.Pt() << " " << mu.Eta() << " " << mu.Phi() << " "<< Mu_mass << endl;
               TLorentzVector nu,W; //TLorentzVector of the reconstructed W
               nu.SetPtEtaPhiM(pfmet,0,pfmet_phi,0);
               W = mu + nu;

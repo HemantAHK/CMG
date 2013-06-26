@@ -1,5 +1,5 @@
 // UNCOMMENT TO USE PDF REWEIGHTING
-// #define LHAPDF_ON
+//#define LHAPDF_ON
 
 #ifdef LHAPDF_ON
   #include "LHAPDF/LHAPDF.h"
@@ -21,7 +21,7 @@
 #include <ctime>
 #include <time.h>
 
-void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
+void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, int buildTemplates, int useMomentumCorr, int smearRochCorrByNsigma, int useEffSF, int usePtSF, int useVtxSF, int controlplots, TString sampleName, int generated_PDF_set, int generated_PDF_member, int contains_PDF_reweight)
 {
 
   if (fChain == 0) return;
@@ -41,24 +41,29 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   outTXTfile.open(Form("%s/Zanalysis_EVlog.log",outputdir.Data()));
   
   #ifdef LHAPDF_ON
-    cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
-    // LHAPDF::initPDFSet();
-    if(WMass::PDF_sets==11200)
-      LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
-    else if(WMass::PDF_sets==232000)
-      LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
-    else if(WMass::PDF_sets==21200)
-      LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
-    // else if(WMass::PDF_sets<0)
-      // LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
-    
+    // LHAPDF::initPDFSet(1,"CT10nnlo.LHgrid");
     if(!sampleName.Contains("DATA")){
       cout << "inizializing LHAPDF::initPDFSet(1)" << endl;
-      // LHAPDF::initPDFSet(1,"CT10nnlo.LHgrid");
       LHAPDF::initPDFSet(1,generated_PDF_set,generated_PDF_member); // CMSSW DEFAULT
       cout << "finished inizializing LHAPDF" << endl;
+
+      cout << "inizializing LHAPDF::initPDFSet(0)" << endl;
+      // LHAPDF::initPDFSet();
+      if(WMass::PDF_sets==11200)
+        // LHAPDF::initPDFSet(0,"CT10nnlo.LHgrid");
+        LHAPDF::initPDFSet(0,11200,0);
+      else if(WMass::PDF_sets==232000)
+        // LHAPDF::initPDFSet(0,"NNPDF23_nnlo_as_0118.LHgrid");
+        LHAPDF::initPDFSet(0,232000,0);
+      else if(WMass::PDF_sets==21200)
+        // LHAPDF::initPDFSet(0,"MSTW2008nnlo68cl.LHgrid");
+        LHAPDF::initPDFSet(0,21200,0);
+      else if(WMass::PDF_sets==21241)
+        LHAPDF::initPDFSet(0,21241,0);  // else if(WMass::PDF_sets<0)
+        // LHAPDF::initPDFSet(0,generated_PDF_set,generated_PDF_member);
+    
     }
-  #endif
+  #endif 
   // TFile*feffSF = new TFile(Form("../Zanalysis.root",outputdir.Data()),"RECREATE");
   
   TH1D *hWlikePos_VarScaled_1_Gen[WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1];
@@ -83,9 +88,9 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
   TH1D *hPileUp_Fall11=new TH1D("hPileUp_Fall11","hPileUp_Fall11",50,0,50);
   TH1D *hWlikePos_VarScaled_RWeighted_Templates[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
   TH1D*hWlikePos_R_WdivZ[WMass::PDF_members][WMass::NFitVar][WMass::etaMuonNSteps][2*WMass::WMassNSteps+1]; // used only to build templates
-  TFile*finTemplates, *finEffSF, *finPileupSF;
+  TFile*finTemplates, *finEffSF, *finPileupSF, *finZPtSF;
   TGraphAsymmErrors*hEffSF_MuId_eta_2011[2],*hEffSF_Iso_eta_2011[2],*hEffSF_HLT_eta_2011/* ,*hEffSF_Iso_vtx_2011A,*hEffSF_Iso_vtx_2011B*/;
-  TH1D*hPileupSF;
+  TH1D*hPileupSF,*hZPtSF;
   
   if(buildTemplates){
     finTemplates = new TFile(Form("%s/../R_WdivZ_OnMC.root",outputdir.Data())); // used only to build templates
@@ -117,6 +122,16 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
       return;
     }else{
       hPileupSF=(TH1D*)finPileupSF->Get("hpileup_reweighting_Fall11");
+    }
+  }
+  if(usePtSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && sampleName.Contains("DYJetsSig")){
+    cout << "REWEIGHTING Z PT" << endl;
+    finZPtSF = new TFile(Form("../utils/Zpt_reweighting.root")); // used only to build templates
+    if(!finZPtSF){
+      cout << "file " << Form("../utils/Zpt_reweighting.root") << " is missing, impossible to retrieve ZPt reweighting factors" << endl;
+      return;
+    }else{
+      hZPtSF=(TH1D*)finZPtSF->Get("hZ_pt_Sig_eta0p6");
     }
   }
   // return;
@@ -350,6 +365,7 @@ void Zanalysis::Loop(int IS_MC_CLOSURE_TEST, int isMCorDATA, TString outputdir, 
     double evt_weight = lumi_scaling;
     // TO BE CHECKED!!!
     if(useVtxSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && npu>0) evt_weight=lumi_scaling*hPileupSF->GetBinContent(hPileupSF->GetXaxis()->FindBin(npu));
+    if(usePtSF && (IS_MC_CLOSURE_TEST || isMCorDATA==0) && hZPtSF && sampleName.Contains("DYJetsSig")) evt_weight*=hZPtSF->GetBinContent(hZPtSF->GetXaxis()->FindBin(Z_pt>0?Z_pt:ZGen_pt));
     
     int runopt = r->Rndm()<0.457451 ? 0 : 1;
     double MuPos_tight_muon_SF = 1;

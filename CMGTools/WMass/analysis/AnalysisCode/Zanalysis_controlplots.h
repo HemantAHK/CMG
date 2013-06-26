@@ -11,6 +11,8 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
 #include <iostream>
 #include <TSystem.h>
 
@@ -190,6 +192,14 @@ class Zanalysis_controlplots {
   virtual void     Loop(int IS_MC_CLOSURE_TEST=0, int isMCorDATA=0, TString outputdir=0, int buildTemplates=0, int useMomentumCorr=0, int smearRochCorrByNsigma=0, int useEffSF=0, int usePtSF=0, int useVtxSF=0, int controlplots=0, TString sampleName="", int generated_PDF_set=-1, int generated_PDF_member=-1, int contains_PDF_reweight=-1);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
+
+  virtual void plot1D(string title, float xval, double weight, std::map<string, TH1F*> &allhistos,
+		      int numbinsx, float xmin, float xmax);
+  
+  virtual void plot2D(string title, float xval, float yval, double weight, std::map<string, TH2F*> &allhistos,
+		      int numbinsx, float xmin, float xmax, int numbinsy, float ymin, float ymax);
+  
+
 };
 
 #endif
@@ -364,4 +374,44 @@ Int_t Zanalysis_controlplots::Cut(Long64_t entry)
   // returns -1 otherwise.
   return 1;
 }
+
+void Zanalysis_controlplots::plot1D(string title, float xval, double weight, std::map<string, TH1F*> &allhistos,
+                                    int numbinsx, float xmin, float xmax)
+{
+
+  std::map<string, TH1F*>::iterator iter= allhistos.find(title);
+  if(iter == allhistos.end()) //no histo for this yet, so make a new one                                                                                                                  
+    {
+      TH1F* currentHisto= new TH1F(title.c_str(), title.c_str(), numbinsx, xmin, xmax);
+      currentHisto->Sumw2();
+      currentHisto->Fill(xval, weight);
+      allhistos.insert(std::pair<string, TH1F*> (title,currentHisto) );
+    }
+  else // exists already, so just fill it                                                                                                                                                 
+    {
+      (*iter).second->Fill(xval, weight);
+    }
+}
+
+void Zanalysis_controlplots::plot2D(string title, float xval, float yval, double weight, std::map<string, TH2F*> &allhistos,
+                                    int numbinsx, float xmin, float xmax, int numbinsy, float ymin, float ymax)
+{
+
+
+  std::map<string, TH2F*>::iterator iter= allhistos.find(title);
+  if(iter == allhistos.end()) //no histo for this yet, so make a new one                                                                                                                  
+    {
+      TH2F* currentHisto= new TH2F(title.c_str(), title.c_str(), numbinsx, xmin, xmax, numbinsy, ymin, ymax);
+      currentHisto->Fill(xval, yval, weight);
+      allhistos.insert(std::pair<string, TH2F*> (title,currentHisto) );
+    }
+  else // exists already, so just fill it                                                                                                                                                 
+    {
+      (*iter).second->Fill(xval, yval, weight);
+    }
+
+  return;
+
+}
+
 #endif // #ifdef Zanalysis_controlplots_cxx

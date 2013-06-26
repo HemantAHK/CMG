@@ -9,7 +9,7 @@ import urllib, urlparse, string, time, os, shutil, sys
 ## STEERING PARAMETERS
 ## ==============================================================
 
-useLHAPDF = False # DEFAULT IS FALSE, to install it follow https://twiki.cern.ch/twiki/bin/view/CMS/CmgWMass#LHAPDF
+useLHAPDF = False # DEFAULT IS False, before to switch to True follow https://twiki.cern.ch/twiki/bin/view/CMS/CmgWMass#LHAPDF
   
 # foldername = "results_test44X_100massPoints3etabins";
 # foldername = "results_test44X_100massPoints";
@@ -21,22 +21,25 @@ useLHAPDF = False # DEFAULT IS FALSE, to install it follow https://twiki.cern.ch
 # foldername = "test_BW_reweighting_normWsig";
 # foldername = "test_controlplots_smear1s";
 # foldername = "test_lhapdfNNPDF23";
-foldername = "test_rochStd";
+# foldername = "test_rochStds_eta2p1";
 # foldername = "test_rochGlbUp";
 # foldername = "test_rochGlbDown";
+# foldername = "test_splitCode";
+foldername = "test_ptreweighting1";
 
-# ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
-ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
+ntuple_folder = "root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
+# ntuple_folder = "~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/";
 lhapdf_folder="/afs/cern.ch/work/p/perrozzi/private/WMassMC/lhapdf/"
 
 usePileupSF = 1; # 0=no, 1=yes
 useEffSF = 1; # 0=no, 1=yes
+usePtSF = 1; # 0=no, 1=yes
 useMomentumCorr = 1; # 0=none, 1=Rochester, 2=MuscleFit
 # RochCorrByNsigma = 1;
 LocalSmearingRochCorrNToys = 0;
 GlobalSmearingRochCorrNsigma = 0;
-# LHAPDF_reweighting_sets="232000" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
-# LHAPDF_reweighting_members="100" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
+# LHAPDF_reweighting_sets="11200" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
+# LHAPDF_reweighting_members="51" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
 LHAPDF_reweighting_sets="10042" # cteq6ll.LHpdf=10042 CT10nnlo.LHgrid=11200, NNPDF23_nnlo_as_0118.LHgrid=232000, MSTW2008nnlo68cl.LHgrid=21200
 LHAPDF_reweighting_members="1" # cteq6ll.LHpdf=1 CT10nnlo.LHgrid=51, NNPDF23_nnlo_as_0118.LHgrid=100, MSTW2008nnlo68cl.LHgrid=41
 ## CHOOSE WETHER IS MC CLOSURE OR NOT (half statistics used as DATA, half as MC)
@@ -49,16 +52,18 @@ useAlsoGenPforSig= 1;
 ZMass = "91.188"; # 91.1876
 WMassCentral_MeV = "80419"; # 80385
 WMassStep_MeV = "10"; # 15
-WMassNSteps = "5"; # 60
+# WMassNSteps = "5"; # 60
+WMassNSteps = "0"; # 60
 etaMuonNSteps = "1"; # 5
 etaMaxMuons = "0.6"; # 0.6, 0.8, 1.2, 1.6, 2.1
+# etaMaxMuons = "2.1"; # 0.6, 0.8, 1.2, 1.6, 2.1
 
-parallelize = 1;
-resumbit_sample = "" # DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD
+parallelize = 0;
+resumbit_sample = "DYJetsSig" # DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD
 
 runWanalysis = 0;
-runZanalysis = 0;
-controlplots = 0;
+runZanalysis = 1;
+controlplots = 1;
 
 mergeSigEWKbkg = 0;
 
@@ -114,18 +119,20 @@ print "cd /afs/cern.ch/work/p/perrozzi/private/CMSSW_6_1_1/src; SCRAM_ARCH=slc5_
 if(IS_MC_CLOSURE_TEST==1):
     foldername+="_MCclosureTest";
     useEffSF=0;
+    usePtSF=0;
     usePileupSF=0;
 
+if(LocalSmearingRochCorrNToys<1):
+  LocalSmearingRochCorrNToys=1
 if(useMomentumCorr==1): 
   foldername+="_RochCorr";
-  if(LocalSmearingRochCorrNToys<1): 
-    LocalSmearingRochCorrNToys=1
   if(GlobalSmearingRochCorrNsigma>0): 
     foldername+=str(GlobalSmearingRochCorrNsigma)+"s_smear";
 else: 
     if(useMomentumCorr==2): foldername+="_MuscleFitCorr";
 
 if(useEffSF==1): foldername+="_EffSFCorr";
+if(usePtSF==1): foldername+="_PtSFCorr";
 if(usePileupSF==1): foldername+="_PileupSFCorr";
 nsamples=10;
 DATA , WJetsSig ,  WJetsFake ,  DYJetsSig ,  DYJetsFake ,   TTJets ,   ZZJets ,   WWJets ,  WZJets ,  QCD = range(10)
@@ -292,18 +299,20 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
 
         if parallelize and (runWanalysis or runZanalysis) and counter>1:
             print "waiting 10 sec to 20 sec (if W and Z are launched) before to proceed with the next sample to let the compilation finish"
-            os.system("sleep 10");
+            os.system("sleep 3");
         
         # if(i==0): os.system("touch *.*");
         
         if(runWanalysis):
             
-            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            wstring="\""+WfileDATA+"\","+str(WfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePtSF)+","+str(usePileupSF)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             if(counter<2):
                 if(useLHAPDF):
+                    os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\#define\ LHAPDF_ON/' Wanalysis.C")
                     print("c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
                     os.system("rm runWanalysis.o; c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
                 else:
+                    os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\/\/\#define\ LHAPDF_ON/' Wanalysis.C")
                     print("c++ -o runWanalysis.o `root-config --glibs --libs --cflags` -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
                     os.system("rm runWanalysis.o; c++ -o runWanalysis.o `root-config --glibs --libs --cflags`  -lm Wanalysis.C rochcor_44X_v3.C runWanalysis.C")
             
@@ -322,16 +331,18 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
 
         if(runZanalysis):
 
-            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
+            zstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePtSF)+","+str(usePileupSF)+","+str(0)+","+str(controlplots)+","+str(generated_PDF_set[i])+""+","+str(generated_PDF_member[i])+","+str(contains_PDF_reweight[i])
             
             if(counter<2):
             # os.system("touch *.*");
                 if(useLHAPDF):
-                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
-                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")                    
+                    os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\#define\ LHAPDF_ON/' Zanalysis.C")
+                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C ../includes/common.h")
+                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -I "+lhapdf_folder+"/include -L "+lhapdf_folder+"/lib -lLHAPDF  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C ../includes/common.h")                    
                 else:
-                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
-                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C")
+                    os.system("sed -i 's/.*\#define\ LHAPDF_ON.*/\/\/\#define\ LHAPDF_ON/' Zanalysis.C")
+                    print("c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C ../includes/common.h")
+                    os.system("rm runZanalysis.o; c++ -o runZanalysis.o `root-config --glibs --libs --cflags`  -lm Zanalysis.C rochcor_44X_v3.C runZanalysis.C ../includes/common.h")
 
             print zstring
             if not parallelize:
@@ -339,19 +350,19 @@ if(runWanalysis or runZanalysis or run_BuildEvByEvTemplates):
                 os.system("./runZanalysis.o "+zstring)
 
             else:
-                if(runWanalysis): os.system("sleep 5");
+                if(runWanalysis): os.system("sleep 3");
                 os.system("./runZanalysis.o "+zstring+" > ../"+filename_outputdir+"Zlog.log 2>&1 &")
                 # print "root -l -b -q \'runZanalysis.C("+zstring+")\' > ../"+filename_outputdir+"Zlog.log 2>&1 &";
                 # os.system("root -l -b -q \'runZanalysis.C("+zstring+")\' > ../"+filename_outputdir+"/Zlog.log 2>&1 &");
 
         if(run_BuildEvByEvTemplates):
-            zTemplstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePileupSF)+","+str(run_BuildEvByEvTemplates)
+            zTemplstring="\""+ZfileDATA+"\","+str(ZfileDATA_lumi_SF)+",\""+sample[i]+"\","+str(useAlsoGenPforSig)+","+str(IS_MC_CLOSURE_TEST)+","+str(isMCorDATA[i])+",\""+filename_outputdir+"\","+str(useMomentumCorr)+","+str(GlobalSmearingRochCorrNsigma)+","+str(useEffSF)+","+str(usePtSF)+","+str(usePileupSF)+","+str(run_BuildEvByEvTemplates)
             # print zTemplstring
             # exit()
             if not parallelize:
                 os.system("root -l -b -q \'runZanalysis.C("+zTemplstring+")\'");
             else:
-                if(runWanalysis): os.system("sleep 5");
+                if(runWanalysis): os.system("sleep 3");
                 # print "root -l -b -q \'runZanalysis.C("+zTemplstring+")\' > ../"+filename_outputdir+"Zlog.log 2>&1 &";
                 os.system("root -l -b -q \'runZanalysis.C("+zTemplstring+")\' > ../"+filename_outputdir+"/ZEvByEvTemplog.log 2>&1 &");
                 # gROOT->ProcessLine(".! touch *.*");

@@ -1,14 +1,15 @@
 #ifndef __CINT__
 #include "RooGlobalFunc.h"
 #endif
+#include <vector>
 #include <sstream>
 #include "TFile.h"
 #include "TTree.h"
 #include "TCanvas.h"
 #include "TH1F.h"
+#include "TF1.h"
 #include "TH2F.h"
 #include "TLegend.h"
-#include "TF1.h"
 #include "TMath.h"
 #include "TVirtualFitter.h"
 #include "TFitResult.h"
@@ -27,7 +28,7 @@
 #include "RooFitResult.h"
 #include "RooDataHist.h"
 #include "RooHistPdf.h"
-#include "/home/pharris/Analysis/W/condor/run/CMSSW_3_8_4/src/MitWlnu/NYStyle/test/NYStyle.h"
+// #include "/home/pharris/Analysis/W/condor/run/CMSSW_3_8_4/src/MitWlnu/NYStyle/test/NYStyle.h"
 using namespace RooFit;
 
 TFile *fDataFile = 0;
@@ -49,7 +50,7 @@ void load(TTree *iTree, int type) {
   //iTree->SetBranchAddress("IS2011A",&fIS2011A);
   iTree->SetBranchAddress("nbtag" ,&fNBTag);
   //iTree->SetBranchAddress("mjj"   ,&fMJJ);
-  iTree->SetBranchAddress("jetpt1"  ,&fJPt1);
+  iTree->SetBranchAddress("Jet_leading_pt"  ,&fJPt1);
   //  iTree->SetBranchAddress("jdeta" ,&fDEta);
   //iTree->SetBranchAddress("id1_l" ,&fId1);
   //iTree->SetBranchAddress("id2_l" ,&fId2);
@@ -62,8 +63,8 @@ void load(TTree *iTree, int type) {
   iTree->SetBranchAddress("eta_2" ,&fEta2);
   iTree->SetBranchAddress("phi_2" ,&fPhi2);
   iTree->SetBranchAddress("taujetpt" ,&fPt2);
-  iTree->SetBranchAddress("pt_vis"  ,&fPt1);
-  iTree->SetBranchAddress("phi_vis" ,&fPhi1);
+  iTree->SetBranchAddress("Mu_pt"  ,&fPt1);
+  iTree->SetBranchAddress("Mu_phi" ,&fPhi1);
  //iTree->SetBranchAddress("Weight",&fWeight);
   iTree->SetBranchAddress("npv"   ,&fNPV);
   if(!fData) iTree->SetBranchAddress("pt_z" ,&fZPt);
@@ -362,7 +363,7 @@ void fitGraph(TTree *iTree,TTree *iTree1, TCanvas *iC,
     //if(!passMatching()) continue;
     //if(fPt2 > 30) fNJet++;
     calculateU1U2(lPar,lPar==fU1);
-    if(fNBTag > 0) continue;
+    // if(fNBTag > 0) continue;
     if(iPol1 && fZPt > 50. && lPar == fU1 && lPar  > (47.5-0.95*fZPt) && iType == 0) continue; //Remove Diboson events at high pT
   
     if(fZPt > fZPtMax) continue;
@@ -615,7 +616,7 @@ void fitRecoil(TTree *iTree,std::string iName) {
   //makeCorr(iTree,iName);
 }
 void runRecoilFit_v6() { 
-  Prep();
+  // Prep();
 
   //fDataFile = new TFile("ZSummary/zjets_mtau.root"); fId = 0; 
   //fDataTree = (TTree*) fDataFile->FindObjectAny("Flat");
@@ -695,12 +696,12 @@ void runRecoilFit_v6() {
   //fId =  0; fNJetSelect =  2; fMetMax = 4000; fZPtMax = 500;  fitRecoil(fDataTree,"recoilfits/recoilfit_wjets53X_20pv_2jet.root");
   //delete fDataFile;
 
- fDataFile = new TFile("../../Htt/Data/s12-higgs_v5.root");
- fDataTree = (TTree*) fDataFile->FindObjectAny("Flat"); fData = true; fId = 0;
- fId =  0; fNJetSelect =  0; fMetMax = 4000; fZPtMax =  70;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_0jet.root");
- fId =  0; fNJetSelect =  1; fMetMax = 4000; fZPtMax = 200;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_1jet.root");
- fId =  0; fNJetSelect =  2; fMetMax = 4000; fZPtMax = 500;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_2jet.root");
- delete fDataFile;
+ // fDataFile = new TFile("../../Htt/Data/s12-higgs_v5.root");
+ // fDataTree = (TTree*) fDataFile->FindObjectAny("Flat"); fData = true; fId = 0;
+ // fId =  0; fNJetSelect =  0; fMetMax = 4000; fZPtMax =  70;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_0jet.root");
+ // fId =  0; fNJetSelect =  1; fMetMax = 4000; fZPtMax = 200;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_1jet.root");
+ // fId =  0; fNJetSelect =  2; fMetMax = 4000; fZPtMax = 500;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs53X_20pv_2jet.root");
+ // delete fDataFile;
 
   //fDataFile = new TFile("../Training/FullTrain/s12-zjets_53_data_mc_full.root");
   //fDataTree = (TTree*) fDataFile->FindObjectAny("Flat"); fData = true; fId = 0;
@@ -715,7 +716,7 @@ void runRecoilFit_v6() {
   //fId =  0; fNJetSelect =  1; fMetMax = 4000; fZPtMax = 200;  fitRecoil(fDataTree,"recoilfits/recoilfit_datamm53X_20pv_1jet.root");
   //fId =  0; fNJetSelect =  2; fMetMax = 4000; fZPtMax = 500;  fitRecoil(fDataTree,"recoilfits/recoilfit_datamm53X_20pv_2jet.root");
   //delete fDataFile;
-  return;
+  // return;
 
   //fDataFile = new TFile("../Valentina/l_tau/zjets_mtau.root");
   //fDataTree = (TTree*) fDataFile->FindObjectAny("Flat");
@@ -726,17 +727,19 @@ void runRecoilFit_v6() {
   //delete fDataFile;
   //return;
 
-  fDataFile = new TFile("higgs_flat_v2.root");
-  fDataTree = (TTree*) fDataFile->FindObjectAny("Flat");
-  fNJetSelect = -1; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_inc.root");
-  fNJetSelect = 0; fMetMax = 4000; fZPtMax = 90;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_0jet.root");
-  fNJetSelect = 1; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_1jet.root");
-  fNJetSelect = 2; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_2jet.root");
+  // fDataFile = new TFile("~/eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/WJets/WTreeProducer_tree_SignalRecoSkimmed.root");
+  fDataFile = TFile::Open("root://eoscms//eos/cms/store/cmst3/user/perrozzi/CMG/ntuples_2012_12_20/DYJets/ZTreeProducer_tree_SignalRecoSkimmed.root");
+  fDataTree = (TTree*) fDataFile->FindObjectAny("ZTreeProducer");
+  fNJetSelect = -1; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_W_inc.root");
+  // fNJetSelect = -1; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_inc.root");
+  // fNJetSelect = 0; fMetMax = 4000; fZPtMax = 90;  fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_0jet.root");
+  // fNJetSelect = 1; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_1jet.root");
+  // fNJetSelect = 2; fMetMax = 4000; fZPtMax = 500; fitRecoil(fDataTree,"recoilfits/recoilfit_higgs_2jet.root");
   delete fDataFile;
   return;
 
-  fDataFile = new TFile("ntuples/data_select.root");
-  fDataTree = (TTree*) fDataFile->FindObjectAny("Events");
-  fNJetSelect = -1; fMetMax = 4000; fZPtMax = 1000; fitRecoil(fDataTree,"recoilfits/recoilfit_datamm_inc.root");
-  return;
+  // fDataFile = new TFile("ntuples/data_select.root");
+  // fDataTree = (TTree*) fDataFile->FindObjectAny("Events");
+  // fNJetSelect = -1; fMetMax = 4000; fZPtMax = 1000; fitRecoil(fDataTree,"recoilfits/recoilfit_datamm_inc.root");
+  // return;
 }

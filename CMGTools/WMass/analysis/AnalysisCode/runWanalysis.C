@@ -4,21 +4,22 @@
 #include <TObjString.h>
 #include <TROOT.h>
 #include "Wanalysis.h"
-#include "rochcor_44X_v3.h"
+// #include "rochcor_44X_v3.h"
 
 using namespace std;
 int main(int argc, char ** argv) 
 {
 
-  TString original, tokenized[14];
+  TString original, tokenized[15];
   original = Form("%s",argv[1]);
       
   TObjArray* LineColumns = original.Tokenize(",");
   
-  for(int j=0;j<14;j++)
+  for(int j=0;j<15;j++)
   {
     tokenized[j] = ((TObjString *)LineColumns->At(j))->GetString();
   }
+
   TString WfileDATA=tokenized[0];
   double WfileDATA_lumi_SF=tokenized[1].Atof();
   TString sample=tokenized[2];
@@ -29,16 +30,16 @@ int main(int argc, char ** argv)
   int useMomentumCorr=tokenized[7].Atof();
   int smearRochCorrByNsigma=tokenized[8].Atof();
   int useEffSF=tokenized[9].Atof();
-  int usePileupSF=tokenized[10].Atof();
-  int controlplots=tokenized[11].Atof();
-  int generated_PDF_set=tokenized[12].Atof();
-  int generated_PDF_member=tokenized[13].Atof();
-  int contains_PDF_reweight=tokenized[14].Atof();
-
+  int usePtSF=tokenized[10].Atof();
+  int usePileupSF=tokenized[11].Atof();
+  int controlplots=tokenized[12].Atof();
+  int generated_PDF_set=tokenized[13].Atof();
+  int generated_PDF_member=tokenized[14].Atof();
+  int contains_PDF_reweight=tokenized[15].Atof();
   cout << "processing line "<< Form("Wanalysis wDATA(\"%s\",%f,%d)",WfileDATA.Data(),WfileDATA_lumi_SF,sample.Contains("WJetsSig")?useAlsoGenPforSig:0) << endl;
   Wanalysis wDATA(WfileDATA.Data(),WfileDATA_lumi_SF,sample.Contains("WJetsSig")?useAlsoGenPforSig:0);
-  cout << "processing line "<< Form("wDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,\"%s\",%d,%d,%d)",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,controlplots,sample.Data(),generated_PDF_set,generated_PDF_member,contains_PDF_reweight) << endl;
-  wDATA.Loop(IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePileupSF,controlplots,sample.Data(),generated_PDF_set,generated_PDF_member,contains_PDF_reweight);
+  cout << "processing line "<< Form("wDATA.Loop(%d,%d,\"../%s\",%d,%d,%d,%d,%d,%d,\"%s\",%d,%d,%d)",IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePtSF,usePileupSF,controlplots,sample.Data(),generated_PDF_set,generated_PDF_member,contains_PDF_reweight) << endl;
+  wDATA.Loop(IS_MC_CLOSURE_TEST,isMCorDATA,filename_outputdir.Data(),useMomentumCorr,smearRochCorrByNsigma,useEffSF,usePtSF,usePileupSF,controlplots,sample.Data(),generated_PDF_set,generated_PDF_member,contains_PDF_reweight);
   gROOT->ProcessLine(Form(".! mv ../%s/Wanalysis.root ../%s/WanalysisOnDATA.root",filename_outputdir.Data(),filename_outputdir.Data()));
   gROOT->ProcessLine(Form(".! cp Wanalysis.* ../%s/",filename_outputdir.Data()));
 
