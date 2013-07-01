@@ -6,7 +6,6 @@
 #include "AnalysisDataFormats/CMGTools/interface/BaseMET.h"
 #include "AnalysisDataFormats/CMGTools/interface/DiObject.h"
 #include "AnalysisDataFormats/CMGTools/interface/DiObjectPair.h"
-#include "AnalysisDataFormats/CMGTools/interface/DiTauObject.h"
 #include "AnalysisDataFormats/CMGTools/interface/Electron.h"
 #include "AnalysisDataFormats/CMGTools/interface/Muon.h"
 #include "AnalysisDataFormats/CMGTools/interface/Tau.h"
@@ -29,13 +28,9 @@ namespace cmg {
   //  typedef cmg::DiObject< edm::Ptr<cmg::Muon>, edm::Ptr< cmg::Muon> > DiMuon;
   typedef cmg::DiObject<cmg::Muon, cmg::Muon > DiMuon;
   typedef cmg::DiObject<cmg::PFJet,cmg::PFJet> DiPFJet;
-  typedef cmg::DiTauObject<cmg::Tau, cmg::Tau> DiTau;
-  typedef cmg::DiObject<cmg::Tau,cmg::Tau> DiTauDiObject;
-  typedef cmg::DiTauObject<cmg::Tau, cmg::Electron> TauEle;
-  typedef cmg::DiObject<cmg::Tau,cmg::Electron> TauEleDiObject;
-  typedef cmg::DiTauObject<cmg::Tau, cmg::Muon> TauMu;
-  typedef cmg::DiObject<cmg::Tau,cmg::Muon> TauMuDiObject; // still need to declare DiObject to generate dictionaries
-  typedef cmg::DiTauObject<cmg::Muon,cmg::Electron> MuEleDiTau;
+  typedef cmg::DiObject<cmg::Tau,cmg::Tau> DiTau;
+  typedef cmg::DiObject<cmg::Tau,cmg::Electron> TauEle;
+  typedef cmg::DiObject<cmg::Tau,cmg::Muon> TauMu;
   typedef cmg::DiObject<cmg::Muon,cmg::Electron> MuEle;
   typedef cmg::DiObject<cmg::Electron,cmg::BaseMET> WENu;
   typedef cmg::DiObject<cmg::Muon,cmg::BaseMET> WMuNu;

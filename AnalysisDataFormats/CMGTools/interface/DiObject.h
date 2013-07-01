@@ -11,7 +11,6 @@ namespace cmg {
 
 template <typename T, typename U> class DiObject;
 template <typename T, typename U> class DiObjectFactory;
-template <typename T, typename U> class DiTauObjectFactory;
 
 template< typename T, typename U >
 class DiObject : public AbstractPhysicsObject{
@@ -193,7 +192,6 @@ class DiObject : public AbstractPhysicsObject{
     double   massSVFit_;
 
     friend class cmg::DiObjectFactory<T,U>;
-    friend class cmg::DiTauObjectFactory<T,U>;
 
 };
 
