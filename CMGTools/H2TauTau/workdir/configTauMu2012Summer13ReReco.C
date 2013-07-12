@@ -17,7 +17,7 @@ TauMuPlotter * configTauMu2012Summer13ReReco(TString name, TString path){
 
   //analysis->tauIsoCutQCD_="(tauisomvaraw>0.5)";
   //analysis->tauIsoCutQCD_="(tauisomva2raw>0.5)";
-  analysis->tauIsoCutQCD_="(tauiso3hitraw<6.0)";
+  analysis->tauIsoCutQCD_="(tauiso3hitraw<10.0)";
 
   ///Moriond
   //analysis->taupTCut_=40;
@@ -89,6 +89,19 @@ TauMuPlotter * configTauMu2012Summer13ReReco(TString name, TString path){
   ZToLJet->setDataType("MC");
   ZToLJet->setCrossection(ZToTauTau->getCrossection());
   analysis->addSample(ZToLJet);
+
+  for(long n=1;n<=4;n++){
+    Sample* ZNjet = new Sample(TString("Z")+n+"ToMuMu",path);
+    ZNjet->setDataType("MCCat");
+    ZNjet->setCrossection(ZToTauTau->getCrossection()*DYNJetFrac[n-1]);
+    analysis->addSample(ZNjet);
+  }
+  for(long n=1;n<=4;n++){
+    Sample* ZNjet = new Sample(TString("Z")+n+"ToLJet",path);
+    ZNjet->setDataType("MCCat");
+    ZNjet->setCrossection(ZToTauTau->getCrossection()*DYNJetFrac[n-1]);
+    analysis->addSample(ZNjet);
+  }
 
 
   //////////TTJets 
@@ -197,23 +210,23 @@ TauMuPlotter * configTauMu2012Summer13ReReco(TString name, TString path){
 
 
 
-//   /////////////////SUSY Samples
-//   for(Int_t i=0;i<NSUSY;i++){
-//       sprintf(nam,"SUSYBB%d",SUSYMass[i]);
-//       Sample* SUSYBB = new Sample(nam,path);
-//       SUSYBB->setDataType("Signal");
-//       SUSYBB->setCrossection(1.);
-//       SUSYBB->setSignalMass(SUSYMass[i]);
-//       analysis->addSample(SUSYBB);    
+  /////////////////SUSY Samples
+  for(Int_t i=0;i<NSUSY;i++){
+      sprintf(nam,"SUSYBB%d",SUSYMass[i]);
+      Sample* SUSYBB = new Sample(nam,path);
+      SUSYBB->setDataType("Signal");
+      SUSYBB->setCrossection(1.);
+      SUSYBB->setSignalMass(SUSYMass[i]);
+      analysis->addSample(SUSYBB);    
 
-//       sprintf(nam,"SUSYGG%d",SUSYMass[i]);
-//       Sample* SUSYGG = new Sample(nam,path);
-//       SUSYGG->setDataType("Signal");
-//       SUSYGG->setCrossection(1.);
-//       SUSYGG->setSignalMass(SUSYMass[i]);
-//       analysis->addSample(SUSYGG);    
+      sprintf(nam,"SUSYGG%d",SUSYMass[i]);
+      Sample* SUSYGG = new Sample(nam,path);
+      SUSYGG->setDataType("Signal");
+      SUSYGG->setCrossection(1.);
+      SUSYGG->setSignalMass(SUSYMass[i]);
+      analysis->addSample(SUSYGG);    
 
-//   }
+  }
 
 
 

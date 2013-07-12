@@ -99,47 +99,52 @@ public:
  
   //Inclusive methods
   TH1F* getTTJetsInc();
+  TH1F* getZNJetSum(TString decay);
   TH1F* getZToLJetInc();
   TH1F* getZLInc();
-  TH1F* getWJetsInc();
-  TH1F* getWJetsNJet();
-  TH1F* getWNJetSum();
-  TH1F* getTotalMCSM(Int_t WType=0);//sum of OS backgrounds execpt for the QCD
-  TH1F* getQCDInc(Int_t WType=0,bool cleanNegativeBins=1);
-  TH1F* getQCDIncWNJet();
 
-  //
+  TH1F* getTotalMCSM(Int_t WType=0);//sum of OS backgrounds execpt for the QCD
+
+  TH1F* getWNJetSum();
+  TH1F* getWNJetSumLooseTau();
   TH1F* getWNJetSumNoChCut();
-  TH1F* getWJetsNJetNoChCut();//combined without proper weights
   TH1F* getWNJetSumNoChNoMTCut();
-  TH1F* getWJetsNJetNoChNoMTCut();
-  TH1F* getWJetsNJetLooseTau();
+  TH1F* getWJetsInc();
+  TH1F* getWJetsNJet(int shape=0);
   TH1F* getWJetsIncShape();
-  TH1F* getWJetsIncNoMTCut();
   TH1F* getW2JetsBJet();
   TH1F* getW3JetsVBF();
-  TH1F* getQCDMuIsoSM();
+  TH1F* getWJetsNJetVBFHCP();
+  TH1F* getWJetsNJetVBFLoose();
+  TH1F* getWJetsNJetVBFTight();
+
+  TH1F* getQCDInc(Int_t WType=0,bool cleanNegativeBins=1);
+  TH1F* getQCDIncWNJet();
+  TH1F* getQCDMuIso();
+  TH1F* getQCDMuIsoLooseTau();
   TH1F* getQCDIncWJetsShape();
   TH1F* getQCDIncFit();
   TH1F* getQCDMike();
   TH1F* getQCDKeti();
+  TH1F* getQCDKetiHCP();//
   TH1F* getQCDIncLooseShape();
   TH1F* getQCDIncHighPt();
   TH1F* getQCDIncLowPt();
 
   ///HCP 2012 Methods
-  TH1F* getWJetsNJetVBFHCP();
-  TH1F* getWJetsNJetVBFLooseIso();
   TH1F* getQCDVBFHCP();
   TH1F* getQCDVBFHCP2();
-  TH1F* getQCDVBFLooseIso();
   TH1F* getSampleVBFHCPShape(TString sample);//used for the methods below
   TH1F* getSampleVBFHCP(TString sample);//used for the methods below
+  TH1F* getSampleVBFTightHCPShape(TString sample);//used for the methods below
+  TH1F* getSampleVBFTightHCP(TString sample);//used for the methods below
   TH1F* getTTJetsVBFHCP();
   TH1F* getZToLJetVBFHCP();
+  TH1F* getZToLJetVBFTightHCP();
   TH1F* getZLVBFHCP();
   TH1F* getZLLVBFHCP();
   TH1F* getDiBosonVBFHCP();
+  TH1F* getDiBosonVBFTightHCP();
   TH1F* getZToTauTauVBF();
   TH1F* getZL2012();
   TH1F* getZL2012Type1();
@@ -147,6 +152,9 @@ public:
   TH1F* getZL2012Type2();
   TH1F* getZLBoost();
 
+  TH1F* getQCDBoostTight();
+  TH1F* getQCDVBFLoose();
+  TH1F* getQCDVBFTight();
 
 
   ///
@@ -249,6 +257,43 @@ public:
     SMcut[5]=bjetcut+"*"+taulowcut;
     SMcut[6]=bjetcut+"*"+tauhighcut;
     cout<<"Category selection : "<<SMcut[sm]<<endl;
+    return SMcut[sm];
+  }
+
+  TString getSMCategory(Int_t sm){
+    if(sm<0||12<sm){
+      cout<<" Category : "<<sm<<" undefined "<<endl;
+      return TString("0");
+    }
+
+    TString metcut="(metpt>30)";
+    TString zerojetcut=TString("(njet==0&&nbjet==0)");
+    TString onejetcut=TString("(njet>=1&&nbjet==0)");
+    TString vbftightcut="(njet>=2&&njetingap==0&&nbjet==0&&diJetMass>700.&&abs(diJetDeltaEta)>4.0&&ditaumetpt>100)";
+    TString notvbftightcut=TString("(!")+vbftightcut+")";
+    TString vbfcut="(njet>=2&&njetingap==0&&nbjet==0&&diJetMass>500.&&abs(diJetDeltaEta)>3.5)";
+    TString notvbfcut=TString("(!")+vbfcut+")";
+    TString btagcut="(nbjet>=1&&njet<2)";
+    TString notbtagcut=TString("(!")+btagcut+")";
+
+
+    TString SMcut[13];
+    SMcut[0]=zerojetcut+"*"+"(20<taupt&&taupt<30)";
+    SMcut[1]=zerojetcut+"*"+"(30<taupt&&taupt<45)";
+    SMcut[2]=zerojetcut+"*"+"(45<taupt)";
+    SMcut[3]=notvbfcut+"*"+onejetcut+"*"+"(30<taupt&&taupt<45)"+"*"+metcut;
+    SMcut[4]=notvbfcut+"*"+onejetcut+"*"+"(45<taupt&&ditaumetpt<100)"+"*"+metcut;
+    SMcut[5]=notvbfcut+"*"+onejetcut+"*"+"(45<taupt&&100<ditaumetpt)"+"*"+metcut;
+    SMcut[6]=notvbftightcut+"*"+vbfcut;
+    SMcut[7]=vbftightcut;
+    SMcut[8]="1";
+    SMcut[9]=btagcut;
+    SMcut[10]=notbtagcut;
+    SMcut[11]=btagcut;//for finebin 
+    SMcut[12]=notbtagcut;
+    cout<<"Category selection : "<<SMcut[sm]<<endl;
+    
+    
     return SMcut[sm];
   }
 

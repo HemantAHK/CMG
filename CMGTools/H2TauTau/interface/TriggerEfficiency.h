@@ -587,12 +587,12 @@ public:
   ////muon MC efficiency remains same as for Moriond
 
   double effTau_muTau_Data_2012ABCDSummer13(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.444056,    0.363077,    0.126673,    4.798026,    0.932726);
-    else               return efficiency(pt,18.556707,    0.243482,    0.121221,    2.636403,    0.894483);
+    if(fabs(eta)<1.5)  return efficiency(pt,18.604910,    0.276042,    0.137039,    2.698437,    0.940721);                                            
+    else               return efficiency(pt,18.701715,    0.216523,    0.148111,    2.245081,    0.895320);
   }
   double effTau_muTau_MC_2012ABCDSummer13(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.540892,    1.323321,    2.901140,    1.001297,    12.472203);
-    else               return efficiency(pt,18.151899,    0.446117,    0.159085,    120.380318,    0.890775);
+    if(fabs(eta)<1.5)  return efficiency(pt,18.532997,    1.027880,    2.262950,    1.003322,    5.297292);
+    else               return efficiency(pt,18.212782,    0.338119,    0.122828,    12.577926,    0.893975);
   }
 
 
@@ -803,12 +803,12 @@ public:
   }
   //electron MC efficiency remains same as Moriond
   double effTau_eTau_Data_2012ABCDSummer13(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.920740,    1.705521,    1.996879,    35.638721,    0.901402);
-    else               return efficiency(pt,18.712473,    0.263371,    0.146785,    3.342299,    0.853802);
+    if(fabs(eta)<1.5)  return efficiency(pt,18.538229,    0.651562,    0.324869,    13.099048,    0.902365);
+    else               return efficiency(pt,18.756548,    0.230732,    0.142859,    3.358497,    0.851919);
   }
   double effTau_eTau_MC_2012ABCDSummer13(double pt, double eta) {
-    if(fabs(eta)<1.5)  return efficiency(pt,18.531258,    0.283163,    0.120956,    5.559196,    0.915048);
-    else               return efficiency(pt,18.641788,    0.742923,    0.598460,    134.920670,    0.865315);
+    if(fabs(eta)<1.5)  return efficiency(pt,18.605055,    0.264062,    0.139561,    4.792849,    0.915035);
+    else               return efficiency(pt,18.557810,    0.280908,    0.119282,    17.749043,    0.865756);
   }
 
 

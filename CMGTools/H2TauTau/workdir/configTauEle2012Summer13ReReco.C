@@ -9,10 +9,9 @@ TauElePlotter * configTauEle2012Summer13ReReco(TString name, TString path){
   TauElePlotter * analysis = new TauElePlotter(name);
   analysis->setOutputPath(path);
   analysis->setQCDOStoSSRatio(1.06);
-  analysis->setZTTType(1);
+  analysis->setZTTType(2);
   analysis->mTCut_=30;
-  analysis->eventWeight_="pupWeights4*embeddedGenWeight*triggerEffWeightsTau4*triggerEffWeightsMu4*selectionEffWeightsId4*selectionEffWeightsIso4*signalWeight*(tauantiemva3>=2&&(tauzimpact<-1.5||0.5<tauzimpact))";
-
+  analysis->eventWeight_="pupWeights4*embeddedGenWeight*triggerEffWeightsTau4*triggerEffWeightsMu4*selectionEffWeightsId4*selectionEffWeightsIso4*signalWeight*(tauantiemva3new>=2)*(!(-1.5<tauzimpact&&tauzimpact<0.5))";
 
   //////Data
   Sample* TauPlusX2012A = new Sample("TauPlusX2012ReRecoA",path);
@@ -70,6 +69,19 @@ TauElePlotter * configTauEle2012Summer13ReReco(TString name, TString path){
   ZToLJet->setDataType("MC");
   ZToLJet->setCrossection(ZToTauTau->getCrossection());
   analysis->addSample(ZToLJet);
+
+  for(long n=1;n<=4;n++){
+    Sample* ZNjet = new Sample(TString("Z")+n+"ToEE",path);
+    ZNjet->setDataType("MCCat");
+    ZNjet->setCrossection(ZToTauTau->getCrossection()*DYNJetFrac[n-1]);
+    analysis->addSample(ZNjet);
+  }
+  for(long n=1;n<=4;n++){
+    Sample* ZNjet = new Sample(TString("Z")+n+"ToLJet",path);
+    ZNjet->setDataType("MCCat");
+    ZNjet->setCrossection(ZToTauTau->getCrossection()*DYNJetFrac[n-1]);
+    analysis->addSample(ZNjet);
+  }
 
   /////////W+jets
   Sample * WJetsToLNu=new Sample("WJetsToLNu",path);
@@ -176,8 +188,28 @@ TauElePlotter * configTauEle2012Summer13ReReco(TString name, TString path){
 
 
 
-
   /////////////////SUSY Samples
+  for(Int_t i=0;i<NSUSY;i++){
+      sprintf(nam,"SUSYBB%d",SUSYMass[i]);
+      Sample* SUSYBB = new Sample(nam,path);
+      SUSYBB->setDataType("Signal");
+      SUSYBB->setCrossection(1.);
+      SUSYBB->setSignalMass(SUSYMass[i]);
+      analysis->addSample(SUSYBB);    
+
+      sprintf(nam,"SUSYGG%d",SUSYMass[i]);
+      Sample* SUSYGG = new Sample(nam,path);
+      SUSYGG->setDataType("Signal");
+      SUSYGG->setCrossection(1.);
+      SUSYGG->setSignalMass(SUSYMass[i]);
+      analysis->addSample(SUSYGG);    
+
+  }
+
+
+
+
+
   analysis->setQCDColor(kMagenta-10);
   analysis->setWJetsColor(kRed+2);
   analysis->setTTJetsColor(kBlue-8);
