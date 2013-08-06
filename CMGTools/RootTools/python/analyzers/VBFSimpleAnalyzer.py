@@ -29,8 +29,6 @@ class VBFSimpleAnalyzer( Analyzer ):
 
     """
 
-    def __init__(self, cfg_ana, cfg_comp, looperName):
-        super(VBFSimpleAnalyzer,self).__init__(cfg_ana, cfg_comp, looperName)
 
     def beginLoop(self):
         super(VBFSimpleAnalyzer,self).beginLoop()
